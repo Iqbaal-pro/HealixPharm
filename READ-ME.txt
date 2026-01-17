@@ -1,11 +1,10 @@
-  =>  Template Name    : MEDINOVA - Hospital Website Template
+  =>  Template Name    : HealixPharm - Pharmacy Website Template
 
-  =>  Template Link    : https://htmlcodex.com/hospital-website-template
+  =>  Template Author  : HealixPharm Team
 
-  =>  Template License : https://htmlcodex.com/license (or read the LICENSE.txt file)
+  =>  Author Website   : https://healixpharm.live/
 
-  =>  Template Author  : HTML Codex
+  =>  About HealixPharm:
+HealixPharm is an AI-enhanced pharmacy management platform designed to automate inventory management, improve patient support, and enhance medication safety. The system focuses on providing efficient, reliable, and user-friendly digital solutions for modern pharmacy operations.
 
-  =>  Author Website   : https://htmlcodex.com
-
-  =>  About HTML Codex : HTML Codex is one of the top creators and publishers of Free HTML templates, HTML landing pages, HTML email templates and HTML snippets in the world. Read more at ( https://htmlcodex.com/about-us )
+The user interface of HealixPharm is developed using modern web technologies and incorporates responsive design elements inspired by resources from HTML Codex, a well-recognized platform that provides high-quality free HTML templates, landing pages, email templates, and reusable HTML components. These resources support the development of clean, consistent, and accessible web interfaces. More information about HTML Codex is available at: https://htmlcodex.com/about-us
