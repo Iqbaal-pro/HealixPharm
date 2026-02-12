@@ -1,0 +1,180 @@
+HEALIXPHARM DATABASE SCHEMA - STOCK MANAGEMENT
+==============================================
+
+medicines table
+===============
+id (INT, PRIMARY KEY)
+name (VARCHAR 100, NOT NULL)
+sku (VARCHAR 50, UNIQUE, NOT NULL)
+dosage_form (VARCHAR 50, NOT NULL)
+strength (VARCHAR 50, NULLABLE)
+unit_of_measurement (VARCHAR 20, NOT NULL) - tablets, ml, gm, etc
+category (VARCHAR 100, NULLABLE) - antibiotic, antihistamine, etc
+manufacturer (VARCHAR 100, NULLABLE)
+registration_number (VARCHAR 50, NULLABLE) - regulatory compliance ID
+cost_price (FLOAT, NOT NULL) - base cost
+selling_price (FLOAT, NOT NULL) - retail price
+minimum_stock_threshold (INT, DEFAULT 10) - critical stock level
+maximum_stock_level (INT, NULLABLE) - detect overstock
+created_at (DATETIME, DEFAULT NOW)
+is_active (BOOLEAN, DEFAULT TRUE)
+
+medicine_batches table
+======================
+id (INT, PRIMARY KEY)
+medicine_id (INT, FOREIGN KEY medicines.id, NOT NULL)
+batch_number (VARCHAR 50, NOT NULL)
+supplier_id (INT, NULLABLE)
+manufacture_date (DATETIME, NOT NULL)
+expiry_date (DATETIME, NOT NULL) - CRITICAL for FEFO
+cost_price (FLOAT, NOT NULL) - cost per unit for this batch
+received_date (DATETIME, DEFAULT NOW)
+created_at (DATETIME, DEFAULT NOW)
+is_active (BOOLEAN, DEFAULT TRUE)
+is_expired (BOOLEAN, DEFAULT FALSE) - auto-set when past expiry_date
+
+inventory table
+===============
+id (INT, PRIMARY KEY)
+medicine_id (INT, FOREIGN KEY medicines.id, NOT NULL)
+batch_id (INT, FOREIGN KEY medicine_batches.id, NOT NULL)
+quantity_available (INT, NOT NULL, DEFAULT 0) - can be dispensed
+quantity_reserved (INT, NOT NULL, DEFAULT 0) - pending orders
+quantity_damaged (INT, NOT NULL, DEFAULT 0) - damaged units
+quantity_expired (INT, NOT NULL, DEFAULT 0) - expired write-offs
+reorder_level (INT, NOT NULL) - when to trigger reorder alert
+reorder_quantity (INT, NULLABLE) - standard order size
+turnover_rate (FLOAT, NULLABLE) - consumption rate
+last_stock_update (DATETIME, DEFAULT NOW)
+last_dispensed_at (DATETIME, NULLABLE) - for overstock detection
+
+stock_log table
+===============
+id (INT, PRIMARY KEY)
+medicine_id (INT, FOREIGN KEY medicines.id, NOT NULL)
+batch_id (INT, FOREIGN KEY medicine_batches.id, NOT NULL)
+quantity_used (INT, NOT NULL) - how much was used/deducted
+reason (VARCHAR 50, NOT NULL) - sold, damage, expired, adjustment, returned
+issued_to (INT, NULLABLE) - order/prescription ID
+reference_type (VARCHAR 20, NULLABLE) - order, prescription, adjustment
+staff_id (INT, NULLABLE) - who performed action
+logged_at (DATETIME, DEFAULT NOW)
+
+stock_update table
+==================
+id (INT, PRIMARY KEY)
+medicine_id (INT, FOREIGN KEY medicines.id, NOT NULL)
+batch_id (INT, FOREIGN KEY medicine_batches.id, NULLABLE)
+batch_number (VARCHAR 50, NOT NULL)
+manufacture_date (DATETIME, NULLABLE)
+expiry_date (DATETIME, NOT NULL)
+quantity_added (INT, NOT NULL)
+cost_price (FLOAT, NOT NULL) - cost per unit
+total_cost (FLOAT, NOT NULL) - total = cost_price * quantity
+supplier_id (INT, NULLABLE)
+supplier_name (VARCHAR 100, NULLABLE)
+staff_id (INT, NOT NULL) - receiving staff
+date_received (DATETIME, DEFAULT NOW)
+updated_at (DATETIME, DEFAULT NOW)
+
+stock_adjustments table
+=======================
+id (INT, PRIMARY KEY)
+medicine_id (INT, FOREIGN KEY medicines.id, NOT NULL)
+batch_id (INT, FOREIGN KEY medicine_batches.id, NOT NULL)
+adjustment_quantity (INT, NOT NULL)
+adjustment_type (VARCHAR 50, NOT NULL) - expired, damaged, waste, correction, returned
+reason (TEXT, NULLABLE) - detailed explanation
+cost_impact (INT, NULLABLE) - financial loss if any
+staff_id (INT, NOT NULL) - who reported
+approved_by (INT, NULLABLE) - manager approval
+approved_at (DATETIME, NULLABLE)
+created_at (DATETIME, DEFAULT NOW)
+
+stock_alerts table
+==================
+id (INT, PRIMARY KEY)
+medicine_id (INT, FOREIGN KEY medicines.id, NOT NULL)
+batch_id (INT, FOREIGN KEY medicine_batches.id, NULLABLE)
+alert_type (VARCHAR 50, NOT NULL) - low_stock, critical_stock, expiry_warning, overstock
+current_quantity (INT, NOT NULL)
+threshold_value (INT, NOT NULL)
+is_active (BOOLEAN, DEFAULT TRUE)
+is_acknowledged (BOOLEAN, DEFAULT FALSE)
+acknowledged_by (INT, NULLABLE)
+acknowledged_at (DATETIME, NULLABLE)
+created_at (DATETIME, DEFAULT NOW)
+resolved_at (DATETIME, NULLABLE)
+
+issued_items table
+==================
+id (INT, PRIMARY KEY)
+prescription_id (INT, FOREIGN KEY prescriptions.id, NOT NULL)
+medicine_id (INT, FOREIGN KEY medicines.id, NOT NULL)
+batch_id (INT, FOREIGN KEY medicine_batches.id, NOT NULL)
+quantity_issued (INT, NOT NULL)
+issued_at (DATETIME, DEFAULT NOW)
+issued_by (INT, NULLABLE) - staff member
+
+RELATIONSHIPS & CONSTRAINTS
+============================
+
+medicines (1) -> (many) medicine_batches
+medicines (1) -> (many) inventory
+medicines (1) -> (many) stock_log
+medicines (1) -> (many) stock_updates
+medicines (1) -> (many) stock_adjustments
+medicines (1) -> (many) stock_alerts
+
+medicine_batches (1) -> (many) inventory
+medicine_batches (1) -> (many) stock_log
+medicine_batches (1) -> (many) stock_adjustments
+medicine_batches (1) -> (many) stock_alerts
+medicine_batches (1) -> (many) issued_items
+
+inventory stores current state per batch
+stock_log is an audit trail of all movements
+stock_update tracks all additions with cost
+stock_adjustments tracks all corrections and write-offs
+stock_alerts triggers notifications
+
+KEY INDEXES TO CREATE
+=====================
+
+CREATE INDEX idx_inventory_batch ON inventory(batch_id);
+CREATE INDEX idx_inventory_medicine ON inventory(medicine_id);
+CREATE INDEX idx_batch_expiry ON medicine_batches(expiry_date);
+CREATE INDEX idx_batch_active ON medicine_batches(is_active);
+CREATE INDEX idx_stock_log_medicine ON stock_log(medicine_id);
+CREATE INDEX idx_stock_log_batch ON stock_log(batch_id);
+CREATE INDEX idx_stock_log_date ON stock_log(logged_at);
+CREATE INDEX idx_stock_alert_medicine ON stock_alerts(medicine_id);
+CREATE INDEX idx_stock_alert_active ON stock_alerts(is_active);
+CREATE INDEX idx_adjustment_date ON stock_adjustments(created_at);
+
+SAMPLE DATA
+===========
+
+medicines:
+id=1, name="Aspirin", sku="ASP-500", strength="500mg", 
+cost_price=10, selling_price=20, minimum_stock_threshold=50
+
+medicine_batches:
+id=1, medicine_id=1, batch_number="LOT2024001",
+expiry_date="2026-01-15", cost_price=10
+
+inventory:
+id=1, medicine_id=1, batch_id=1, quantity_available=100,
+reorder_level=50
+
+stock_log:
+id=1, medicine_id=1, batch_id=1, quantity_used=10,
+reason="sold"
+
+stock_adjustments:
+id=1, medicine_id=1, batch_id=1, adjustment_quantity=5,
+adjustment_type="damaged"
+
+stock_alerts:
+id=1, medicine_id=1, alert_type="low_stock",
+current_quantity=40, threshold_value=50
