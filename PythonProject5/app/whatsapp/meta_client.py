@@ -4,6 +4,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class MetaClient_wb:
     """
     Handles all Meta WhatsApp Cloud API calls
@@ -111,3 +112,32 @@ class MetaClient_wb:
             "status_code": response.status_code,
             "response": response.text
         }
+
+    def get_media_url(self, media_id: str) -> str:
+        """
+        Retrieve a temporary URL for a media object uploaded to WhatsApp Cloud API.
+        """
+        logger.info(f"[WB_META] Getting media URL for id: {media_id}")
+        url = f"{settings.META_GRAPH_URL}/{media_id}"
+        headers = {"Authorization": f"Bearer {self.token}"}
+        resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            logger.error(f"[WB_META] Failed to get media URL | Status: {resp.status_code} | Resp: {resp.text}")
+            raise RuntimeError("Failed to fetch media url from Meta API")
+
+        data = resp.json()
+        media_url = data.get("url")
+        logger.info(f"[WB_META] Media URL obtained: {bool(media_url)}")
+        return media_url
+
+    def download_media(self, media_url: str) -> bytes:
+        """
+        Download binary content from the provided media URL.
+        Meta's media URL must be fetched first via `get_media_url`.
+        """
+        logger.info(f"[WB_META] Downloading media from URL")
+        resp = requests.get(media_url, headers={"Authorization": f"Bearer {self.token}"}, stream=True)
+        if resp.status_code != 200:
+            logger.error(f"[WB_META] Failed to download media | Status: {resp.status_code}")
+            raise RuntimeError("Failed to download media content")
+        return resp.content

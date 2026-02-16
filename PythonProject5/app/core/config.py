@@ -4,17 +4,23 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings:
-    # Meta WhatsApp Configuration
-    VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "HEAL")
-    WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
-    PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID", "973507845836211")
-    
-    # Meta Graph API
-    META_API_VERSION = "v18.0"
-    META_GRAPH_URL = f"https://graph.facebook.com/{META_API_VERSION}"
+    # Twilio WhatsApp Configuration
+    TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+    TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+    TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "+14155238886")
+    TWILIO_WHATSAPP_WEBHOOK_TOKEN = os.getenv("TWILIO_WHATSAPP_WEBHOOK_TOKEN", "HEAL")
     
     # Database
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///healix.db")
+    
+    # AWS S3
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+    AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "healix-prescriptions")
+    AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+
+    # Twilio SMS (fallback notifications)
+    TWILIO_SMS_FROM_NUMBER = os.getenv("TWILIO_SMS_FROM_NUMBER", "")
     
     # Server
     SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")

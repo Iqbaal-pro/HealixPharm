@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class UserState_wb:
     """
     Track user state in conversation
@@ -22,7 +23,8 @@ class UserState_wb:
             cls._user_states[user_id] = {
                 "current_step": "main_menu",
                 "conversation_data": {},
-                "last_action": None
+                "last_action": None,
+                "is_first_message": True
             }
         logger.debug(f"[WB_STATE] Retrieved state for user {user_id}: {cls._user_states[user_id]['current_step']}")
         return cls._user_states[user_id]
@@ -31,6 +33,7 @@ class UserState_wb:
     def set_user_state(cls, user_id: str, step: str, data: Dict = None):
         """
         Update user state
+        data: can contain both conversation_data updates and top-level state updates
         """
         if user_id not in cls._user_states:
             cls._user_states[user_id] = {}
@@ -39,7 +42,16 @@ class UserState_wb:
         cls._user_states[user_id]["current_step"] = step
 
         if data:
-            cls._user_states[user_id]["conversation_data"].update(data)
+            # Handle special top-level state properties
+            if "is_first_message" in data:
+                cls._user_states[user_id]["is_first_message"] = data["is_first_message"]
+            
+            # Update conversation_data with remaining data
+            remaining_data = {k: v for k, v in data.items() if k != "is_first_message"}
+            if remaining_data:
+                if "conversation_data" not in cls._user_states[user_id]:
+                    cls._user_states[user_id]["conversation_data"] = {}
+                cls._user_states[user_id]["conversation_data"].update(remaining_data)
 
         logger.info(f"[WB_STATE] User {user_id} transitioned: {old_step} -> {step} | Data: {data}")
 
