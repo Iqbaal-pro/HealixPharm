@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+requests
+pydantic
+python-dotenv
+pytest
+sqlalchemy
+boto3
+opencv-python-headless
+twilio
+python-multipart
