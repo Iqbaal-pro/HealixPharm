@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Optional smooth rendering */
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-blue-950 text-blue-100 antialiased;
+}
