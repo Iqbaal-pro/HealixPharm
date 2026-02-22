@@ -8,7 +8,7 @@ type SidebarProps = {
 
 export default function Sidebar({ closeSidebar }: SidebarProps) {
   return (
-    <aside className="w-64 min-h-screen bg-[#0c2242] text-white p-6 shadow-lg">
+    <aside className="w-64 h-screen bg-[#0c2242] text-white p-6 shadow-lg flex flex-col">
       
       {/* Close Button */}
       <div className="flex justify-end mb-6">
@@ -17,7 +17,7 @@ export default function Sidebar({ closeSidebar }: SidebarProps) {
         </button>
       </div>
 
-      <ul className="space-y-4 text-sm font-medium">
+      <ul className="space-y-4 text-sm font-medium flex-1">
         <li>
           <Link href="/dashboard" onClick={closeSidebar}>
             Dashboard

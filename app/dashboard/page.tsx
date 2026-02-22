@@ -18,7 +18,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-teal-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
         <StatCard
           title="Total Medicines"
