@@ -24,6 +24,7 @@ async def receive_webhook_wb(request: Request):
         # Parse Twilio's form-encoded payload
         form_data = await request.form()
         data = dict(form_data)
+        print(f"\n[DEBUG_WEBHOOK] Received: {data}\n")
         
         logger.debug(f"[WB_WEBHOOK] Twilio webhook data keys: {list(data.keys())}")
 
@@ -37,29 +38,34 @@ async def receive_webhook_wb(request: Request):
         user_id = from_number.replace("whatsapp:", "")
         logger.info(f"[WB_WEBHOOK] MESSAGE_RECEIVED | User: {user_id}")
 
-        # Check message type: text vs media
-        if "Body" in data:
-            # Text message
-            body = data.get("Body", "").strip()
-            logger.info(f"[WB_WEBHOOK] TEXT_MESSAGE | User: {user_id} | Body: {body}")
-            
-            message_data = {"body": body}
-            service_wb.handle_user_message(user_id, "text", message_data)
-
-        elif "MediaUrl0" in data:
+        if "MediaUrl0" in data:
             # Media message (photo/image)
             media_url = data.get("MediaUrl0")
             media_content_type = data.get("MediaContentType0", "image/jpeg")
+            print(f"[DEBUG_WEBHOOK] Media Detected: {media_content_type}, URL: {media_url}")
             logger.info(f"[WB_WEBHOOK] MEDIA_MESSAGE | User: {user_id} | Type: {media_content_type}")
             
             # Only handle images/photos for now
             if "image" in media_content_type:
+                print(f"[DEBUG_WEBHOOK] Routing to image handler...")
                 message_data = {"media_url": media_url}
                 service_wb.handle_user_message(user_id, "image", message_data)
             else:
+                print(f"[DEBUG_WEBHOOK] Unsupported media: {media_content_type}")
                 logger.info(f"[WB_WEBHOOK] Unsupported media type: {media_content_type}")
                 service_wb.twilio_wa.send_text(user_id, "Please send an image of your prescription.")
+
+        elif "Body" in data:
+            # Text message
+            body = data.get("Body", "").strip()
+            print(f"[DEBUG_WEBHOOK] Body Detected: '{body}'. Routing to text handler...")
+            logger.info(f"[WB_WEBHOOK] TEXT_MESSAGE | User: {user_id} | Body: {body}")
+            
+            message_data = {"body": body}
+            service_wb.handle_user_message(user_id, "text", message_data)
+        
         else:
+            print(f"[DEBUG_WEBHOOK] No Body or Media found in payload keys: {list(data.keys())}")
             logger.debug("[WB_WEBHOOK] No message body or media, ignoring")
 
         logger.info(f"[WB_WEBHOOK] Message processed successfully for user {user_id}")

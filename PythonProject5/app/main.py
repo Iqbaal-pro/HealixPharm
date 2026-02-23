@@ -5,6 +5,7 @@ from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
 from app import models
 from app.admin.routes import router as admin_router
+from app.core.scheduler import scheduler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -13,6 +14,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="HealixPharm - WhatsApp Bot")
+
+from app.core.scheduler import scheduler
+@app.on_event("startup")
+async def startup_event():
+    scheduler.start()
 
 logger.info("[WB_MAIN] HealixPharm WhatsApp Bot initialized")
 logger.info(f"[WB_MAIN] Server: {settings.SERVER_HOST}:{settings.SERVER_PORT}")
@@ -29,6 +35,11 @@ logger.info("[WB_MAIN] Admin routes included")
 # Ensure database tables exist (creates if not present)
 Base.metadata.create_all(bind=engine)
 logger.info("[WB_MAIN] Database tables ensured")
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("[WB_MAIN] Starting background scheduler...")
+    scheduler.start()
 
 @app.get("/health")
 async def health_check_wb():
