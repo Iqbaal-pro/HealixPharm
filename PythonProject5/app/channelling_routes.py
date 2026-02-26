@@ -10,16 +10,30 @@ from datetime import datetime
 
 router = APIRouter(prefix="/channelling", tags=["Channelling"])
 
-@router.get("/", response_class=HTMLResponse)
-async def channelling_portal():
-    """Simple placeholder for the channelling web portal."""
+@router.get("/success", response_class=HTMLResponse)
+async def payment_success():
+    """Payment success page."""
     return """
     <html>
-        <head><title>HealixPharm Channelling</title></head>
-        <body>
-            <h1>HealixPharm E-Channelling Portal</h1>
-            <p>Welcome to our secure booking portal. Please choose your doctor and book an appointment.</p>
-            <p>(Booking UI is under development.)</p>
+        <head><title>Payment Success - HealixPharm</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1 style="color: #4CAF50;">Payment Successful!</h1>
+            <p>Your appointment has been confirmed. You will receive a confirmation message on WhatsApp shortly.</p>
+            <p><a href="/">Return to Home</a></p>
+        </body>
+    </html>
+    """
+
+@router.get("/cancel", response_class=HTMLResponse)
+async def payment_cancel():
+    """Payment cancellation page."""
+    return """
+    <html>
+        <head><title>Payment Cancelled - HealixPharm</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h1 style="color: #f44336;">Payment Cancelled</h1>
+            <p>Your payment process was cancelled. You can try booking again from the portal.</p>
+            <p><a href="/channelling">Try Again</a></p>
         </body>
     </html>
     """
