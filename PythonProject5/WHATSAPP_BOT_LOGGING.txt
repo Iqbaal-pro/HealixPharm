@@ -1,0 +1,293 @@
+HEALIXPHARM WHATSAPP BOT - CLASS NAMING & LOGGING DOCUMENTATION
+================================================================
+
+NAMING CONVENTION: _wb Suffix
+=============================
+
+All WhatsApp Bot related classes and functions use _wb suffix for easy identification.
+
+Classes Renamed:
+- MetaClient → MetaClient_wb
+- TextMessage → TextMessage_wb
+- InteractiveMessage → InteractiveMessage_wb
+- WebhookMessage → WebhookMessage_wb
+- MenuButton → MenuButton_wb
+- MenuItem → MenuItem_wb
+- UserState → UserState_wb
+- WhatsAppService → WhatsAppService_wb
+
+Functions/Methods Renamed:
+- verify_webhook() → verify_webhook_wb()
+- receive_webhook() → receive_webhook_wb()
+- health_check() → health_check_wb()
+- root() → root_wb()
+
+Router Variable:
+- service = WhatsAppService() → service_wb = WhatsAppService_wb()
+
+
+LOG CATEGORIES & PREFIXES
+==========================
+
+[WB_MAIN] - Main application initialization
+- Server startup
+- Configuration loading
+- Route registration
+
+[WB_ROUTES] - Webhook route events
+- GET /webhook verification
+- POST /webhook message receiving
+- Route initialization
+
+[WB_WEBHOOK] - Webhook processing
+- GET request verification (success/failure)
+- POST request receiving
+- Message parsing
+- Error handling
+
+[WB_META] - Meta WhatsApp Cloud API calls
+- MetaClient_wb initialization
+- Text message sending
+- Menu sending
+- List message sending
+- API response status
+
+[WB_SERVICE] - WhatsAppService_wb business logic
+- Message routing
+- Handler selection
+- Button click processing
+- State transitions
+- Menu composition
+
+[WB_STATE] - UserState_wb state management
+- State creation for new users
+- State retrieval
+- State transitions
+- Last action tracking
+- User state clearing
+- Total active users count
+
+[WB_TEST] - Testing and verification
+- Test initialization
+- Test assertions
+- Test results
+
+[WB_API] - API endpoints
+- Health check requests
+- Root endpoint access
+
+[WB_STARTUP] - Server startup sequence
+- Server initialization messages
+
+
+LOG FLOW - USER SENDING MESSAGE
+================================
+
+1. User sends WhatsApp message to business phone number
+
+2. Meta webhook calls POST /webhook
+   Log: [WB_WEBHOOK] POST /webhook received | Full payload: {data}
+
+3. routes.py: receive_webhook_wb() extracts data
+   Logs: 
+   - [WB_WEBHOOK] Extracted value from webhook
+   - [WB_WEBHOOK] MESSAGE_RECEIVED | User: {user_id} | Type: {message_type}
+
+4. If text message:
+   Log: [WB_WEBHOOK] TEXT_MESSAGE | User: {user_id} | Body: {body}
+
+5. WhatsAppService_wb.handle_user_message() called
+   Logs:
+   - [WB_SERVICE] Handling message from user {user_id} | Type: {message_type}
+   - [WB_SERVICE] User {user_id} current step: {current_step}
+   - [WB_SERVICE] Processing text message from user {user_id}
+
+6. _handle_text_message() sends welcome
+   Logs:
+   - [WB_SERVICE] TEXT_MESSAGE_HANDLER | User: {user_id} | Message: {message}
+   - [WB_SERVICE] Sending welcome message to user {user_id}
+   - [WB_META] Sending text to {user_id}: Welcome Healix Pharm
+
+7. MetaClient_wb.send_text() calls Meta API
+   Logs:
+   - [WB_META] Text sent successfully to {user_id}
+   - OR [WB_META] Failed to send text to {user_id} | Status: {status_code}
+
+8. send_main_menu() sends menu
+   Logs:
+   - [WB_SERVICE] Sending main menu to user {user_id}
+   - [WB_SERVICE] Menu buttons: [button_titles]
+   - [WB_META] Sending menu to {user_id} with {count} buttons
+   - [WB_SERVICE] Main menu sent and user state updated for {user_id}
+
+9. UserState_wb.set_user_state() updates state
+   Logs:
+   - [WB_STATE] User {user_id} transitioned: {old_step} -> {new_step}
+   - [WB_STATE] Creating new state for user {user_id}
+
+10. Response sent to Meta
+    Log: [WB_WEBHOOK] Message processed successfully for user {user_id}
+
+
+LOG FLOW - USER CLICKS BUTTON
+==============================
+
+1. User taps button on WhatsApp menu
+
+2. Meta webhook calls POST /webhook with interactive reply
+   Log: [WB_WEBHOOK] POST /webhook received | Full payload: {data}
+
+3. routes.py extracts button data
+   Logs:
+   - [WB_WEBHOOK] INTERACTIVE_MESSAGE | User: {user_id} | Button: {button_id}
+
+4. WhatsAppService_wb.handle_user_message() routes to button handler
+   Logs:
+   - [WB_SERVICE] Handling message from user {user_id} | Type: interactive
+   - [WB_SERVICE] Processing interactive message from user {user_id}
+   - [WB_SERVICE] BUTTON_CLICK_HANDLER | User: {user_id} | Button: {button_id}
+
+5. Based on button_id, specific handler called
+   Examples:
+   - [WB_SERVICE] User {user_id} clicked ORDER button
+   - [WB_SERVICE] User {user_id} clicked DOCTOR button
+   - [WB_SERVICE] User {user_id} clicked AGENT button
+
+6. Response message sent via MetaClient_wb
+   Log: [WB_META] Text sent successfully to {user_id}
+
+7. State updated if needed
+   Log: [WB_STATE] User {user_id} state set to awaiting_prescription
+
+
+WEBHOOK VERIFICATION LOG FLOW
+==============================
+
+1. Meta sends GET request to /webhook
+   Log: [WB_WEBHOOK] GET /webhook received | hub.mode: subscribe | hub.verify_token: {token}
+
+2. Verification successful
+   Log: [WB_WEBHOOK] Webhook verification SUCCESSFUL
+   Response: hub.challenge value
+
+3. Verification failed
+   Log: [WB_WEBHOOK] Webhook verification FAILED | Provided token: {token} | Expected: {expected}
+   Response: 403 Verification failed
+
+
+ERROR LOGGING
+=============
+
+1. Exception in webhook processing
+   Log: [WB_WEBHOOK] ERROR processing webhook: {error_message} (with stack trace)
+   Response: 500 error JSON
+
+2. Failed API call to Meta
+   Log: [WB_META] Failed to send {message_type} to {user_id} | Status: {status_code}
+
+3. Unknown button
+   Log: [WB_SERVICE] Unknown button clicked | User: {user_id} | Button: {button_id}
+
+
+DEBUG LOGS (only shown when logging level = DEBUG)
+===================================================
+
+- [WB_STATE] Retrieved state for user {user_id}: {step}
+- [WB_STATE] User {user_id} last action: {action}
+- [WB_STATE] Total active users: {count}
+- [WB_SERVICE] User {user_id} current step: {current_step}
+- [WB_SERVICE] Sending {message_type} to user {user_id}
+- [WB_WEBHOOK] Extracted value from webhook
+- [WB_WEBHOOK] No messages in webhook value, skipping
+- [WB_API] Root endpoint accessed
+- [WB_HEALTH] Health check requested
+
+
+HOW TO VIEW LOGS
+================
+
+Standard Output (INFO level):
+- Show all important events
+- Message flow tracking
+- State transitions
+- API calls
+
+With Debug (DEBUG level):
+python -m uvicorn app.main:app --reload --log-level debug
+
+Or in code:
+logging.basicConfig(level=logging.DEBUG)
+
+
+LOG OUTPUT EXAMPLE
+==================
+
+[WB_MAIN] HealixPharm WhatsApp Bot initialized
+[WB_MAIN] Server: 0.0.0.0:8000
+[WB_MAIN] Debug Mode: False
+[WB_MAIN] WhatsApp routes included
+[WB_ROUTES] WhatsApp routes initialized
+[WB_WEBHOOK] GET /webhook received | hub.mode: subscribe | hub.verify_token: HEAL
+[WB_WEBHOOK] Webhook verification SUCCESSFUL
+[WB_WEBHOOK] POST /webhook received | Full payload: {...}
+[WB_WEBHOOK] MESSAGE_RECEIVED | User: 1234567890 | Type: text
+[WB_WEBHOOK] TEXT_MESSAGE | User: 1234567890 | Body: hello
+[WB_SERVICE] Handling message from user 1234567890 | Type: text
+[WB_SERVICE] TEXT_MESSAGE_HANDLER | User: 1234567890 | Message: hello
+[WB_SERVICE] Sending welcome message to user 1234567890
+[WB_META] Sending text to 1234567890: Welcome Healix Pharm
+[WB_META] Text sent successfully to 1234567890
+[WB_STATE] Creating new state for user 1234567890
+[WB_SERVICE] Sending main menu to user 1234567890
+[WB_SERVICE] Menu buttons: ['Order Medicine', 'Channel Doctor', 'Disease Updates', 'Contact Agent']
+[WB_META] Sending menu to 1234567890 with 4 buttons
+[WB_META] Menu sent successfully to 1234567890
+[WB_STATE] User 1234567890 transitioned: main_menu -> main_menu
+[WB_SERVICE] Main menu sent and user state updated for 1234567890
+[WB_WEBHOOK] Message processed successfully for user 1234567890
+
+
+FILE LOCATIONS
+==============
+
+All _wb classes and methods located in:
+- app/whatsapp/routes.py - webhook endpoints
+- app/whatsapp/meta_client.py - Meta API client
+- app/whatsapp/service.py - business logic
+- app/whatsapp/state.py - state management
+- app/whatsapp/schemas.py - data schemas
+- app/main.py - FastAPI app with logging
+- app/whatsapp/tests/test_webhook.py - tests
+
+
+SUMMARY OF CHANGES
+==================
+
+Total Classes Renamed: 7
+- MetaClient_wb
+- TextMessage_wb
+- InteractiveMessage_wb
+- WebhookMessage_wb
+- MenuButton_wb
+- MenuItem_wb
+- UserState_wb
+- WhatsAppService_wb
+
+Total Functions Renamed: 4
+- verify_webhook_wb()
+- receive_webhook_wb()
+- health_check_wb()
+- root_wb()
+
+Logging Added:
+- 60+ log statements across all files
+- 8 log category prefixes ([WB_*])
+- DEBUG and INFO level messages
+- Error tracking with stack traces
+- Complete message flow tracking
+
+Benefits:
+- Easy identification of WhatsApp Bot code with _wb suffix
+- Complete audit trail of all operations
+- Easy debugging with categorized logs
+- Production-ready monitoring
