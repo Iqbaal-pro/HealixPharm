@@ -27,4 +27,8 @@ class Settings:
     SERVER_PORT = int(os.getenv("SERVER_PORT", 8000))
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
+    # Spreading Disease Alert System
+    ALERT_JOB_INTERVAL_MINS = int(os.getenv("ALERT_JOB_INTERVAL_MINS", 30))
+    ALERT_SUCCESS_THRESHOLD = float(os.getenv("ALERT_SUCCESS_THRESHOLD", 0.90))
+
 settings = Settings()

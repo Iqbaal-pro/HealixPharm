@@ -71,9 +71,9 @@ def run_alert_broadcast_job():
                     response=str(result["response"])
                 )
             
-            # 5) Mark as sent only if good success rate (>= 90%)
+            # 5) Mark as sent only if good success rate
             total = success_count + fail_count
-            if total > 0 and (success_count / total) >= 0.90:
+            if total > 0 and (success_count / total) >= settings.ALERT_SUCCESS_THRESHOLD:
                 alert_service.mark_broadcast_sent(db, alert.id)
                 logger.info(f"[BROADCAST_JOB] Completed broadcast for alert ID: {alert.id} (Success Rate: {success_count/total:.2%})")
             else:

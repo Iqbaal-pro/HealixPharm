@@ -30,6 +30,35 @@ logger.info("[WB_MAIN] Admin routes included")
 Base.metadata.create_all(bind=engine)
 logger.info("[WB_MAIN] Database tables ensured")
 
+# --- APScheduler Setup (Module 5) ---
+from apscheduler.schedulers.background import BackgroundScheduler
+from app.services.broadcast_job import run_alert_broadcast_job
+
+scheduler = BackgroundScheduler()
+
+@app.on_event("startup")
+def startup_event():
+    logger.info("[WB_MAIN] Starting APScheduler...")
+    # Add job to run every interval defined in settings
+    scheduler.add_job(
+        run_alert_broadcast_job,
+        "interval",
+        minutes=settings.ALERT_JOB_INTERVAL_MINS,
+        id="moh_alert_job",
+        replace_existing=True
+    )
+    # Also run once immediately on startup for verification/initial check
+    scheduler.add_job(run_alert_broadcast_job, id="moh_alert_initial_run")
+    
+    scheduler.start()
+    logger.info("[WB_MAIN] APScheduler started and moh_alert_job added")
+
+@app.on_event("shutdown")
+def shutdown_event():
+    logger.info("[WB_MAIN] Shutting down APScheduler...")
+    scheduler.shutdown()
+    logger.info("[WB_MAIN] APScheduler shut down")
+
 @app.get("/health")
 async def health_check_wb():
     """
