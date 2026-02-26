@@ -6,9 +6,10 @@ from dotenv import load_dotenv
 # Add current directory to path
 sys.path.append(os.getcwd())
 
+from app.core.config import settings
+
 def verify_schema():
-    load_dotenv()
-    database_url = os.getenv("DATABASE_URL")
+    database_url = settings.DATABASE_URL
     
     if not database_url or "PASSWORD_HERE" in database_url:
         print("Error: Please set your actual database password in the .env file first.")
