@@ -16,10 +16,6 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 notif = NotificationService()
 
 
-<<<<<<< HEAD
-from datetime import datetime
-from typing import Optional
-
 class StatusUpdate(BaseModel):
     status: str
 
@@ -32,14 +28,6 @@ class AlertCreate(BaseModel):
     end_date: datetime
 
 
-@router.get("/orders")
-def list_orders(db: Session = Depends(get_db)):
-    """List orders for admin review."""
-    orders = db.query(models.Order).all()
-=======
-stock_bridge = StockIntegrationService()
-
-
 @router.get("/orders", response_model=List[schemas.OrderSimpleSchema])
 def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
     """List all orders with optional status filter."""
@@ -49,7 +37,6 @@ def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
     
     orders = query.order_by(models.Order.created_at.desc()).all()
     # Manual conversion to inject phone for the simple schema
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198
     result = []
     for o in orders:
         res = schemas.OrderSimpleSchema.from_orm(o)
@@ -184,7 +171,6 @@ def update_order_status(order_id: int, payload: schemas.StatusUpdate, db: Sessio
     return {"id": order.id, "token": order.token, "status": order.status}
 
 
-<<<<<<< HEAD
 @router.post("/moh-alert/create")
 def create_moh_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     """
@@ -219,7 +205,8 @@ def create_moh_alert(payload: AlertCreate, db: Session = Depends(get_db)):
     db.refresh(new_alert)
 
     return new_alert
-=======
+
+
 @router.post("/orders/{order_id}/confirm-payment")
 def confirm_payment(order_id: int, db: Session = Depends(get_db)):
     """Admin manually confirms payment (e.g., for bank transfer or COD received)."""
@@ -241,4 +228,3 @@ def confirm_payment(order_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to send payment confirmation: {e}")
         
     return {"status": "PAID", "order_id": order.id}
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198

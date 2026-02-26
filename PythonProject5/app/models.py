@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
-=======
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.db import Base

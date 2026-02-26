@@ -1,9 +1,6 @@
 import logging
-<<<<<<< HEAD
 import uuid
-=======
 from datetime import datetime
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198
 from app.whatsapp.twilio_client import TwilioWhatsAppClient
 from app.whatsapp.state import UserState_wb
 from app.services.image_service import is_image_clear
@@ -57,17 +54,12 @@ class WhatsAppService_wb:
             self._handle_image_message(user_id, message_data)
 
         elif message_type == "interactive":
-<<<<<<< HEAD
             logger.info(f"[WB_SERVICE] Processing interactive message from user {user_id}")
-            button_id = message_data.get("button_id", "")
+            button_id = message_data.get("button_id")
             if button_id:
                 self._handle_button_click(user_id, str(button_id))
             else:
                 logger.warning(f"[WB_SERVICE] Interactive message missing button_id for user {user_id}")
-=======
-            button_id = message_data.get("button_id")
-            self._handle_button_click(user_id, button_id)
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198
 
     def _handle_text_message(self, user_id: str, message_data: dict):
         """
@@ -393,17 +385,13 @@ class WhatsAppService_wb:
                 self.twilio_wa.send_text(user_id, "The image is unclear. Please re-upload a sharper photo of the prescription.")
                 return
 
-<<<<<<< HEAD
-            # Persist image to S3
+            # 3. Persist image to S3
             presc_id = uuid.uuid4().hex
             s3_key = upload_prescription(presc_id, image_bytes)
             s3_url = generate_presigned_url(s3_key)
 
-            # Create DB records (user, order, prescription)
+            # 4. Create DB records (user, order, prescription)
             db = SessionLocal()
-=======
-            # 3. Persist image to S3
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198
             try:
                 presc_id = __import__("uuid").uuid4().hex
                 s3_key = upload_prescription(presc_id, image_bytes)

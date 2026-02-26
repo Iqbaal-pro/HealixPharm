@@ -6,13 +6,9 @@ boto3
 opencv-python-headless
 twilio
 python-multipart
-<<<<<<< HEAD
-apscheduler
-pymysql
-=======
 sqlalchemy
 pydantic
 pydantic-settings
-mysql-connector-python
 apscheduler
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198
+pymysql
+mysql-connector-python

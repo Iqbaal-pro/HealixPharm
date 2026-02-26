@@ -35,17 +35,24 @@ logger.info("[WB_MAIN] Payments routes included")
 Base.metadata.create_all(bind=engine)
 logger.info("[WB_MAIN] Database tables ensured")
 
-<<<<<<< HEAD
-# --- APScheduler Setup (Module 5) ---
-from apscheduler.schedulers.background import BackgroundScheduler
-from app.services.broadcast_job import run_alert_broadcast_job
-
-scheduler = BackgroundScheduler()
-
 @app.on_event("startup")
-def startup_event():
-    logger.info("[WB_MAIN] Starting APScheduler...")
-    # Add job to run every interval defined in settings (days)
+async def startup_event():
+    logger.info("[WB_MAIN] Starting background scheduler...")
+    
+    # 1. Start scheduler
+    scheduler.start()
+    
+    # 2. Add fulfillment monitor job (Runs every 5 minutes)
+    scheduler.add_job(
+        monitor_fulfillment, 
+        'interval', 
+        minutes=5, 
+        id='fulfillment_monitor', 
+        replace_existing=True
+    )
+    
+    # 3. Add disease alert job (Runs every settings.ALERT_JOB_INTERVAL_DAYS)
+    from app.services.broadcast_job import run_alert_broadcast_job
     scheduler.add_job(
         run_alert_broadcast_job,
         "interval",
@@ -56,27 +63,13 @@ def startup_event():
     # Also run once immediately on startup for verification/initial check
     scheduler.add_job(run_alert_broadcast_job, id="moh_alert_initial_run")
     
-    scheduler.start()
-    logger.info("[WB_MAIN] APScheduler started and moh_alert_job added")
+    logger.info("[WB_MAIN] Background jobs scheduled (Fulfillment & Disease Alerts).")
 
 @app.on_event("shutdown")
 def shutdown_event():
-    logger.info("[WB_MAIN] Shutting down APScheduler...")
+    logger.info("[WB_MAIN] Shutting down background scheduler...")
     scheduler.shutdown()
-    logger.info("[WB_MAIN] APScheduler shut down")
-=======
-@app.on_event("startup")
-async def startup_event():
-    logger.info("[WB_MAIN] Starting background scheduler...")
-    
-    # 1. Start scheduler
-    scheduler.start()
-    
-    # 2. Add fulfillment monitor job (Runs every 5 minutes)
-    scheduler.add_job(monitor_fulfillment, 'interval', minutes=5, id='fulfillment_monitor', replace_existing=True)
-    
-    logger.info("[WB_MAIN] Background jobs scheduled.")
->>>>>>> 23b9adec51205709f8649d3560a32b2295743198
+    logger.info("[WB_MAIN] Background scheduler shut down")
 
 @app.get("/health")
 async def health_check_wb():
