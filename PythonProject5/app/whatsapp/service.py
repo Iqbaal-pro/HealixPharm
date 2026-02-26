@@ -202,7 +202,7 @@ class WhatsAppService_wb:
 
         elif button_id == "disease":
             logger.info(f"[WB_SERVICE] User {user_id} clicked DISEASE button")
-            self.twilio_wa.send_text(user_id, "Disease updates coming soon.")
+            self._handle_disease_updates(user_id)
 
         elif button_id == "agent":
             logger.info(f"[WB_SERVICE] User {user_id} clicked AGENT button")
@@ -437,12 +437,39 @@ class WhatsAppService_wb:
         logger.info(f"[WB_SERVICE] PHASE 3 - REMINDER_FLOW | User: {user_id} | Status: NOT IMPLEMENTED")
         pass
 
+    def _handle_disease_updates(self, user_id: str):
+        """
+        PHASE 4: Disease alerts - Display active alerts to user
+        """
+        logger.info(f"[WB_SERVICE] Handling Disease Updates for {user_id}")
+        db = SessionLocal()
+        try:
+            from app.services import alert_service
+            alerts = alert_service.get_all_active_alerts(db)
+            
+            if not alerts:
+                self.twilio_wa.send_text(user_id, "There are currently no active MOH disease alerts for your region. Stay safe! ✅")
+            else:
+                msg = "🔔 *Active MOH Disease Alerts:*\n\n"
+                for alert in alerts:
+                    msg += (
+                        f"⚠️ *{alert.disease_name}*\n"
+                        f"📍 Region: {alert.region}\n"
+                        f"📊 Level: {alert.threat_level}\n"
+                        f"📅 Until: {alert.end_date.strftime('%Y-%m-%d')}\n\n"
+                    )
+                msg += "Please follow MOH guidelines and take necessary precautions."
+                self.twilio_wa.send_text(user_id, msg)
+            
+            # Reset state just in case, though handled by send_main_menu usually
+            UserState_wb.set_user_state(user_id, "main_menu")
+        finally:
+            db.close()
+
     def send_disease_alert(self, user_id: str, alert_data: dict):
         """
-        PHASE 4: Disease alerts
-        Placeholder for future implementation
+        Placeholder for direct alert notification if needed.
         """
-        logger.info(f"[WB_SERVICE] PHASE 4 - DISEASE_ALERT | User: {user_id} | Status: NOT IMPLEMENTED")
         pass
 
 def close_all_user_tickets(db, user):

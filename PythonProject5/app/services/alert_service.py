@@ -23,6 +23,14 @@ def get_eligible_alerts(db: Session, today: datetime):
         models.MOHDiseaseAlert.end_date >= today
     ).all()
 
+def get_all_active_alerts(db: Session):
+    """
+    RETURN all currently active alerts for manual user check.
+    """
+    return db.query(models.MOHDiseaseAlert).filter(
+        models.MOHDiseaseAlert.status == "Active"
+    ).order_by(models.MOHDiseaseAlert.created_at.desc()).all()
+
 def expire_old_alerts(db: Session, today: datetime):
     """
     UPDATE alerts SET status="Expired"
