@@ -5,6 +5,9 @@ from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
 from app import models
 from app.admin.routes import router as admin_router
+from app.payments.routes import router as payments_router
+from app.core.scheduler import scheduler
+from app.core.fulfillment_scheduler import monitor_fulfillment
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,12 +27,15 @@ logger.info("[WB_MAIN] WhatsApp routes included")
 
 # Include admin routes for pharmacist actions (approve/reject)
 app.include_router(admin_router)
-logger.info("[WB_MAIN] Admin routes included")
+# Include payment routes
+app.include_router(payments_router)
+logger.info("[WB_MAIN] Payments routes included")
 
 # Ensure database tables exist (creates if not present)
 Base.metadata.create_all(bind=engine)
 logger.info("[WB_MAIN] Database tables ensured")
 
+<<<<<<< HEAD
 # --- APScheduler Setup (Module 5) ---
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.services.broadcast_job import run_alert_broadcast_job
@@ -58,6 +64,19 @@ def shutdown_event():
     logger.info("[WB_MAIN] Shutting down APScheduler...")
     scheduler.shutdown()
     logger.info("[WB_MAIN] APScheduler shut down")
+=======
+@app.on_event("startup")
+async def startup_event():
+    logger.info("[WB_MAIN] Starting background scheduler...")
+    
+    # 1. Start scheduler
+    scheduler.start()
+    
+    # 2. Add fulfillment monitor job (Runs every 5 minutes)
+    scheduler.add_job(monitor_fulfillment, 'interval', minutes=5, id='fulfillment_monitor', replace_existing=True)
+    
+    logger.info("[WB_MAIN] Background jobs scheduled.")
+>>>>>>> 23b9adec51205709f8649d3560a32b2295743198
 
 @app.get("/health")
 async def health_check_wb():

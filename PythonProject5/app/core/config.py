@@ -37,6 +37,7 @@ class Settings:
     SERVER_PORT = int(os.getenv("SERVER_PORT", 8000))
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
+<<<<<<< HEAD
     # Spreading Disease Alert System
     ALERT_JOB_INTERVAL_DAYS = int(os.getenv("ALERT_JOB_INTERVAL_DAYS", 7))
     ALERT_SUCCESS_THRESHOLD = float(os.getenv("ALERT_SUCCESS_THRESHOLD", 0.90))
@@ -45,5 +46,24 @@ class Settings:
         "ALERT_MESSAGE_TEMPLATE", 
         "ALERT: {disease_name} in {region}. Threat: {threat_level}. Take precautions. Source: MOH"
     )
+=======
+    # Stock Management DB (MySQL)
+    STOCK_DB_USER = os.getenv("STOCK_DB_USER", "stock_user")
+    STOCK_DB_PASSWORD = os.getenv("STOCK_DB_PASSWORD", "stock123")
+    STOCK_DB_HOST = os.getenv("STOCK_DB_HOST", "127.0.0.1")
+    STOCK_DB_PORT = int(os.getenv("STOCK_DB_PORT", 3306))
+    STOCK_DB_NAME = os.getenv("STOCK_DB_NAME", "stock_management_db")
+
+    # PayHere Configuration
+    PAYHERE_MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "need_to_be_fill")
+    PAYHERE_MERCHANT_SECRET = os.getenv("PAYHERE_MERCHANT_SECRET", "need_to_be_fill")
+    PAYHERE_NOTIFY_URL = os.getenv("PAYHERE_NOTIFY_URL", "need_to_be_fill")
+    PAYHERE_SANDBOX = os.getenv("PAYHERE_SANDBOX", "True").lower() == "true"
+    PAYHERE_CURRENCY = os.getenv("PAYHERE_CURRENCY", "LKR")
+
+    @property
+    def STOCK_DATABASE_URL(self):
+        return f"mysql+mysqlconnector://{self.STOCK_DB_USER}:{self.STOCK_DB_PASSWORD}@{self.STOCK_DB_HOST}:{self.STOCK_DB_PORT}/{self.STOCK_DB_NAME}"
+>>>>>>> 23b9adec51205709f8649d3560a32b2295743198
 
 settings = Settings()
