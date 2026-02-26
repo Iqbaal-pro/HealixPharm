@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from app.whatsapp.twilio_client import TwilioWhatsAppClient
 from app.whatsapp.state import UserState_wb
 from app.services.image_service import is_image_clear
@@ -7,6 +8,8 @@ from app.services.order_service import get_or_create_user, create_order_with_pre
 from app.services.notification_service import NotificationService
 from app.services.payhere_service import PayHereService
 from app.db import SessionLocal
+from app import models
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -61,33 +64,43 @@ class WhatsAppService_wb:
         print(f"[DEBUG_SERVICE] Text Body: {body}")
         logger.info(f"[WB_SERVICE] TEXT_MESSAGE | User: {user_id} | Message: {body}")
         
-        # Handle numeric menu selections (1, 2, 3, 4)
-        menu_mapping = {
-            "1": "order",
-            "2": "doctor",
-            "3": "disease",
-            "4": "agent"
-        }
-        
-        if body in menu_mapping:
-            logger.info(f"[WB_SERVICE] User {user_id} selected menu option {body}")
-            button_id = menu_mapping[body]
-            self._handle_button_click(user_id, button_id)
-            return
-        
-        # If user explicitly requests ordering via text, start order flow
-        if body in ["order medicine", "order now", "order"]:
-            logger.info(f"[WB_SERVICE] User {user_id} initiated order via text")
-            self.twilio_wa.send_text(user_id, "Please upload your prescription photo.")
-            UserState_wb.set_user_state(user_id, "awaiting_prescription")
+        # 1. GREETINGS - Always handle these first so people who are "stuck" can get out
+        if body in ["hi", "hello", "hey", "hii", "menu"]:
+            logger.info(f"[WB_SERVICE] User {user_id} requested menu/greeting: {body}. Resetting to main menu.")
+            self.send_main_menu(user_id)
             return
 
-        # NEW: If user is in awaiting_prescription and sends text, it might be a caption.
-        # Don't reset them to main menu.
+        # 2. STATE CHECK
         state = UserState_wb.get_user_state(user_id)
-        if state["current_step"] == "awaiting_prescription" or state.get("last_action") == "sending_image":
-            logger.info(f"[WB_SERVICE] Ignoring potential caption text: '{body}' while in state: {state['current_step']}")
+        current_step = state.get("current_step", "main_menu")
+        
+        # If user is in awaiting_prescription and sends text, it might be a caption.
+        # Don't reset them if they are just typing while uploading.
+        if current_step == "awaiting_prescription" or state.get("last_action") == "sending_image":
+            logger.info(f"[WB_SERVICE] Ignoring potential caption text: '{body}' while in state: {current_step}")
             return
+
+        # Define missing mappings
+        faq_menu_mapping = {
+            "1": "faq_hours",
+            "2": "faq_delivery_areas",
+            "3": "faq_prescription",
+            "4": "faq_order_status",
+            "5": "faq_delivery_charges",
+            "6": "faq_refunds",
+            "7": "back_to_main"
+        }
+        
+        agent_menu_mapping = {
+            "1": "agent_chat",
+            "2": "agent_call",
+            "3": "back_to_main"
+        }
+        
+        delay_menu_mapping = {
+            "1": "agent_faq",
+            "2": "agent_continue"
+        }
 
         if current_step == "faq_mode" and body in faq_menu_mapping:
             self._handle_faq_selection(user_id, faq_menu_mapping[body])
@@ -148,7 +161,20 @@ class WhatsAppService_wb:
             finally:
                 db.close()
 
-        if body == "menu":
+        if current_step == "main_menu":
+            logger.info(f"[WB_SERVICE] Unrecognized input from {user_id} in main_menu: '{body}'")
+            # Handle numeric menu selections (1, 2, 3, 4) if not handled as greeting
+            menu_mapping = {
+                "1": "order",
+                "2": "doctor",
+                "3": "disease",
+                "4": "agent"
+            }
+            if body in menu_mapping:
+                self._handle_button_click(user_id, menu_mapping[body])
+                return
+            
+            self.twilio_wa.send_text(user_id, "I didn't quite catch that. Please select an option from the menu below.")
             self.send_main_menu(user_id)
             return
 
@@ -187,17 +213,24 @@ class WhatsAppService_wb:
                 db.commit()
                 UserState_wb.set_user_state(user_id, "waiting_for_agent")
                 self.twilio_wa.send_text(user_id, "You have been added to the queue. An agent will be with you shortly.")
-                # Schedule delay check
-                from app.core.scheduler import scheduler
-                from app.whatsapp.service import check_agent_delay
-                scheduler.add_job(
-                    check_agent_delay,
-                    'date',
-                    run_date=datetime.now() + __import__("datetime").timedelta(seconds=20),
-                    args=[user_id]
-                )
+                # Schedule delay check after 20 seconds
+                try:
+                    from app.core.scheduler import scheduler
+                    scheduler.add_job(
+                        check_agent_delay,
+                        'date',
+                        run_date=datetime.now() + timedelta(seconds=20),
+                        args=[user_id]
+                    )
+                except Exception as e:
+                    logger.error(f"[WB_SERVICE] Failed to schedule delay check: {e}")
             finally:
                 db.close()
+
+        elif button_id == "agent_call":
+            logger.info(f"[WB_SERVICE] User {user_id} requested AGENT_CALL")
+            self.twilio_wa.send_text(user_id, "We have noted your request. An agent will call you shortly on this number. ☎️")
+            UserState_wb.set_user_state(user_id, "main_menu")
 
         elif button_id == "agent_faq":
             self.send_faq_menu(user_id)

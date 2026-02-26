@@ -9,3 +9,5 @@ python-multipart
 sqlalchemy
 pydantic
 pydantic-settings
+mysql-connector-python
+apscheduler
