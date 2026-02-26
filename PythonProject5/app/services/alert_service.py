@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from app import models
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

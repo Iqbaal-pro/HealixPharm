@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from app.db import SessionLocal
+from app.core.config import settings
 from app.services import alert_service
 from app.services.notification_service import NotificationService
 
