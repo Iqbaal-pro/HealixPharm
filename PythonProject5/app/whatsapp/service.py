@@ -1,4 +1,5 @@
 import logging
+import uuid
 from app.whatsapp.twilio_client import TwilioWhatsAppClient
 from app.whatsapp.state import UserState_wb
 from app.services.image_service import is_image_clear
@@ -43,8 +44,11 @@ class WhatsAppService_wb:
 
         elif message_type == "interactive":
             logger.info(f"[WB_SERVICE] Processing interactive message from user {user_id}")
-            button_id = message_data.get("button_id")
-            self._handle_button_click(user_id, button_id)
+            button_id = message_data.get("button_id", "")
+            if button_id:
+                self._handle_button_click(user_id, str(button_id))
+            else:
+                logger.warning(f"[WB_SERVICE] Interactive message missing button_id for user {user_id}")
 
     def _handle_text_message(self, user_id: str, message_data: dict):
         """
@@ -177,7 +181,7 @@ class WhatsAppService_wb:
                 return
 
             # Persist image to S3
-            presc_id = __import__("uuid").uuid4().hex
+            presc_id = uuid.uuid4().hex
             s3_key = upload_prescription(presc_id, image_bytes)
             s3_url = generate_presigned_url(s3_key)
 

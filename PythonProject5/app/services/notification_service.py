@@ -43,3 +43,26 @@ class NotificationService:
         )
         logger.info(f"[NOTIFY] SMS sent SID: {message.sid}")
         return message.sid
+
+    def build_alert_message(self, alert):
+        """
+        FUNCTION BuildAlertMessage(alert):
+            RETURN "ALERT: {disease} in {region}. Threat: {level}. Take precautions. Source: MOH"
+        """
+        return (
+            f"ALERT: {alert.disease_name} in {alert.region}. "
+            f"Threat: {alert.threat_level}. Take precautions. Source: MOH"
+        )
+
+    def send_whatsapp_message(self, phone, message):
+        """
+        FUNCTION SendWhatsAppMessage(phone, message):
+            CALL Twilio WhatsApp API
+            RETURN {success: true/false, response: json}
+        """
+        logger.info(f"[NOTIFY] Sending WhatsApp Alert to {phone}")
+        result = self.twilio_wa.send_text(phone, message)
+        return {
+            "success": result.get("status") == "success",
+            "response": result
+        }
