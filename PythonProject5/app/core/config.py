@@ -11,7 +11,17 @@ class Settings:
     TWILIO_WHATSAPP_WEBHOOK_TOKEN = os.getenv("TWILIO_WHATSAPP_WEBHOOK_TOKEN", "HEAL")
     
     # Database
-    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///healix.db")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "3306")
+    DB_USER = os.getenv("DB_USER", "root")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    DB_NAME = os.getenv("DB_NAME", "healix")
+    
+    # Construct DATABASE_URL from components if available, else use raw URL
+    DATABASE_URL = os.getenv(
+        "DATABASE_URL", 
+        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
     
     # AWS S3
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
@@ -28,7 +38,7 @@ class Settings:
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
     # Spreading Disease Alert System
-    ALERT_JOB_INTERVAL_MINS = int(os.getenv("ALERT_JOB_INTERVAL_MINS", 30))
+    ALERT_JOB_INTERVAL_DAYS = int(os.getenv("ALERT_JOB_INTERVAL_DAYS", 7))
     ALERT_SUCCESS_THRESHOLD = float(os.getenv("ALERT_SUCCESS_THRESHOLD", 0.90))
     ALERT_MIN_THREAT_LEVEL = os.getenv("ALERT_MIN_THREAT_LEVEL", "High")
     ALERT_MESSAGE_TEMPLATE = os.getenv(

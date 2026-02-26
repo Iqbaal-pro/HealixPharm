@@ -39,11 +39,11 @@ scheduler = BackgroundScheduler()
 @app.on_event("startup")
 def startup_event():
     logger.info("[WB_MAIN] Starting APScheduler...")
-    # Add job to run every interval defined in settings
+    # Add job to run every interval defined in settings (days)
     scheduler.add_job(
         run_alert_broadcast_job,
         "interval",
-        minutes=settings.ALERT_JOB_INTERVAL_MINS,
+        days=settings.ALERT_JOB_INTERVAL_DAYS,
         id="moh_alert_job",
         replace_existing=True
     )

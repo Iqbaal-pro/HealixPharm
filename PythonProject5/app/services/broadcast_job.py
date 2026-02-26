@@ -10,7 +10,7 @@ notif_service = NotificationService()
 def run_alert_broadcast_job():
     """
     Orchestrator job for broadcasting MOH disease alerts.
-    Runs every 30 minutes.
+    Runs every X days as defined in settings.
     """
     logger.info("[BROADCAST_JOB] Starting MOH Alert Broadcast Job")
     db = SessionLocal()
