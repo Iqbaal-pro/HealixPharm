@@ -46,13 +46,19 @@ class NotificationService:
 
     def build_alert_message(self, alert):
         """
-        FUNCTION BuildAlertMessage(alert):
-            RETURN "ALERT: {disease} in {region}. Threat: {level}. Take precautions. Source: MOH"
+        Build message using ALERT_MESSAGE_TEMPLATE from settings.
+        Supports placeholders: {disease_name}, {region}, {threat_level}
         """
-        return (
-            f"ALERT: {alert.disease_name} in {alert.region}. "
-            f"Threat: {alert.threat_level}. Take precautions. Source: MOH"
-        )
+        try:
+            return settings.ALERT_MESSAGE_TEMPLATE.format(
+                disease_name=alert.disease_name,
+                region=alert.region,
+                threat_level=alert.threat_level
+            )
+        except Exception as e:
+            logger.error(f"[NOTIFY] Error formatting alert message: {e}")
+            # Fallback to a simple default if formatting fails
+            return f"ALERT: {alert.disease_name} in {alert.region}. Source: MOH"
 
     def send_whatsapp_message(self, phone, message):
         """

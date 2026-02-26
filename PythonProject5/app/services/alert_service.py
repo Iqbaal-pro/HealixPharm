@@ -16,7 +16,7 @@ def get_eligible_alerts(db: Session, today: datetime):
     """
     return db.query(models.MOHDiseaseAlert).filter(
         models.MOHDiseaseAlert.status == "Active",
-        models.MOHDiseaseAlert.threat_level == "High",
+        models.MOHDiseaseAlert.threat_level == settings.ALERT_MIN_THREAT_LEVEL,
         models.MOHDiseaseAlert.broadcast_sent == False,
         models.MOHDiseaseAlert.start_date <= today,
         models.MOHDiseaseAlert.end_date >= today

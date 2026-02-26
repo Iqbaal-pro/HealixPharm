@@ -30,5 +30,10 @@ class Settings:
     # Spreading Disease Alert System
     ALERT_JOB_INTERVAL_MINS = int(os.getenv("ALERT_JOB_INTERVAL_MINS", 30))
     ALERT_SUCCESS_THRESHOLD = float(os.getenv("ALERT_SUCCESS_THRESHOLD", 0.90))
+    ALERT_MIN_THREAT_LEVEL = os.getenv("ALERT_MIN_THREAT_LEVEL", "High")
+    ALERT_MESSAGE_TEMPLATE = os.getenv(
+        "ALERT_MESSAGE_TEMPLATE", 
+        "ALERT: {disease_name} in {region}. Threat: {threat_level}. Take precautions. Source: MOH"
+    )
 
 settings = Settings()
