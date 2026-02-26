@@ -7,11 +7,6 @@ from app.services.order_service import get_or_create_user, create_order_with_pre
 from app.services.notification_service import NotificationService
 from app.db import SessionLocal
 from app import models
-<<<<<<< HEAD
-=======
-
-from app import models
->>>>>>> agent
 from datetime import datetime, timedelta
 from app.core.scheduler import scheduler
 
@@ -196,7 +191,15 @@ class WhatsAppService_wb:
 
         elif button_id == "doctor":
             logger.info(f"[WB_SERVICE] User {user_id} clicked DOCTOR button")
-            self.twilio_wa.send_text(user_id, "Doctor channeling coming soon.")
+            from app.core.config import settings
+            message = (
+                "🩺 *Channel a Doctor*\n\n"
+                "To book an appointment, please visit our secure portal:\n"
+                f"🔗 {settings.BASE_URL}/channelling\n\n"
+                "Choose your doctor, pick a slot, and pay online.\n"
+                "We'll confirm it here instantly!"
+            )
+            self.twilio_wa.send_text(user_id, message)
 
         elif button_id == "disease":
             logger.info(f"[WB_SERVICE] User {user_id} clicked DISEASE button")
@@ -221,11 +224,7 @@ class WhatsAppService_wb:
                 "You have been added to the queue.\nPlease wait for an available agent.\nType 'menu' to return to main menu."
             )
             
-<<<<<<< HEAD
             # Schedule delay menu check after 1 minute
-=======
-            # Schedule delay menu check after 20 seconds
->>>>>>> agent
             scheduler.add_job(
                 check_agent_delay,
                 'date',
@@ -458,9 +457,4 @@ def check_agent_delay(user_id: str):
     except Exception as e:
         logger.error(f"[TIMER] Error in check_agent_delay: {e}", exc_info=True)
     finally:
-<<<<<<< HEAD
         db.close()
- 
-=======
-        db.close()
->>>>>>> agent

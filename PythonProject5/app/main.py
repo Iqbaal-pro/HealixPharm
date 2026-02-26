@@ -5,7 +5,10 @@ from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
 from app import models
 from app.admin.routes import router as admin_router
+from app.channelling_routes import router as channelling_router
 from app.core.scheduler import scheduler
+from app.channelling_db import engine_channelling, BaseChannelling
+from app import channelling_models
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,9 +35,16 @@ logger.info("[WB_MAIN] WhatsApp routes included")
 app.include_router(admin_router)
 logger.info("[WB_MAIN] Admin routes included")
 
-# Ensure database tables exist (creates if not present)
+# Include E-Channelling routes
+app.include_router(channelling_router)
+logger.info("[WB_MAIN] Channelling routes included")
+
 Base.metadata.create_all(bind=engine)
-logger.info("[WB_MAIN] Database tables ensured")
+logger.info("[WB_MAIN] Pharmacy database tables ensured")
+
+# Ensure channelling tables exist
+BaseChannelling.metadata.create_all(bind=engine_channelling)
+logger.info("[WB_MAIN] Channelling database tables ensured")
 
 @app.on_event("startup")
 async def startup_event():
