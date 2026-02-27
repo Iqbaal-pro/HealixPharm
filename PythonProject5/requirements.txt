@@ -9,5 +9,8 @@ python-multipart
 sqlalchemy
 pydantic
 pydantic-settings
+<<<<<<< HEAD
 mysql-connector-python
+=======
+>>>>>>> agent
 apscheduler

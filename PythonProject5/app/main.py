@@ -17,6 +17,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="HealixPharm - WhatsApp Bot")
 
+from app.core.scheduler import scheduler
+@app.on_event("startup")
+async def startup_event():
+    scheduler.start()
+
 logger.info("[WB_MAIN] HealixPharm WhatsApp Bot initialized")
 logger.info(f"[WB_MAIN] Server: {settings.SERVER_HOST}:{settings.SERVER_PORT}")
 logger.info(f"[WB_MAIN] Debug Mode: {settings.DEBUG}")

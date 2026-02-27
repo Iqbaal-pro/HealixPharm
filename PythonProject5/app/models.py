@@ -1,7 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from datetime import datetime
 from app.db import Base
+
 
 class User(Base):
     __tablename__ = "users"
@@ -14,29 +16,32 @@ class User(Base):
     orders = relationship("Order", back_populates="user")
     support_tickets = relationship("SupportTicket", back_populates="user")
 
+
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    agent_id = Column(String(50), nullable=True)
-    status = Column(String(50), default="WAITING")  # WAITING, ACTIVE, COMPLETED
+    agent_id = Column(String(50), nullable=True) # Name or ID of the pharmacy agent
+    status = Column(String(50), default="WAITING") # WAITING, ACTIVE, COMPLETED
     created_at = Column(DateTime, server_default=func.now())
     accepted_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="support_tickets")
     messages = relationship("SupportMessage", back_populates="ticket")
 
+
 class SupportMessage(Base):
     __tablename__ = "support_messages"
 
     id = Column(Integer, primary_key=True, index=True)
     ticket_id = Column(Integer, ForeignKey("support_tickets.id"))
-    sender_type = Column(String(20))  # USER or AGENT
+    sender_type = Column(String(20)) # USER or AGENT
     body = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
 
     ticket = relationship("SupportTicket", back_populates="messages")
+
 
 class Order(Base):
     __tablename__ = "orders"
@@ -65,6 +70,7 @@ class Order(Base):
     prescription = relationship("Prescription", back_populates="order", uselist=False)
     payments = relationship("Payment", back_populates="order")
 
+
 class OrderItem(Base):
     __tablename__ = "order_items"
 
@@ -77,6 +83,7 @@ class OrderItem(Base):
     subtotal = Column(Float, nullable=False)
 
     order = relationship("Order", back_populates="items")
+
 
 class Prescription(Base):
     __tablename__ = "prescriptions"
@@ -91,12 +98,14 @@ class Prescription(Base):
 
     order = relationship("Order", back_populates="prescription")
 
+
 class PharmacySetting(Base):
     __tablename__ = "pharmacy_settings"
 
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(100), unique=True, index=True, nullable=False)
     value = Column(Text, nullable=False)
+
 
 class DeliverySetting(Base):
     __tablename__ = "delivery_settings"
@@ -106,12 +115,14 @@ class DeliverySetting(Base):
     charge = Column(Float, nullable=False)
     estimated_time = Column(String(100), nullable=True)
 
+
 class PolicySetting(Base):
     __tablename__ = "policy_settings"
 
     id = Column(Integer, primary_key=True, index=True)
-    policy_type = Column(String(100), unique=True, index=True, nullable=False)
+    policy_type = Column(String(100), unique=True, index=True, nullable=False) # e.g., 'prescription', 'refund'
     content = Column(Text, nullable=False)
+
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -126,3 +137,17 @@ class Payment(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     order = relationship("Order", back_populates="payments")
+
+class MOHDiseaseAlert(Base):
+    __tablename__ = "moh_disease_alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    disease_name = Column(String(255), nullable=False)
+    region = Column(String(255), nullable=False)
+    threat_level = Column(String(50), nullable=False) # Low, Medium, High
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    status = Column(String(50), default="Active") # Active, Expired
+    broadcast_sent = Column(Integer, default=0) # 0 or 1
+    retry_count = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())

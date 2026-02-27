@@ -1,0 +1,85 @@
+# HEALIX PHARM - COMPLETE DATABASE SCHEMA & INTEGRATION REPORT
+
+This document outlines the professional database structure for the integrated WhatsApp Bot and Stock Management system. All tables are moving to a unified MySQL database.
+
+---
+
+## 🆕 1. NEWLY ADDED CONFIGURATION TABLES
+These tables remove hard-coding and allow the FAQ bot to be dynamic.
+
+### A. pharmacy_settings
+*Stalks general business information.*
+- `id`: Primary Key
+- `key`: UNIQUE (e.g., 'opening_hours', 'location', 'contact_phone')
+- `value`: TEXT (The actual content)
+
+### B. delivery_settings
+*Controls delivery logic and charges.*
+- `id`: Primary Key
+- `area`: UNIQUE (e.g., 'Colombo 01-15')
+- `charge`: FLOAT (e.g., 300.00)
+- `estimated_time`: VARCHAR (e.g., '2-4 hours')
+
+### C. policy_settings
+*Stores healthcare and business rules.*
+- `id`: Primary Key
+- `policy_type`: UNIQUE (e.g., 'prescription', 'refund', 'cancellation')
+- `content`: TEXT (Legal/Policy text)
+
+---
+
+## 🔄 2. PREVAILING TABLES & REQUIRED CHANGES
+The following tables exist in the WhatsApp Bot project and require specific updates for Stock Management integration.
+
+### D. users (MODIFIED)
+- `id`: Primary Key
+- `phone`: UNIQUE (Used as the main Identifier for WhatsApp)
+- `name`: NULLABLE
+- **CHANGE**: Link to `patient_id` if the Stock system requires specific patient profiles.
+
+### E. orders (MODIFIED)
+- `id`: Primary Key
+- `token`: UNIQUE
+- `status`: (PENDING, VERIFIED, DISPENSED, REJECTED)
+- `user_id`: Foreign Key (users.id)
+- **CHANGE**: Status flow must sync with "Stock Deduction". Once status = DISPENSED, stock must be reduced.
+
+### F. support_tickets
+*Tracks agent chat requests.*
+- `id`: Primary Key
+- `user_id`: Foreign Key (users.id)
+- `agent_id`: NULLABLE (Pharmacy staff name)
+- `status`: (WAITING, ACTIVE, COMPLETED)
+
+### G. support_messages
+*Persistent chat logs for agents.*
+- `id`: Primary Key
+- `ticket_id`: Foreign Key (support_tickets.id)
+- `sender_type`: (USER or AGENT)
+- `body`: TEXT
+
+### H. prescriptions (CRITICAL CHANGES)
+- **PREVAILING**: Stores S3 image unit IDs and image URLs.
+- **STOCK SYSTEM**: Stores patient info and physician data.
+- **MODIFICATION**: We must merge these. The new `prescriptions` table will store:
+  - `s3_key`: (The WhatsApp photo link)
+  - `status`: (VALIDATED / INVALID)
+  - `medicine_line_items`: (Linked via `issued_items` to specific Stock Batch IDs).
+
+---
+
+## 📦 3. STOCK MANAGEMENT TABLES (THE CONNECTION)
+These tables live in the Stock Management side but are now reachable by the Bot.
+
+### I. inventory & medicine_batches
+- **TRIGGER**: When a WhatsApp Order is approved, the `FEFODeductionService` identifies the earliest expiring `batch_id` from these tables.
+
+### J. issued_items
+- **TRIGGER**: Every medicine approved from a WhatsApp prescription image is recorded here, linking the `prescription_id` to the specific `batch_id` and `quantity_issued`.
+
+---
+
+## 🏛 🏛 🏛 PROFESSIONAL DESIGN RULE
+**Single Instance**: All logic now points to one MySQL database (`stock_management_db`).
+**FEFO Integrity**: Stock is only deducted from the earliest expiring batch.
+**Audit Trail**: Every change is logged in `stock_log` with a reference to the WhatsApp `order_id`.
