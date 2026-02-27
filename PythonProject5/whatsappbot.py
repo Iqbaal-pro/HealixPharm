@@ -39,7 +39,9 @@ async def receive_webhook(request: Request):
 
         user = value["messages"][0]["from"]
 
-        send_text(user, "Welcome to Healix Pharm")
+        # Send plain welcome then menu
+        send_text(user, "Welcome Healix Pharm")
+        send_menu(user)
 
     except Exception as e:
         print("ERROR:", e)
@@ -56,3 +58,26 @@ def send_text(to, text):
     }
     r = requests.post(META_URL, headers=HEADERS, json=payload)
     print("SEND STATUS:", r.status_code, r.text)
+
+
+def send_menu(to):
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {"text": "Welcome Healix Pharm\nChoose an option:"},
+            "action": {
+                "buttons": [
+                    {"type": "reply", "reply": {"id": "order", "title": "Order Medicine"}},
+                    {"type": "reply", "reply": {"id": "doctor", "title": "Channel Doctor"}},
+                    {"type": "reply", "reply": {"id": "disease", "title": "Disease Updates"}},
+                    {"type": "reply", "reply": {"id": "agent", "title": "Contact Agent"}}
+                ]
+            }
+        }
+    }
+
+    r = requests.post(META_URL, headers=HEADERS, json=payload)
+    print("MENU STATUS:", r.status_code, r.text)
