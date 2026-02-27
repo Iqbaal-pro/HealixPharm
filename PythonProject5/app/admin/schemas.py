@@ -42,3 +42,13 @@ class OrderApprovalPayload(BaseModel):
 
 class StatusUpdate(BaseModel):
     status: str
+
+class AlertCreate(BaseModel):
+    disease_name: str
+    region: str
+    threat_level: str  # e.g., Low, Medium, High
+
+class SupportMessageBase(BaseModel):
+    sender: str
+    content: str
+

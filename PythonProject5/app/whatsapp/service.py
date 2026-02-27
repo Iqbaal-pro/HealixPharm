@@ -272,7 +272,8 @@ class WhatsAppService_wb:
             {"id": "disease", "title": "Disease Updates"},
             {"id": "agent", "title": "Contact Agent"}
         ]
-        self.twilio_wa.send_menu(user_id, "Welcome Healix Pharm\nChoose an option:", buttons)
+        res = self.twilio_wa.send_menu(user_id, "Welcome Healix Pharm\nChoose an option:", buttons)
+        logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id} | Response: {res['status']}")
         UserState_wb.set_user_state(user_id, "main_menu")
 
     def send_agent_menu(self, user_id: str):
