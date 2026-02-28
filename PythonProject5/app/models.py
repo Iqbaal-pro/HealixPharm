@@ -122,8 +122,6 @@ class PolicySetting(Base):
     id = Column(Integer, primary_key=True, index=True)
     policy_type = Column(String(100), unique=True, index=True, nullable=False) # e.g., 'prescription', 'refund'
     content = Column(Text, nullable=False)
-<<<<<<< HEAD
-
 
 class Payment(Base):
     __tablename__ = "payments"
@@ -152,5 +150,3 @@ class MOHDiseaseAlert(Base):
     broadcast_sent = Column(Integer, default=0) # 0 or 1
     retry_count = Column(Integer, default=0)
     created_at = Column(DateTime, server_default=func.now())
-=======
->>>>>>> e-channeling-feature

@@ -233,11 +233,7 @@ def accept_support_ticket(ticket_id: int, agent_name: str, db: Session = Depends
 @router.post("/support/tickets/{ticket_id}/send")
 def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = Depends(get_db)):
     """
-<<<<<<< HEAD
-    Agent sends a message to the user from Admin Portal.
-=======
     Stage 6: Agent sends a message to the user from Admin Portal.
->>>>>>> e-channeling-feature
     """
     from app.services.order_service import add_support_message
     

@@ -240,23 +240,23 @@ class WhatsAppService_wb:
             self.send_main_menu(user_id)
             
     def _handle_doctor_button(self, user_id: str):
-    """
-    Handles the doctor button click.
-    Sends instructions or interactive portal link.
-    Payment occurs on the portal
-    """
-    logger.info(f"[WB_SERVICE] User {user_id} clicked DOCTOR button")
-    from app.core.config import settings
+        """
+        Handles the doctor button click.
+        Sends instructions or interactive portal link.
+        Payment occurs on the portal
+        """
+        logger.info(f"[WB_SERVICE] User {user_id} clicked DOCTOR button")
+        from app.core.config import settings
+        
     
-
-    message = (
-        "*Channel a Doctor*\n\n"
-        "To book an appointment, please visit our secure portal:\n"
-        f"🔗 {settings.BASE_URL}/channelling\n\n"
-        "Choose your doctor, pick a slot, and pay online.\n"
-        "We'll confirm it here instantly!"
-    )
-    self.twilio_wa.send_text(user_id, message)
+        message = (
+            "*Channel a Doctor*\n\n"
+            "To book an appointment, please visit our secure portal:\n"
+            f"🔗 {settings.BASE_URL}/channelling\n\n"
+            "Choose your doctor, pick a slot, and pay online.\n"
+            "We'll confirm it here instantly!"
+        )
+        self.twilio_wa.send_text(user_id, message)
          
 
     def _handle_disease_updates(self, user_id: str):
