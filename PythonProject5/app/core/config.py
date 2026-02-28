@@ -26,6 +26,16 @@ class Settings:
     SERVER_HOST = os.getenv("SERVER_HOST", "0.0.0.0")
     SERVER_PORT = int(os.getenv("SERVER_PORT", 8000))
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+    
+    # E-Channelling
+    BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+    CHANNELLING_DATABASE_URL = os.getenv("CHANNELLING_DATABASE_URL", "sqlite:///channelling.db")
+    
+    # PayHere
+    PAYHERE_MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "")
+    PAYHERE_SECRET = os.getenv("PAYHERE_SECRET", "")
+    PAYHERE_BASE_URL = os.getenv("PAYHERE_BASE_URL", "https://sandbox.payhere.lk/pay/checkout")
+    PAYHERE_SANDBOX = os.getenv("PAYHERE_SANDBOX", "True").lower() == "true"
 
     # Stock Management DB (MySQL)
     STOCK_DB_USER = os.getenv("STOCK_DB_USER", "stock_user")

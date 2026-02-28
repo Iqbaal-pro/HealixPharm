@@ -43,6 +43,7 @@ class WhatsAppService_wb:
 
         if message_type == "text":
             if is_first:
+                # Welcome logic
                 self.twilio_wa.send_text(user_id, "Welcome to Healix Pharm")
                 self.send_main_menu(user_id)
             else:
@@ -184,7 +185,7 @@ class WhatsAppService_wb:
         if current_step == "awaiting_prescription" or state.get("last_action") == "sending_image":
             logger.info(f"[WB_SERVICE] Ignoring potential caption text: '{body}'")
             return
-
+        
         # Default
         self.send_main_menu(user_id)
 
@@ -199,14 +200,14 @@ class WhatsAppService_wb:
             UserState_wb.set_user_state(user_id, "awaiting_prescription")
 
         elif button_id == "doctor":
-            self.twilio_wa.send_text(user_id, "Doctor channeling coming soon.")
+            self.handle_doctor_button(user_id)
 
         elif button_id == "disease":
             self._handle_disease_updates(user_id)
 
         elif button_id == "agent":
             self.send_agent_menu(user_id)
-        
+
         elif button_id == "agent_chat":
             db = SessionLocal()
             try:
@@ -237,6 +238,26 @@ class WhatsAppService_wb:
             
         elif button_id == "back_to_main":
             self.send_main_menu(user_id)
+            
+    def _handle_doctor_button(self, user_id: str):
+    """
+    Handles the doctor button click.
+    Sends instructions or interactive portal link.
+    Payment occurs on the portal
+    """
+    logger.info(f"[WB_SERVICE] User {user_id} clicked DOCTOR button")
+    from app.core.config import settings
+    
+
+    message = (
+        "*Channel a Doctor*\n\n"
+        "To book an appointment, please visit our secure portal:\n"
+        f"🔗 {settings.BASE_URL}/channelling\n\n"
+        "Choose your doctor, pick a slot, and pay online.\n"
+        "We'll confirm it here instantly!"
+    )
+    self.twilio_wa.send_text(user_id, message)
+         
 
     def _handle_disease_updates(self, user_id: str):
         """
@@ -272,6 +293,7 @@ class WhatsAppService_wb:
             {"id": "disease", "title": "Disease Updates"},
             {"id": "agent", "title": "Contact Agent"}
         ]
+
         res = self.twilio_wa.send_menu(user_id, "Welcome Healix Pharm\nChoose an option:", buttons)
         logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id} | Response: {res['status']}")
         UserState_wb.set_user_state(user_id, "main_menu")
@@ -378,7 +400,7 @@ class WhatsAppService_wb:
             elif selection == "back_to_main":
                 self.send_main_menu(user_id)
                 return
-
+            
             self.send_faq_menu(user_id)
 
         finally:

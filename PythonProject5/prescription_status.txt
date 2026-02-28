@@ -36,7 +36,6 @@ WHAT WE HAVE DONE SO FAR:
    - Implemented Approve/Reject functionality.
    - Automated Twilio SMS notifications to users if an order is rejected by a pharmacist.
 
-<<<<<<< HEAD
 6. STOCK MANAGEMENT INTEGRATION (PHASE 2)
    - Established a "Bridge" to the external MySQL database in the Stock Management project.
    - Implemented itemized approval: Pharmacists now search and select real medicines from stock.
@@ -54,8 +53,6 @@ TECHNICAL NOTES & RECENT CHALLENGES:
 - INTEGRATION FAIL: During the Phase 2 simulation, we discovered a "NoneType formatting" bug where reminders would fail if an order total was missing. This was successfully patched by adding default value fallbacks (`or 0.0`).
 - DATABASE DEPENDENCY: The MySQL server at `127.0.0.1:3306` must be active for the Stock Bridge to work live. A standalone diagnostic tool (`test_stock_conn.py`) was created to verify this.
 - REPOSITORY RECOVERY: Successfully removed accidentally committed secrets and restored the FAQ/Agent features that were missing in previous versions.
-=======
->>>>>>> agent
 
 WHAT WE HAVE TO DO:
 -------------------
@@ -63,19 +60,6 @@ WHAT WE HAVE TO DO:
 1. ADMIN UI/PORTAL
    - The current admin system is API-only. We need a simple web dashboard for pharmacists to see prescription images and click "Approve" or "Reject".
 
-<<<<<<< HEAD
-2. PERSISTENT CONVERSATION STATE
-   - Move remaining memory-based state (like FAQ navigation) to the SQLite database for full server-restart resilience.
-
-3. PHASE 3: REAL-TIME TRACKING
-   - Add functionality for users to get status updates (Dispatched, Out for Delivery) on their orders.
-
-4. PHASE 4: DISEASE ALERTS
-   - Implement the placeholder logic for pushing community health alerts to users.
-
-5. PRODUCTION DEPLOYMENT
-   - Transition from ngrok to a permanent cloud server.
-=======
 2. PERSISTENT USER STATE
    - Currently, user conversation state (where they are in the menu) is stored in memory. If the server restarts, people in the middle of an order might get reset. We should move this to a database or Redis for production.
 
@@ -88,4 +72,3 @@ WHAT WE HAVE TO DO:
 
 5. PRODUCTION DEPLOYMENT
    - Set up a permanent server (VPS/Cloud) instead of using local ngrok tunnels.
->>>>>>> agent
