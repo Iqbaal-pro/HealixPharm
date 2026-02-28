@@ -30,7 +30,6 @@ def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
         query = query.filter(models.Order.status == status.upper())
     
     orders = query.order_by(models.Order.created_at.desc()).all()
-    
     result = []
     for o in orders:
         res = schemas.OrderSimpleSchema.from_orm(o)
@@ -157,7 +156,6 @@ def update_order_status(order_id: int, payload: schemas.StatusUpdate, db: Sessio
 
     return {"id": order.id, "token": order.token, "status": order.status}
 
-
 @router.post("/orders/{order_id}/confirm-payment")
 def confirm_payment(order_id: int, db: Session = Depends(get_db)):
     """Admin manually confirms payment (e.g., for bank transfer or COD received)."""
@@ -179,7 +177,6 @@ def confirm_payment(order_id: int, db: Session = Depends(get_db)):
         
     return {"status": "PAID", "order_id": order.id}
 
-
 @router.get("/support/queue")
 def list_support_queue(db: Session = Depends(get_db)):
     """List all users waiting for an agent."""
@@ -199,7 +196,11 @@ def list_support_queue(db: Session = Depends(get_db)):
 def accept_support_ticket(ticket_id: int, agent_name: str, db: Session = Depends(get_db)):
     """
     Agent accepts a waiting ticket.
+    Transitions user state to 'live_chat' and notifies them.
     """
+    from app.whatsapp.state import UserState_wb
+    from datetime import datetime
+
     ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -213,11 +214,14 @@ def accept_support_ticket(ticket_id: int, agent_name: str, db: Session = Depends
     db.add(ticket)
     db.commit()
 
+    # Update User State for WhatsApp Bot
+
     user_phone = ticket.user.phone if ticket.user else None
     if user_phone:
         UserState_wb.set_user_state(user_phone, "live_chat")
         UserState_wb.set_last_action(user_phone, "agent_connected")
-        
+
+        # Notify user via WhatsApp
         try:
             notif.send_agent_connected_notification(user_phone)
         except Exception as e:
@@ -229,7 +233,11 @@ def accept_support_ticket(ticket_id: int, agent_name: str, db: Session = Depends
 @router.post("/support/tickets/{ticket_id}/send")
 def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = Depends(get_db)):
     """
+<<<<<<< HEAD
     Agent sends a message to the user from Admin Portal.
+=======
+    Stage 6: Agent sends a message to the user from Admin Portal.
+>>>>>>> e-channeling-feature
     """
     from app.services.order_service import add_support_message
     
@@ -241,8 +249,10 @@ def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = De
     if not user_phone:
         raise HTTPException(status_code=400, detail="User phone not found")
 
+    # 1. Store message
     add_support_message(db, ticket_id, "AGENT", payload.body)
 
+    # 2. Send via WhatsApp
     try:
         from app.whatsapp.twilio_client import TwilioWhatsAppClient
         twilio = TwilioWhatsAppClient()
@@ -258,7 +268,9 @@ def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = De
 def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     """
     Pharmacy agent closes chat manually.
+    Stage 7: Updates user state and notifies via WhatsApp
     """
+    from app.whatsapp.state import UserState_wb
     from app.services.order_service import close_ticket
 
     ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
@@ -266,9 +278,11 @@ def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     user_phone = ticket.user.phone if ticket.user else None
-    
+
+    # Update DB
     close_ticket(db, ticket_id)
 
+    # Update state and notify user
     if user_phone:
         UserState_wb.set_user_state(user_phone, "main_menu")
         try:
@@ -279,6 +293,7 @@ def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
             logger.error(f"Failed to notify user {user_phone} of chat closure: {e}")
 
     return {"status": "CLOSED"}
+
 
 @router.post("/moh-alert/create")
 def create_moh_alert(payload: schemas.AlertCreate, db: Session = Depends(get_db)):

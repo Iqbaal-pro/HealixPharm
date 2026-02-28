@@ -5,7 +5,16 @@ from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
 from app import models
 from app.admin.routes import router as admin_router
+
+# Payments router
 from app.payments.routes import router as payments_router
+
+# E-Channelling
+from app.channelling_routes import router as channelling_router
+from app.channelling_db import engine_channelling, BaseChannelling
+from app import channelling_models
+
+# Scheduler
 from app.core.scheduler import scheduler
 from app.core.fulfillment_scheduler import monitor_fulfillment
 
@@ -21,33 +30,43 @@ app = FastAPI(title="HealixPharm - WhatsApp Bot")
 app.include_router(whatsapp_router)
 app.include_router(admin_router)
 app.include_router(payments_router)
+app.include_router(channelling_router)
 
 # Ensure database tables exist
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("[WB_MAIN] Database tables ensured")
-except Exception as e:
-    logger.warning(f"[WB_MAIN] Database initialization warning (might already exist): {e}")
+Base.metadata.create_all(bind=engine)
+logger.info("[WB_MAIN] Pharmacy database tables ensured")
+
+BaseChannelling.metadata.create_all(bind=engine_channelling)
+logger.info("[WB_MAIN] Channelling database tables ensured")
+
 
 @app.on_event("startup")
 async def startup_event():
     logger.info("[WB_MAIN] Starting background scheduler...")
-    
-    # Check if scheduler is already running (handle reloads)
+
+    # Start scheduler if not already running
     if not scheduler.running:
         scheduler.start()
         logger.info("[WB_MAIN] Scheduler started.")
     else:
         logger.info("[WB_MAIN] Scheduler is already running.")
-    
+
     # Add fulfillment monitor job (Runs every 5 minutes)
-    scheduler.add_job(monitor_fulfillment, 'interval', minutes=5, id='fulfillment_monitor', replace_existing=True)
-    
+    scheduler.add_job(
+        monitor_fulfillment,
+        'interval',
+        minutes=5,
+        id='fulfillment_monitor',
+        replace_existing=True
+    )
+
     logger.info("[WB_MAIN] Background jobs scheduled.")
+
 
 @app.get("/health")
 async def health_check_wb():
     return {"status": "ok", "service": "HealixPharm WhatsApp Bot"}
+
 
 @app.get("/")
 async def root_wb():
@@ -57,6 +76,7 @@ async def root_wb():
         "webhook": "/whatsapp",
         "health": "/health"
     }
+
 
 if __name__ == "__main__":
     import uvicorn

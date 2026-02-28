@@ -1,7 +1,8 @@
+
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
+from datetime import datetime  #SupportTicket
 from app.db import Base
 
 
@@ -22,9 +23,9 @@ class SupportTicket(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    agent_id = Column(String(50), nullable=True) # Name or ID of the pharmacy agent
-    status = Column(String(50), default="WAITING") # WAITING, ACTIVE, COMPLETED
-    created_at = Column(DateTime, server_default=func.now())
+    agent_id = Column(String(50), nullable=True)  # Name or ID of the pharmacy agent
+    status = Column(String(50), default="WAITING")  # WAITING, ACTIVE, COMPLETED
+    created_at = Column(DateTime, default=datetime.utcnow)  # using datetime.utcnow
     accepted_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="support_tickets")
@@ -36,13 +37,12 @@ class SupportMessage(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     ticket_id = Column(Integer, ForeignKey("support_tickets.id"))
-    sender_type = Column(String(20)) # USER or AGENT
+    sender_type = Column(String(20))  # USER or AGENT
     body = Column(Text)
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=datetime.utcnow)  # using datetime.utcnow
 
     ticket = relationship("SupportTicket", back_populates="messages")
-
-
+    
 class Order(Base):
     __tablename__ = "orders"
 
@@ -122,6 +122,7 @@ class PolicySetting(Base):
     id = Column(Integer, primary_key=True, index=True)
     policy_type = Column(String(100), unique=True, index=True, nullable=False) # e.g., 'prescription', 'refund'
     content = Column(Text, nullable=False)
+<<<<<<< HEAD
 
 
 class Payment(Base):
@@ -151,3 +152,5 @@ class MOHDiseaseAlert(Base):
     broadcast_sent = Column(Integer, default=0) # 0 or 1
     retry_count = Column(Integer, default=0)
     created_at = Column(DateTime, server_default=func.now())
+=======
+>>>>>>> e-channeling-feature
