@@ -10,7 +10,7 @@ export default function LoginPage() {
 
     // 🔹 Later you will add backend validation here
 
-    // ✅ For now just redirect to dashboard
+    // For now just redirect to dashboard
     router.push("/dashboard");
   };
 
