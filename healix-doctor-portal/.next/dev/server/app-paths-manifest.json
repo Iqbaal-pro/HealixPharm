@@ -1,0 +1,5 @@
+{
+  "/channel/page": "app/channel/page.js",
+  "/channel/results/page": "app/channel/results/page.js",
+  "/page": "app/page.js"
+}
