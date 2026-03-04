@@ -2,46 +2,133 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[90vh] px-4 text-center">
-      <div className="mb-6 flex items-center gap-3">
-        <div>
-          
-        </div>
-        <div className="text-left">
-          {/*<p className="text-blue-400 text-xs font-bold tracking-widest uppercase">
-            HealixPharm
-          </p>*/}
-          <h1 className="text-2xl font-extrabold text-white">eChannelling Portal</h1>
-        </div>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: "90vh",
+      padding: "0 24px",
+      textAlign: "center",
+    }}>
+
+      {/* Eyebrow badge */}
+      <div className="animate-fade-up" style={{
+        display: "inline-flex", alignItems: "center", gap: 8,
+        padding: "5px 16px", borderRadius: 99,
+        border: "1px solid rgba(14,165,233,0.15)",
+        background: "rgba(14,165,233,0.05)",
+        marginBottom: 32, fontSize: 12, fontWeight: 500,
+        color: "#7dd3fc", letterSpacing: 0.5,
+      }}>
+        <span style={{
+          width: 5, height: 5, borderRadius: "50%",
+          background: "#4ade80", display: "inline-block",
+        }} />
+         eChannelling Portal
       </div>
 
-      <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
-        Book a Doctor <br />
-        <span className="text-blue-400">Instantly</span>
-      </h2>
-      <p className="text-slate-400 text-lg mb-8 max-w-md">
-        Find specialists, check availability and confirm your appointment — all in minutes.
+      {/* Heading */}
+      <h1 className="animate-fade-up-1" style={{
+        fontFamily: "Syne, sans-serif",
+        fontSize: "clamp(2.4rem, 5vw, 3.8rem)",
+        fontWeight: 800, lineHeight: 1.1,
+        color: "#f1f5f9", letterSpacing: -1.5,
+        marginBottom: 20, maxWidth: 600,
+      }}>
+        Book a Doctor,{" "}
+        <span style={{
+          background: "linear-gradient(90deg, #38bdf8, #818cf8)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}>
+          Instantly.
+        </span>
+      </h1>
+
+      {/* Subtext */}
+      <p className="animate-fade-up-2" style={{
+        color: "#a9b1bd", fontSize: 16,
+        lineHeight: 1.8, maxWidth: 380, marginBottom: 40,
+      }}>
+        Search specialists, pick a time slot and confirm your appointment
+        
       </p>
 
-      <Link
-        href="/channel"
-        className="btn-primary px-8 py-4 text-lg inline-block rounded-xl"
-      >
-        Find a Doctor
-      </Link>
+      {/* CTA */}
+      <div className="animate-fade-up-3" style={{ marginBottom: 56 }}>
+        <Link href="/channel" className="btn-glow" style={{
+          padding: "13px 34px", fontSize: 15,
+          textDecoration: "none", display: "inline-block", borderRadius: 10,
+        }}>
+          Find a Doctor
+        </Link>
+      </div>
 
-      <div className="mt-16 grid grid-cols-3 gap-12">
+ {/* ── EKG pulse line ── */}
+      <div className="animate-fade-up-4" style={{
+        width: "100%", maxWidth: 500,
+        marginBottom: 48, position: "relative",
+      }}>
+        <svg
+          viewBox="0 0 500 60"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ width: "100%", height: 60, display: "block" }}
+        >
+          <path
+            className="ekg-line"
+            d="M0,30 L80,30 L100,30 L115,10 L125,50 L135,15 L145,30 L165,30 L180,30 L195,30 L210,10 L220,50 L230,15 L240,30 L260,30 L280,30 L295,10 L305,50 L315,15 L325,30 L345,30 L500,30"
+            stroke="url(#ekgGrad)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <defs>
+            <linearGradient id="ekgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stopColor="#38bdf8" stopOpacity="0"/>
+              <stop offset="20%"  stopColor="#38bdf8" stopOpacity="1"/>
+              <stop offset="80%"  stopColor="#818cf8" stopOpacity="1"/>
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      {/* Stats */}
+      <div className="animate-fade-up-4" style={{
+        display: "flex", alignItems: "center", gap: 0,
+      }}>
         {[
-          { value: "50+", label: "Doctors" },
-          { value: "8",   label: "Hospitals" },
-          { value: "24/7",label: "Booking" },
-        ].map((s) => (
-          <div key={s.label} className="text-center">
-            <div className="text-3xl font-extrabold text-blue-400">{s.value}</div>
-            <div className="text-slate-500 text-sm mt-1">{s.label}</div>
+          { value: "50+",  label: "Doctors"   },
+          { value: "8",    label: "Hospitals" },
+          { value: "24/7", label: "Booking"   },
+        ].map((s, i) => (
+          <div key={s.label} style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ textAlign: "center", padding: "0 32px" }}>
+              <div style={{
+                fontFamily: "Syne, sans-serif", fontWeight: 800, fontSize: 24,
+                background: "linear-gradient(90deg, #38bdf8, #818cf8)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+                backgroundClip: "text", marginBottom: 4,
+              }}>
+                {s.value}
+              </div>
+              <div style={{
+                color: "#b4bbc6", fontSize: 11,
+                letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 600,
+              }}>
+                {s.label}
+              </div>
+            </div>
+            {i < 2 && (
+              <div style={{ width: 1, height: 32, background: "rgba(148,163,184,0.1)" }} />
+            )}
           </div>
         ))}
       </div>
+
     </div>
   );
 }
