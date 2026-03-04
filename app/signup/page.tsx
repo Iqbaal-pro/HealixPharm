@@ -7,8 +7,6 @@ export default function SignupPage() {
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Redirect to register form page
     router.push("/register");
   };
 
@@ -24,37 +22,47 @@ export default function SignupPage() {
           Join HealiXPharm today
         </p>
 
-        <form className="space-y-4" onSubmit={handleSignup}>
+        <form className="space-y-5" onSubmit={handleSignup}>
+
           <input
             type="text"
             placeholder="Full Name"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3
+            focus:outline-none focus:ring-2 focus:ring-[#0c2242]
+            text-gray-700 placeholder-gray-400"
           />
 
           <input
             type="email"
             placeholder="Email Address"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3
+            focus:outline-none focus:ring-2 focus:ring-[#0c2242]
+            text-gray-700 placeholder-gray-400"
           />
 
           <input
             type="password"
             placeholder="Password"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3
+            focus:outline-none focus:ring-2 focus:ring-[#0c2242]
+            text-gray-700 placeholder-gray-400"
           />
 
           <input
             type="password"
             placeholder="Confirm Password"
-            className="w-full border border-gray-300 rounded-lg px-4 py-3"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3
+            focus:outline-none focus:ring-2 focus:ring-[#0c2242]
+            text-gray-700 placeholder-gray-400"
           />
 
           <button
             type="submit"
-            className="w-full bg-[#0c2242] text-white py-3 rounded-lg font-semibold"
+            className="w-full bg-[#0c2242] text-white py-3 rounded-lg font-semibold hover:opacity-90 transition"
           >
             Sign Up
           </button>
+
         </form>
 
       </div>
