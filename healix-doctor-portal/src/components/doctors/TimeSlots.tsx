@@ -7,9 +7,11 @@ interface Props {
   selected: string;
   onSelect: (time: string) => void;
   onBook: () => void;
+  hospital: string;
+  hours: string;
 }
 
-export default function TimeSlots({ slots, selected, onSelect, onBook }: Props) {
+export default function TimeSlots({ slots, selected, onSelect, onBook, hospital, hours }: Props) {
   const available = slots.filter(s => !s.booked).length;
 
   return (
@@ -18,24 +20,30 @@ export default function TimeSlots({ slots, selected, onSelect, onBook }: Props) 
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center",
-        justifyContent: "space-between", marginBottom: 20,
+        justifyContent: "space-between", marginBottom: 6,
       }}>
         <p style={{
           fontSize: 11, fontWeight: 600, color: "#475569",
           letterSpacing: 1.5, textTransform: "uppercase",
         }}>
-          Available Slots
+          Time Slots
         </p>
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 5,
           padding: "3px 10px", borderRadius: 99,
-          background: "rgba(14,165,233,0.06)",
-          border: "1px solid rgba(14,165,233,0.15)",
-          fontSize: 11, fontWeight: 500, color: "#7dd3fc",
+          background: available > 0 ? "rgba(14,165,233,0.06)" : "rgba(148,163,184,0.06)",
+          border: `1px solid ${available > 0 ? "rgba(14,165,233,0.15)" : "rgba(148,163,184,0.1)"}`,
+          fontSize: 11, fontWeight: 500,
+          color: available > 0 ? "#7dd3fc" : "#475569",
         }}>
-          {available} slots left
+          {available > 0 ? `${available} slots left` : "Fully booked"}
         </div>
       </div>
+
+      {/* Hospital context */}
+      <p style={{ color: "#334155", fontSize: 12, marginBottom: 16 }}>
+        {hospital} · {hours}
+      </p>
 
       {/* Legend */}
       <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
@@ -94,9 +102,7 @@ export default function TimeSlots({ slots, selected, onSelect, onBook }: Props) 
                   : "#7dd3fc",
                 textDecoration: slot.booked ? "line-through" : "none",
                 transform: isSelected ? "scale(1.03)" : "none",
-                boxShadow: isSelected
-                  ? "0 4px 12px rgba(3,105,161,0.25)"
-                  : "none",
+                boxShadow: isSelected ? "0 4px 12px rgba(3,105,161,0.25)" : "none",
               }}
               onMouseEnter={e => {
                 if (!slot.booked && !isSelected) {
@@ -130,7 +136,6 @@ export default function TimeSlots({ slots, selected, onSelect, onBook }: Props) 
           flexWrap: "wrap",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            {/* Clock icon */}
             <div style={{
               width: 40, height: 40, borderRadius: 10, flexShrink: 0,
               background: "rgba(14,165,233,0.1)",
@@ -153,10 +158,13 @@ export default function TimeSlots({ slots, selected, onSelect, onBook }: Props) 
               }}>
                 {selected}
               </p>
+              <p style={{ color: "#475569", fontSize: 11, marginTop: 3 }}>
+                {hospital}
+              </p>
             </div>
           </div>
           <Button size="lg" onClick={onBook}>
-            Book Now →
+            Book Now
           </Button>
         </div>
       )}

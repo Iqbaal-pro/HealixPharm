@@ -9,14 +9,12 @@ import BookingForm from "../../../components/booking/BookingForm";
 
 type Step = "results" | "detail" | "book";
 
-// ── Skeleton card ──
 function SkeletonCard() {
   return (
     <div className="glass" style={{
       padding: "20px 24px",
       display: "flex", alignItems: "center", gap: 20,
     }}>
-      {/* Avatar skeleton */}
       <div style={{
         width: 52, height: 52, borderRadius: 14,
         background: "rgba(148,163,184,0.06)",
@@ -28,8 +26,6 @@ function SkeletonCard() {
           animation: "shimmer 1.5s infinite",
         }} />
       </div>
-
-      {/* Text skeleton */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{
           height: 14, borderRadius: 6, width: "55%",
@@ -56,8 +52,6 @@ function SkeletonCard() {
           ))}
         </div>
       </div>
-
-      {/* Button skeleton */}
       <div style={{
         width: 80, height: 32, borderRadius: 10,
         background: "rgba(148,163,184,0.05)",
@@ -69,6 +63,127 @@ function SkeletonCard() {
           animation: "shimmer 1.5s infinite",
         }} />
       </div>
+    </div>
+  );
+}
+
+function EmptyState({ filters, onReset }: {
+  filters: { spec: string; hospital: string; name: string };
+  onReset: () => void;
+}) {
+  const applied = [
+    filters.spec     && { label: "Specialization", value: filters.spec     },
+    filters.hospital && { label: "Hospital",        value: filters.hospital },
+    filters.name     && { label: "Name",            value: filters.name     },
+  ].filter(Boolean) as { label: string; value: string }[];
+
+  return (
+    <div className="glass animate-fade-up" style={{
+      padding: "48px 32px",
+      textAlign: "center",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+      {/* Background accent */}
+      <div style={{
+        position: "absolute", top: -60, left: "50%",
+        transform: "translateX(-50%)",
+        width: 200, height: 200, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(14,165,233,0.04) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Icon */}
+      <div style={{
+        width: 64, height: 64, borderRadius: 16, margin: "0 auto 20px",
+        background: "rgba(148,163,184,0.06)",
+        border: "1px solid rgba(148,163,184,0.1)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 26,
+      }}>
+        🔍
+      </div>
+
+      <h3 style={{
+        fontFamily: "Syne, sans-serif", fontWeight: 700,
+        fontSize: 18, color: "#f1f5f9", marginBottom: 8,
+      }}>
+        No doctors found
+      </h3>
+
+      <p style={{
+        color: "#475569", fontSize: 14, marginBottom: 24,
+        maxWidth: 320, margin: "0 auto 24px", lineHeight: 1.7,
+      }}>
+        We couldn't find any doctors matching your search. Try adjusting your filters.
+      </p>
+
+      {/* Applied filters */}
+      {applied.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <p style={{
+            fontSize: 11, fontWeight: 600, color: "#475569",
+            letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 10,
+          }}>
+            You searched for
+          </p>
+          <div style={{
+            display: "flex", flexWrap: "wrap",
+            justifyContent: "center", gap: 8,
+          }}>
+            {applied.map(f => (
+              <div key={f.label} style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "5px 12px", borderRadius: 99,
+                background: "rgba(148,163,184,0.06)",
+                border: "1px solid rgba(148,163,184,0.1)",
+                fontSize: 12,
+              }}>
+                <span style={{ color: "#475569" }}>{f.label}:</span>
+                <span style={{ color: "#94a3b8", fontWeight: 500 }}>{f.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Suggestions */}
+      <div style={{
+        background: "rgba(6,13,26,0.5)",
+        border: "1px solid rgba(148,163,184,0.07)",
+        borderRadius: 12, padding: "16px 20px",
+        maxWidth: 340, margin: "0 auto 28px",
+        textAlign: "left",
+      }}>
+        <p style={{
+          fontSize: 11, fontWeight: 600, color: "#475569",
+          letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 10,
+        }}>
+          Try these instead
+        </p>
+        {[
+          "Remove the hospital filter",
+          "Search by doctor name only",
+          "Try a broader specialization",
+          "Clear all filters to see all doctors",
+        ].map(s => (
+          <div key={s} style={{
+            display: "flex", alignItems: "center", gap: 8,
+            marginBottom: 8, fontSize: 13, color: "#475569",
+          }}>
+            <span style={{ color: "#334155", fontSize: 10 }}>→</span>
+            {s}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onReset}
+        className="btn-glow"
+        style={{ padding: "11px 32px", fontSize: 14 }}
+      >
+        Clear Filters & Try Again
+      </button>
     </div>
   );
 }
@@ -86,8 +201,8 @@ function ResultsContent() {
   const [step, setStep]                         = useState<Step>("results");
   const [selectedDoctor, setSelectedDoctor]     = useState<Doctor | null>(null);
   const [selectedSlot, setSelectedSlot]         = useState("");
+  const [selectedHospital, setSelectedHospital] = useState("");
 
-  // Simulate loading
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
@@ -97,13 +212,14 @@ function ResultsContent() {
       if (name)     filtered = filtered.filter(d => d.name.toLowerCase().includes(name.toLowerCase()));
       setResults(filtered);
       setLoading(false);
-    }, 900);
+    }, 0);
     return () => clearTimeout(timer);
   }, [spec, hospital, name]);
 
   const handleChannel = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     setSelectedSlot("");
+    setSelectedHospital(doctor.hospital);
     setStep("detail");
   };
 
@@ -198,7 +314,6 @@ function ResultsContent() {
       {/* Results */}
       {step === "results" && (
         <div>
-          {/* Header row */}
           <div className="animate-fade-up" style={{
             display: "flex", alignItems: "baseline",
             gap: 10, marginBottom: 20,
@@ -234,28 +349,15 @@ function ResultsContent() {
             )}
           </div>
 
-          {/* Skeleton or results */}
           {loading ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
             </div>
           ) : results.length === 0 ? (
-            <div className="glass animate-fade-up" style={{ padding: 48, textAlign: "center" }}>
-              <div style={{ fontSize: 36, marginBottom: 14 }}>🔍</div>
-              <p style={{ color: "#64748b", marginBottom: 8, fontSize: 15, fontWeight: 600 }}>
-                No doctors match your search
-              </p>
-              <p style={{ color: "#334155", fontSize: 13, marginBottom: 24 }}>
-                Try adjusting your filters or search by name
-              </p>
-              <button
-                onClick={() => router.push("/channel")}
-                className="btn-glow"
-                style={{ padding: "10px 24px" }}
-              >
-                Try Again
-              </button>
-            </div>
+            <EmptyState
+              filters={{ spec, hospital, name }}
+              onReset={() => router.push("/channel")}
+            />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {results.map((doc, i) => (
@@ -278,6 +380,8 @@ function ResultsContent() {
           doctor={selectedDoctor}
           selectedSlot={selectedSlot}
           onSelectSlot={setSelectedSlot}
+          selectedHospital={selectedHospital}
+          onSelectHospital={setSelectedHospital}
           onBook={() => setStep("book")}
           onBack={() => setStep("results")}
         />
@@ -288,6 +392,7 @@ function ResultsContent() {
         <BookingForm
           doctor={selectedDoctor}
           slot={selectedSlot}
+          hospital={selectedHospital || selectedDoctor.hospital}
           onBack={() => setStep("detail")}
         />
       )}

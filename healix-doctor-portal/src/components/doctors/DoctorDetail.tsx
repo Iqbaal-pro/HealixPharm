@@ -1,19 +1,32 @@
-import { Doctor } from "../../types";
+"use client";
+import { useState } from "react";
+import { Doctor, OtherHospital } from "../../types";
 import { formatCurrency } from "../../lib/utils";
 import { TIME_SLOTS } from "../../data/mockData";
 import Badge from "../ui/Badge";
-import Button from "../ui/Button";
 import TimeSlots from "./TimeSlots";
 
 interface Props {
   doctor: Doctor;
   selectedSlot: string;
   onSelectSlot: (time: string) => void;
+  selectedHospital: string;
+  onSelectHospital: (hospital: string) => void;
   onBook: () => void;
   onBack: () => void;
 }
 
-export default function DoctorDetail({ doctor, selectedSlot, onSelectSlot, onBook, onBack }: Props) {
+export default function DoctorDetail({
+  doctor, selectedSlot, onSelectSlot,
+  selectedHospital, onSelectHospital,
+  onBook, onBack,
+}: Props) {
+  const [activeHospital, setActiveHospital] = useState<"main" | OtherHospital>("main");
+
+  const currentHospital = activeHospital === "main" ? doctor.hospital : activeHospital.name;
+  const currentSlots    = activeHospital === "main" ? TIME_SLOTS : activeHospital.timeSlots;
+  const currentHours    = activeHospital === "main" ? "Today" : activeHospital.hours;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
@@ -23,12 +36,9 @@ export default function DoctorDetail({ doctor, selectedSlot, onSelectSlot, onBoo
         position: "relative",
         overflow: "hidden",
       }}>
-        {/* Background accent */}
         <div style={{
-          position: "absolute",
-          top: -40, right: -40,
-          width: 180, height: 180,
-          borderRadius: "50%",
+          position: "absolute", top: -40, right: -40,
+          width: 180, height: 180, borderRadius: "50%",
           background: "radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 70%)",
           pointerEvents: "none",
         }} />
@@ -57,7 +67,6 @@ export default function DoctorDetail({ doctor, selectedSlot, onSelectSlot, onBoo
               }}>
                 {doctor.name}
               </h2>
-              {/* Live availability pill */}
               <div style={{
                 display: "inline-flex", alignItems: "center", gap: 5,
                 padding: "3px 10px", borderRadius: 99,
@@ -68,19 +77,16 @@ export default function DoctorDetail({ doctor, selectedSlot, onSelectSlot, onBoo
                 <span style={{
                   width: 5, height: 5, borderRadius: "50%",
                   background: "#4ade80", display: "inline-block",
-                  animation: "pulse-ring 2s infinite",
                 }} />
                 Available Today
               </div>
             </div>
-
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
               <Badge variant="blue">{doctor.specialization}</Badge>
-              <Badge variant="slate">{doctor.hospital}</Badge>
+              <Badge variant="slate">{doctor.qualifications}</Badge>
             </div>
-
             <p style={{ color: "#475569", fontSize: 12 }}>
-              {doctor.qualifications} · {doctor.experience}
+              {doctor.experience} experience
             </p>
           </div>
 
@@ -102,42 +108,113 @@ export default function DoctorDetail({ doctor, selectedSlot, onSelectSlot, onBoo
         </div>
       </div>
 
+      {/* Location selector */}
+      <div className="glass animate-fade-up-1" style={{ padding: "18px 24px" }}>
+        <p style={{
+          fontSize: 11, fontWeight: 600, color: "#475569",
+          letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14,
+        }}>
+          Select Location
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+          {/* Main hospital */}
+          <button
+            onClick={() => {
+              setActiveHospital("main");
+              onSelectSlot("");
+              onSelectHospital(doctor.hospital);
+            }}
+            style={{
+              display: "flex", alignItems: "center",
+              justifyContent: "space-between",
+              padding: "14px 16px", borderRadius: 12,
+              cursor: "pointer", transition: "all 0.2s",
+              background: activeHospital === "main"
+                ? "rgba(14,165,233,0.08)" : "rgba(6,13,26,0.5)",
+              border: activeHospital === "main"
+                ? "1px solid rgba(14,165,233,0.25)"
+                : "1px solid rgba(148,163,184,0.07)",
+              textAlign: "left" as const,
+              width: "100%",
+            }}
+          >
+            <div>
+              <p style={{ fontWeight: 600, color: "#e2e8f0", fontSize: 13, marginBottom: 3 }}>
+                {doctor.hospital}
+              </p>
+              <p style={{ color: "#475569", fontSize: 12 }}>
+                Main location · Today
+              </p>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {activeHospital === "main" && (
+                <div style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#38bdf8", flexShrink: 0,
+                }} />
+              )}
+              <Badge variant="blue">Available</Badge>
+            </div>
+          </button>
+
+          {/* Other hospitals */}
+          {doctor.otherHospitals.map(h => {
+            const isActive = activeHospital !== "main" && activeHospital.name === h.name;
+            return (
+              <button
+                key={h.name}
+                onClick={() => {
+                  setActiveHospital(h);
+                  onSelectSlot("");
+                  onSelectHospital(h.name);
+                }}
+                style={{
+                  display: "flex", alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "14px 16px", borderRadius: 12,
+                  cursor: "pointer", transition: "all 0.2s",
+                  background: isActive
+                    ? "rgba(14,165,233,0.08)" : "rgba(6,13,26,0.5)",
+                  border: isActive
+                    ? "1px solid rgba(14,165,233,0.25)"
+                    : "1px solid rgba(148,163,184,0.07)",
+                  textAlign: "left" as const,
+                  width: "100%",
+                }}
+              >
+                <div>
+                  <p style={{ fontWeight: 600, color: "#e2e8f0", fontSize: 13, marginBottom: 3 }}>
+                    {h.name}
+                  </p>
+                  <p style={{ color: "#475569", fontSize: 12 }}>
+                    {h.days} · {h.hours}
+                  </p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {isActive && (
+                    <div style={{
+                      width: 6, height: 6, borderRadius: "50%",
+                      background: "#38bdf8", flexShrink: 0,
+                    }} />
+                  )}
+                  <Badge variant="slate">Other Location</Badge>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Time slots */}
       <TimeSlots
-        slots={TIME_SLOTS}
+        slots={currentSlots}
         selected={selectedSlot}
         onSelect={onSelectSlot}
         onBook={onBook}
+        hospital={currentHospital}
+        hours={currentHours}
       />
-
-      {/* Other hospitals */}
-      {doctor.otherHospitals.length > 0 && (
-        <div className="glass animate-fade-up-3" style={{ padding: "22px 24px" }}>
-          <p style={{
-            fontSize: 11, fontWeight: 600, color: "#475569",
-            letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 16,
-          }}>
-            Also Available At
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {doctor.otherHospitals.map(h => (
-              <div key={h.name} style={{
-                display: "flex", alignItems: "center",
-                justifyContent: "space-between",
-                background: "rgba(6,13,26,0.5)",
-                borderRadius: 10, padding: "12px 16px",
-                border: "1px solid rgba(148,163,184,0.07)",
-              }}>
-                <div>
-                  <p style={{ fontWeight: 600, color: "#cbd5e1", fontSize: 13 }}>{h.name}</p>
-                  <p style={{ color: "#475569", fontSize: 12, marginTop: 2 }}>{h.days} · {h.hours}</p>
-                </div>
-                <Badge variant="slate">Other Location</Badge>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -17,6 +17,7 @@ export interface OtherHospital {
   name: string;
   days: string;
   hours: string;
+  timeSlots: TimeSlot[];
 }
 
 export interface TimeSlot {

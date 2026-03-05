@@ -10,7 +10,7 @@
 
   body {
     font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
-    background: #060d1a;
+    background: #0a1628;
     color: #cbd5e1;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
@@ -40,7 +40,7 @@
   background:
     radial-gradient(ellipse at 20% 50%, #071828 0%, transparent 55%),
     radial-gradient(ellipse at 80% 20%, #060f1e 0%, transparent 50%),
-    linear-gradient(160deg, #060d1a 0%, #070e1c 50%, #050a18 100%);
+    linear-gradient(160deg, #0a1628 0%, #0d1a30 50%, #091422 100%)
 }
 
 .aurora-bg::before {
@@ -107,13 +107,14 @@
 
 /* ── Glass cards ── */
 .glass {
-  background: rgba(10, 20, 42, 0.8);
+  background: rgba(15, 30, 60, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148,163,184,0.08);
+  border: 1px solid rgba(148,163,184,0.12);
   border-radius: 1.25rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3),
-              inset 0 1px 0 rgba(255,255,255,0.03);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4),
+              0 1px 0 rgba(255,255,255,0.04),
+              inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .glass-hover {
