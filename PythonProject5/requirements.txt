@@ -1,11 +1,13 @@
 fastapi
-uvicorn
+uvicorn[standard]
 requests
-pydantic
 python-dotenv
-pytest
-sqlalchemy
 boto3
 opencv-python-headless
 twilio
 python-multipart
+sqlalchemy
+pydantic
+pydantic-settings
+mysql-connector-python
+apscheduler

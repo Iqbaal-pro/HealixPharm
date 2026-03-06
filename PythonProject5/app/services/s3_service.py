@@ -21,12 +21,16 @@ def upload_prescription(prescription_id: str, image_bytes: bytes, content_type: 
     Upload prescription image bytes to S3 under prescriptions/{prescription_id}.jpg
     Returns the S3 key of the uploaded object.
     """
-    s3 = get_s3_client()
-    key = f"prescriptions/{prescription_id}.jpg"
-    logger.info(f"[S3_SERVICE] Uploading prescription to s3://{settings.AWS_S3_BUCKET}/{key}")
-    s3.put_object(Bucket=settings.AWS_S3_BUCKET, Key=key, Body=image_bytes, ContentType=content_type)
-    logger.info("[S3_SERVICE] Upload successful")
-    return key
+    try:
+        s3 = get_s3_client()
+        key = f"prescriptions/{prescription_id}.jpg"
+        logger.info(f"[S3_SERVICE] Uploading prescription to s3://{settings.AWS_S3_BUCKET}/{key}")
+        s3.put_object(Bucket=settings.AWS_S3_BUCKET, Key=key, Body=image_bytes, ContentType=content_type)
+        logger.info("[S3_SERVICE] Upload successful")
+        return key
+    except Exception as e:
+        logger.error(f"[S3_SERVICE] Failed to upload to S3: {e}", exc_info=True)
+        raise
 
 
 def generate_presigned_url(key: str, expires_in: int = 3600) -> str:

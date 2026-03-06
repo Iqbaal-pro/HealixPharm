@@ -7,6 +7,9 @@ from app.models.stock_adjustment import StockAdjustment
 from app.models.stock_alert import StockAlert
 from app.models.issued_item import IssuedItem
 from app.models.prescription import Prescription
+from app.models.patient import Patient
+from app.models.reminder import Reminder
+from app.models.reminder_log import ReminderLog
 
 __all__ = [
     "Medicine",
@@ -17,5 +20,8 @@ __all__ = [
     "StockAdjustment",
     "StockAlert",
     "IssuedItem",
-    "Prescription"
+    "Prescription",
+    "Patient",
+    "Reminder",
+    "ReminderLog"
 ]
