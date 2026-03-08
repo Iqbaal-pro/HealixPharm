@@ -15,7 +15,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])
 notif = NotificationService()
 
+<<<<<<< HEAD
 stock_bridge = StockIntegrationService()
+=======
+
+class StatusUpdate(BaseModel):
+    status: str
+
+
+class AlertCreate(BaseModel):
+    disease_name: str
+    region: str
+    threat_level: str
+    start_date: datetime
+    end_date: datetime
+>>>>>>> disease-alert-feature
 
 
 class MessagePayload(BaseModel):
@@ -156,6 +170,46 @@ def update_order_status(order_id: int, payload: schemas.StatusUpdate, db: Sessio
 
     return {"id": order.id, "token": order.token, "status": order.status}
 
+<<<<<<< HEAD
+=======
+
+@router.post("/moh-alert/create")
+def create_moh_alert(payload: AlertCreate, db: Session = Depends(get_db)):
+    """
+    Build Admin API endpoint to create MOH alert.
+    Validates threat_level and dates.
+    """
+    if not payload.disease_name.strip():
+        raise HTTPException(status_code=400, detail="disease_name not empty")
+    if not payload.region.strip():
+        raise HTTPException(status_code=400, detail="region not empty")
+
+    threat_level = payload.threat_level.strip().capitalize()
+    if threat_level not in ("Low", "Medium", "High"):
+        raise HTTPException(status_code=400, detail="threat_level must be Low, Medium, or High")
+
+    if payload.start_date > payload.end_date:
+        raise HTTPException(status_code=400, detail="start_date <= end_date")
+
+    new_alert = models.MOHDiseaseAlert(
+        disease_name=payload.disease_name,
+        region=payload.region,
+        threat_level=threat_level,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        status="Active",
+        broadcast_sent=False,
+        retry_count=0
+    )
+
+    db.add(new_alert)
+    db.commit()
+    db.refresh(new_alert)
+
+    return new_alert
+
+
+>>>>>>> disease-alert-feature
 @router.post("/orders/{order_id}/confirm-payment")
 def confirm_payment(order_id: int, db: Session = Depends(get_db)):
     """Admin manually confirms payment (e.g., for bank transfer or COD received)."""

@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
 # Engine
+# pool_pre_ping=True is highly recommended for MySQL to prevent "MySQL server has gone away" errors
 engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
 
 # Session factory

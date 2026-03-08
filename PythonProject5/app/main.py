@@ -60,7 +60,25 @@ async def startup_event():
         replace_existing=True
     )
 
-    logger.info("[WB_MAIN] Background jobs scheduled.")
+    # 3. Add disease alert job (Runs every settings.ALERT_JOB_INTERVAL_DAYS)
+    from app.services.broadcast_job import run_alert_broadcast_job
+    scheduler.add_job(
+        run_alert_broadcast_job,
+        "interval",
+        days=settings.ALERT_JOB_INTERVAL_DAYS,
+        id="moh_alert_job",
+        replace_existing=True
+    )
+
+    
+    logger.info("[WB_MAIN] Background jobs scheduled (Fulfillment & Disease Alerts).")
+
+@app.on_event("shutdown")
+def shutdown_event():
+    logger.info("[WB_MAIN] Shutting down background scheduler...")
+    if scheduler.running:
+        scheduler.shutdown()
+        logger.info("[WB_MAIN] Background scheduler shut down")
 
 
 @app.get("/health")

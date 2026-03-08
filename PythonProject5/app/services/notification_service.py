@@ -44,6 +44,7 @@ class NotificationService:
         logger.info(f"[NOTIFY] SMS sent SID: {message.sid}")
         return message.sid
 
+<<<<<<< HEAD
     def send_agent_connected_notification(self, to_phone: str):
         """
         Notify the user that an agent has joined the chat.
@@ -51,3 +52,33 @@ class NotificationService:
         text = "You are now connected to a pharmacy agent."
         logger.info(f"[NOTIFY] Notifying {to_phone} that agent has connected")
         return self.twilio_wa.send_text(to_phone, text)
+=======
+    def build_alert_message(self, alert):
+        """
+        Build message using ALERT_MESSAGE_TEMPLATE from settings.
+        Supports placeholders: {disease_name}, {region}, {threat_level}
+        """
+        try:
+            return settings.ALERT_MESSAGE_TEMPLATE.format(
+                disease_name=alert.disease_name,
+                region=alert.region,
+                threat_level=alert.threat_level
+            )
+        except Exception as e:
+            logger.error(f"[NOTIFY] Error formatting alert message: {e}")
+            # Fallback to a simple default if formatting fails
+            return f"ALERT: {alert.disease_name} in {alert.region}. Source: MOH"
+
+    def send_whatsapp_message(self, phone, message):
+        """
+        FUNCTION SendWhatsAppMessage(phone, message):
+            CALL Twilio WhatsApp API
+            RETURN {success: true/false, response: json}
+        """
+        logger.info(f"[NOTIFY] Sending WhatsApp Alert to {phone}")
+        result = self.twilio_wa.send_text(phone, message)
+        return {
+            "success": result.get("status") == "success",
+            "response": result
+        }
+>>>>>>> disease-alert-feature
