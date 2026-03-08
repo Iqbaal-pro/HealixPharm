@@ -44,7 +44,6 @@ class NotificationService:
         logger.info(f"[NOTIFY] SMS sent SID: {message.sid}")
         return message.sid
 
-<<<<<<< HEAD
     def send_agent_connected_notification(self, to_phone: str):
         """
         Notify the user that an agent has joined the chat.
@@ -52,7 +51,6 @@ class NotificationService:
         text = "You are now connected to a pharmacy agent."
         logger.info(f"[NOTIFY] Notifying {to_phone} that agent has connected")
         return self.twilio_wa.send_text(to_phone, text)
-=======
     def build_alert_message(self, alert):
         """
         Build message using ALERT_MESSAGE_TEMPLATE from settings.
@@ -81,4 +79,3 @@ class NotificationService:
             "success": result.get("status") == "success",
             "response": result
         }
->>>>>>> disease-alert-feature

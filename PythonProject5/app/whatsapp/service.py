@@ -1,10 +1,5 @@
 import logging
-<<<<<<< HEAD
 from datetime import datetime, timedelta
-=======
-import uuid
-from datetime import datetime
->>>>>>> disease-alert-feature
 from app.whatsapp.twilio_client import TwilioWhatsAppClient
 from app.whatsapp.state import UserState_wb
 from app.services.image_service import is_image_clear
@@ -212,10 +207,7 @@ class WhatsAppService_wb:
             self.handle_doctor_button(user_id)
 
         elif button_id == "disease":
-<<<<<<< HEAD
-=======
             logger.info(f"[WB_SERVICE] User {user_id} clicked DISEASE button")
->>>>>>> disease-alert-feature
             self._handle_disease_updates(user_id)
 
         elif button_id == "agent":
@@ -276,19 +268,24 @@ class WhatsAppService_wb:
         """
         Fetch and show active disease alerts.
         """
+        logger.info(f"[WB_SERVICE] Handling Disease Updates for {user_id}")
         db = SessionLocal()
         try:
-            from app.services.alert_service import AlertService
-            alert_service = AlertService(db)
-            alerts = alert_service.get_active_alerts()
+            from app.services import alert_service
+            alerts = alert_service.get_all_active_alerts(db)
 
             if not alerts:
-                msg = "No active health alerts for your region at this time. Stay safe! 🟢"
+                msg = "There are currently no active MOH disease alerts. Stay safe! ✅"
             else:
-                msg = "🔔 *Active Health Alerts*:\n\n"
-                for a in alerts:
-                    msg += f"📍 {a.region}: {a.disease_name}\n⚠️ Level: {a.threat_level}\n\n"
-                msg += "Please follow the guidelines provided by the Ministry of Health."
+                msg = "🔔 *Active MOH Disease Alerts:*\n\n"
+                for alert in alerts:
+                    msg += (
+                        f"⚠️ *{alert.disease_name}*\n"
+                        f"📍 Region: {alert.region}\n"
+                        f"📊 Level: {alert.threat_level}\n"
+                        f"📅 Until: {alert.end_date.strftime('%Y-%m-%d')}\n\n"
+                    )
+                msg += "Please follow MOH guidelines and take necessary precautions."
 
             self.twilio_wa.send_text(user_id, msg)
             self.send_main_menu(user_id)
@@ -443,19 +440,6 @@ class WhatsAppService_wb:
             s3_key = upload_prescription(presc_id, image_bytes)
             s3_url = generate_presigned_url(s3_key)
 
-<<<<<<< HEAD
-=======
-            if not clear:
-                self.twilio_wa.send_text(user_id, "The image is unclear. Please re-upload a sharper photo of the prescription.")
-                return
-
-            # 3. Persist image to S3
-            presc_id = uuid.uuid4().hex
-            s3_key = upload_prescription(presc_id, image_bytes)
-            s3_url = generate_presigned_url(s3_key)
-
-            # 4. Create DB records (user, order, prescription)
->>>>>>> disease-alert-feature
             db = SessionLocal()
             try:
                 user = get_or_create_user(db, phone=user_id)
@@ -471,66 +455,9 @@ class WhatsAppService_wb:
             logger.error(f"[WB_SERVICE] Error in image flow: {e}", exc_info=True)
             self.twilio_wa.send_text(user_id, "There was an error processing your prescription.")
 
-<<<<<<< HEAD
     def send_order_flow(self, user_id: str): pass
     def send_reminder_flow(self, user_id: str): pass
     def send_disease_alert(self, user_id: str, alert_data: dict): pass
-=======
-    def send_reminder_flow(self, user_id: str):
-        """
-        PHASE 3: Reminder flow
-        Placeholder for future implementation
-        """
-        logger.info(f"[WB_SERVICE] PHASE 3 - REMINDER_FLOW | User: {user_id} | Status: NOT IMPLEMENTED")
-        pass
-
-    def _handle_disease_updates(self, user_id: str):
-        """
-        PHASE 4: Disease alerts - Display active alerts to user
-        """
-        logger.info(f"[WB_SERVICE] Handling Disease Updates for {user_id}")
-        db = SessionLocal()
-        try:
-            from app.services import alert_service
-            alerts = alert_service.get_all_active_alerts(db)
-            
-            if not alerts:
-                self.twilio_wa.send_text(user_id, "There are currently no active MOH disease alerts for your region. Stay safe! ✅")
-            else:
-                msg = "🔔 *Active MOH Disease Alerts:*\n\n"
-                for alert in alerts:
-                    msg += (
-                        f"⚠️ *{alert.disease_name}*\n"
-                        f"📍 Region: {alert.region}\n"
-                        f"📊 Level: {alert.threat_level}\n"
-                        f"📅 Until: {alert.end_date.strftime('%Y-%m-%d')}\n\n"
-                    )
-                msg += "Please follow MOH guidelines and take necessary precautions."
-                self.twilio_wa.send_text(user_id, msg)
-            
-            # Reset state just in case, though handled by send_main_menu usually
-            UserState_wb.set_user_state(user_id, "main_menu")
-        finally:
-            db.close()
-
-    def send_disease_alert(self, user_id: str, alert_data: dict):
-        """
-        Placeholder for direct alert notification if needed.
-        """
-        pass
-
-def close_all_user_tickets(db, user):
-    """
-    Close all WAITING or ACTIVE tickets for a user
-    """
-    tickets = db.query(models.SupportTicket).filter(
-        models.SupportTicket.user_id == user.id,
-        models.SupportTicket.status.in_(["WAITING", "ACTIVE"])
-    ).all()
-    for t in tickets:
-        t.status = "COMPLETED"
-    db.commit()
->>>>>>> disease-alert-feature
 
 def check_agent_delay(user_id: str):
     """

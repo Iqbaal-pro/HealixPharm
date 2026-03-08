@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Float
-=======
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Float
->>>>>>> disease-alert-feature
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime  #SupportTicket
@@ -46,9 +41,6 @@ class SupportMessage(Base):
     created_at = Column(DateTime, default=datetime.utcnow)  # using datetime.utcnow
 
     ticket = relationship("SupportTicket", back_populates="messages")
-<<<<<<< HEAD
-    
-=======
 
 class Patient(Base):
     __tablename__ = "patients"
@@ -86,7 +78,6 @@ class AlertBroadcastLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
->>>>>>> disease-alert-feature
 class Order(Base):
     __tablename__ = "orders"
 
@@ -181,16 +172,3 @@ class Payment(Base):
 
     order = relationship("Order", back_populates="payments")
 
-class MOHDiseaseAlert(Base):
-    __tablename__ = "moh_disease_alerts"
-
-    id = Column(Integer, primary_key=True, index=True)
-    disease_name = Column(String(255), nullable=False)
-    region = Column(String(255), nullable=False)
-    threat_level = Column(String(50), nullable=False) # Low, Medium, High
-    start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime, nullable=False)
-    status = Column(String(50), default="Active") # Active, Expired
-    broadcast_sent = Column(Integer, default=0) # 0 or 1
-    retry_count = Column(Integer, default=0)
-    created_at = Column(DateTime, server_default=func.now())
