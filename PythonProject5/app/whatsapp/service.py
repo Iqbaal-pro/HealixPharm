@@ -94,12 +94,6 @@ class WhatsAppService_wb:
         state = UserState_wb.get_user_state(user_id)
         current_step = state.get("current_step", "main_menu")
         
-        # Generic 'Back to Menu' handler for info states (where "1" is the back button)
-        if current_step in ["doctor_info", "disease_info", "awaiting_prescription"]:
-            if body == "1":
-                self.send_main_menu(user_id)
-                return
-
         # Mappings
         faq_menu_mapping = {
             "1": "faq_hours", "2": "faq_delivery_areas", "3": "faq_prescription",
@@ -281,6 +275,7 @@ class WhatsAppService_wb:
             f"🔗 {settings.BASE_URL}/channelling\n\n"
             "Choose your doctor, pick a slot, and pay online.\n"
             "We'll confirm it here instantly!"
+            "Tap Back to Main Menu or type 'menu' anytime."
         )
         self.twilio_wa.send_menu(
             user_id,
