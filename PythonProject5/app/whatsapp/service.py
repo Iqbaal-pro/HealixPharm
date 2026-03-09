@@ -7,6 +7,7 @@ from app.services.s3_service import upload_prescription, generate_presigned_url
 from app.services.order_service import get_or_create_user, create_order_with_prescription, create_support_ticket, close_all_user_tickets, add_support_message
 from app.services.notification_service import NotificationService
 from app.services.payhere_service import PayHereService
+from app.services.whatsapp_auth_service import WhatsAppAuthService
 from app.db import SessionLocal
 from app import models
 from app.core.scheduler import scheduler
@@ -33,6 +34,16 @@ class WhatsAppService_wb:
         """
         logger.info(f"[WB_SERVICE] Handling message from user {user_id} | Type: {message_type}")
         
+        # 1. Patient Verification Check
+        db = SessionLocal()
+        try:
+            if not WhatsAppAuthService.is_authenticated(db, user_id):
+                logger.warning(f"[WB_SERVICE] Access denied for unregistered user: {user_id}")
+                self.twilio_wa.send_text(user_id, "Sorry, this service is only available for registered patients of Healix Pharm. Please contact the pharmacy to register.")
+                return
+        finally:
+            db.close()
+
         state = UserState_wb.get_user_state(user_id)
         is_first = state.get("is_first_message", False)
         
@@ -274,7 +285,7 @@ class WhatsAppService_wb:
             "To book an appointment, please visit our secure portal:\n"
             f"🔗 {settings.BASE_URL}/channelling\n\n"
             "Choose your doctor, pick a slot, and pay online.\n"
-            "We'll confirm it here instantly!"
+            "We'll confirm it here instantly!\n\n"
             "Tap Back to Main Menu or type 'menu' anytime."
         )
         self.twilio_wa.send_menu(
