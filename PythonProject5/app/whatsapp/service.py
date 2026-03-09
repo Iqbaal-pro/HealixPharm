@@ -38,16 +38,23 @@ class WhatsAppService_wb:
         
         if is_first:
             logger.info(f"[WB_SERVICE] First interaction from user {user_id}")
-            # Clear flag immediately to prevent multi-webhook race conditions
             UserState_wb.set_user_state(user_id, state["current_step"], {"is_first_message": False})
+            
+            # Welcome & Guidance (sent in order)
+            self.twilio_wa.send_text(user_id, "Welcome to Healix Pharm")
+            
+            guidance = (
+                "📖 *How to use Healix Pharm Bot:*\n\n"
+                "1️⃣ *Select* an option from the menu below.\n"
+                "2️⃣ *Follow* the prompts (e.g., upload prescription).\n"
+                "3️⃣ *Type* 'menu' or 'hi' anytime to return home."
+            )
+            self.twilio_wa.send_text(user_id, guidance)
+            self.send_main_menu(user_id)
+            return
 
         if message_type == "text":
-            if is_first:
-                # Welcome logic
-                self.twilio_wa.send_text(user_id, "Welcome to Healix Pharm")
-                self.send_main_menu(user_id)
-            else:
-                self._handle_text_message(user_id, message_data)
+            self._handle_text_message(user_id, message_data)
 
         elif message_type == "image":
             self._handle_image_message(user_id, message_data)
@@ -87,6 +94,12 @@ class WhatsAppService_wb:
         state = UserState_wb.get_user_state(user_id)
         current_step = state.get("current_step", "main_menu")
         
+        # Generic 'Back to Menu' handler for info states (where "1" is the back button)
+        if current_step in ["doctor_info", "disease_info", "awaiting_prescription"]:
+            if body == "1":
+                self.send_main_menu(user_id)
+                return
+
         # Mappings
         faq_menu_mapping = {
             "1": "faq_hours", "2": "faq_delivery_areas", "3": "faq_prescription",
@@ -181,7 +194,11 @@ class WhatsAppService_wb:
             
             # Explicit order keywords
             if body in ["order medicine", "order now", "order"]:
-                self.twilio_wa.send_text(user_id, "Please upload your prescription photo.")
+                self.twilio_wa.send_menu(
+                    user_id, 
+                    "Please upload your prescription photo.",
+                    [{"id": "back_to_main", "title": "Back to Main Menu"}]
+                )
                 UserState_wb.set_user_state(user_id, "awaiting_prescription")
                 return
 
@@ -200,11 +217,15 @@ class WhatsAppService_wb:
         logger.info(f"[WB_SERVICE] BUTTON_CLICK_HANDLER | User: {user_id} | Button: {button_id}")
         
         if button_id == "order":
-            self.twilio_wa.send_text(user_id, "Please upload your prescription photo.")
+            self.twilio_wa.send_menu(
+                user_id, 
+                "Please upload your prescription photo.",
+                [{"id": "back_to_main", "title": "Back to Main Menu"}]
+            )
             UserState_wb.set_user_state(user_id, "awaiting_prescription")
 
         elif button_id == "doctor":
-            self.handle_doctor_button(user_id)
+            self._handle_doctor_button(user_id)
 
         elif button_id == "disease":
             logger.info(f"[WB_SERVICE] User {user_id} clicked DISEASE button")
@@ -261,7 +282,12 @@ class WhatsAppService_wb:
             "Choose your doctor, pick a slot, and pay online.\n"
             "We'll confirm it here instantly!"
         )
-        self.twilio_wa.send_text(user_id, message)
+        self.twilio_wa.send_menu(
+            user_id,
+            message,
+            [{"id": "back_to_main", "title": "Back to Main Menu"}]
+        )
+        UserState_wb.set_user_state(user_id, "doctor_info")
          
 
     def _handle_disease_updates(self, user_id: str):
@@ -287,8 +313,12 @@ class WhatsAppService_wb:
                     )
                 msg += "Please follow MOH guidelines and take necessary precautions."
 
-            self.twilio_wa.send_text(user_id, msg)
-            self.send_main_menu(user_id)
+            self.twilio_wa.send_menu(
+                user_id,
+                msg,
+                [{"id": "back_to_main", "title": "Back to Main Menu"}]
+            )
+            UserState_wb.set_user_state(user_id, "disease_info")
         finally:
             db.close()
 
