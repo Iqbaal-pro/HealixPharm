@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, text
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, text
 
 from app.database.user_base import UserBase
 
@@ -15,6 +15,7 @@ class Pharmacy(UserBase):
     opening_hours = Column(Text, nullable=True)
     estimated_delivery_time = Column(String(50), nullable=True)
     service_areas = Column(String(100), nullable=True)
+    service_charge = Column(Float, nullable=True)
     prescription_policy = Column(Text, nullable=True)
     refund_policy = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))

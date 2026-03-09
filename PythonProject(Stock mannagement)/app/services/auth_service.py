@@ -65,6 +65,7 @@ class AuthService:
         opening_hours: str = None,
         estimated_delivery_time: str = None,
         service_areas: str = None,
+        service_charge: float = None,
         prescription_policy: str = None,
         refund_policy: str = None,
     ):
@@ -92,6 +93,7 @@ class AuthService:
                 opening_hours=opening_hours,
                 estimated_delivery_time=estimated_delivery_time,
                 service_areas=service_areas,
+                service_charge=service_charge,
                 prescription_policy=prescription_policy,
                 refund_policy=refund_policy,
             )
@@ -136,6 +138,7 @@ class AuthService:
             "opening_hours",
             "estimated_delivery_time",
             "service_areas",
+            "service_charge",
             "prescription_policy",
             "refund_policy",
         }

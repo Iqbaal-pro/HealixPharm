@@ -17,6 +17,7 @@ class PharmacyUpdateRequest(BaseModel):
     opening_hours: str | None = None
     estimated_delivery_time: str | None = None
     service_areas: str | None = None
+    service_charge: float | None = None
     prescription_policy: str | None = None
     refund_policy: str | None = None
 
@@ -40,6 +41,7 @@ def _serialize_pharmacy(pharmacy):
         "opening_hours": pharmacy.opening_hours,
         "estimated_delivery_time": pharmacy.estimated_delivery_time,
         "service_areas": pharmacy.service_areas,
+        "service_charge": pharmacy.service_charge,
         "prescription_policy": pharmacy.prescription_policy,
         "refund_policy": pharmacy.refund_policy,
         "created_at": pharmacy.created_at,
