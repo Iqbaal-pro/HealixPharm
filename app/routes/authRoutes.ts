@@ -18,6 +18,7 @@ export interface SignupPayload {
   opening_hours?: string | null;
   estimated_delivery_time?: string | null;
   service_areas?: string | null;
+  service_charge?: string | null;   // e.g. "5%" or "LKR 150 flat"
   prescription_policy?: string | null;
   refund_policy?: string | null;
 }
@@ -44,6 +45,7 @@ export interface PharmacyResponse {
   opening_hours: string | null;
   estimated_delivery_time: string | null;
   service_areas: string | null;
+  service_charge: string | null;
   prescription_policy: string | null;
   refund_policy: string | null;
   created_at: string;
