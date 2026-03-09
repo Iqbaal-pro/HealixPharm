@@ -116,3 +116,34 @@ class AuthService:
             raise ValueError("Invalid credentials")
 
         return user
+
+    def get_user_by_id(self, user_id: int) -> User | None:
+        return self.db.query(User).filter(User.id == user_id).first()
+
+    def get_pharmacy_by_user_id(self, user_id: int) -> Pharmacy | None:
+        return self.db.query(Pharmacy).filter(Pharmacy.user_id == user_id).first()
+
+    def update_pharmacy_by_user_id(self, user_id: int, **fields) -> Pharmacy:
+        pharmacy = self.get_pharmacy_by_user_id(user_id)
+        if not pharmacy:
+            raise ValueError("Pharmacy profile not found")
+
+        allowed = {
+            "pharmacy_name",
+            "contact_number",
+            "whatsapp_number",
+            "address",
+            "opening_hours",
+            "estimated_delivery_time",
+            "service_areas",
+            "prescription_policy",
+            "refund_policy",
+        }
+        for key, value in fields.items():
+            if key in allowed and value is not None:
+                setattr(pharmacy, key, value)
+
+        self.db.add(pharmacy)
+        self.db.commit()
+        self.db.refresh(pharmacy)
+        return pharmacy

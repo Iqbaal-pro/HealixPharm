@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.database.user_db import UserSessionLocal
 from app.services.auth_service import AuthService
+from app.services.auth_token_service import create_access_token, decode_access_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+security = HTTPBearer()
 
 
 class SignupRequest(BaseModel):
@@ -36,6 +39,53 @@ def get_user_db():
         db.close()
 
 
+def _serialize_user(user):
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "created_at": user.created_at
+    }
+
+
+def _serialize_pharmacy(pharmacy):
+    return {
+        "id": pharmacy.id,
+        "user_id": pharmacy.user_id,
+        "pharmacy_name": pharmacy.pharmacy_name,
+        "contact_number": pharmacy.contact_number,
+        "whatsapp_number": pharmacy.whatsapp_number,
+        "address": pharmacy.address,
+        "opening_hours": pharmacy.opening_hours,
+        "estimated_delivery_time": pharmacy.estimated_delivery_time,
+        "service_areas": pharmacy.service_areas,
+        "prescription_policy": pharmacy.prescription_policy,
+        "refund_policy": pharmacy.refund_policy,
+        "created_at": pharmacy.created_at,
+    }
+
+
+def get_current_auth_context(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_user_db),
+):
+    try:
+        payload = decode_access_token(credentials.credentials)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc))
+
+    service = AuthService(db)
+    user = service.get_user_by_id(int(payload["sub"]))
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    pharmacy = service.get_pharmacy_by_user_id(user.id)
+    if not pharmacy:
+        raise HTTPException(status_code=404, detail="Pharmacy profile not found")
+
+    return {"user": user, "pharmacy": pharmacy, "payload": payload}
+
+
 @router.post("/signup")
 def signup(payload: SignupRequest, db: Session = Depends(get_user_db)):
     service = AuthService(db)
@@ -56,26 +106,8 @@ def signup(payload: SignupRequest, db: Session = Depends(get_user_db)):
         )
         return {
             "message": "Signup successful",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "created_at": user.created_at
-            },
-            "pharmacy": {
-                "id": pharmacy.id,
-                "user_id": pharmacy.user_id,
-                "pharmacy_name": pharmacy.pharmacy_name,
-                "contact_number": pharmacy.contact_number,
-                "whatsapp_number": pharmacy.whatsapp_number,
-                "address": pharmacy.address,
-                "opening_hours": pharmacy.opening_hours,
-                "estimated_delivery_time": pharmacy.estimated_delivery_time,
-                "service_areas": pharmacy.service_areas,
-                "prescription_policy": pharmacy.prescription_policy,
-                "refund_policy": pharmacy.refund_policy,
-                "created_at": pharmacy.created_at,
-            }
+            "user": _serialize_user(user),
+            "pharmacy": _serialize_pharmacy(pharmacy),
         }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -89,14 +121,30 @@ def login(payload: LoginRequest, db: Session = Depends(get_user_db)):
             username_or_email=payload.username_or_email,
             password=payload.password
         )
+        pharmacy = service.get_pharmacy_by_user_id(user.id)
+        if not pharmacy:
+            raise HTTPException(status_code=404, detail="Pharmacy profile not found")
+
+        access_token = create_access_token(user_id=user.id, pharmacy_id=pharmacy.id)
         return {
             "message": "Login successful",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "created_at": user.created_at
-            }
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": _serialize_user(user),
+            "pharmacy": _serialize_pharmacy(pharmacy),
         }
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc))
+
+
+@router.get("/me")
+def auth_me(context=Depends(get_current_auth_context)):
+    return {
+        "user": _serialize_user(context["user"]),
+        "pharmacy": _serialize_pharmacy(context["pharmacy"]),
+        "token_claims": {
+            "user_id": context["payload"]["sub"],
+            "pharmacy_id": context["payload"]["pharmacy_id"],
+            "exp": context["payload"]["exp"],
+        }
+    }

@@ -22,6 +22,7 @@ from app.routes.stock_adjustment_routes import router as stock_adjustment_router
 from app.routes.batch_routes import router as batch_router
 from app.routes.analytics_routes import router as analytics_router
 from app.routes.auth_routes import router as auth_router
+from app.routes.pharmacy_routes import router as pharmacy_router
 
 # ─── Import scheduler ──────────────────────────────────────────────
 from app.services.scheduler_service import start_scheduler, stop_scheduler
@@ -63,6 +64,7 @@ app.include_router(stock_adjustment_router)
 app.include_router(batch_router)
 app.include_router(analytics_router)
 app.include_router(auth_router)
+app.include_router(pharmacy_router)
 
 
 @app.get("/")
@@ -78,6 +80,7 @@ def root():
             "/stock-adjustments",
             "/batches",
             "/analytics",
-            "/auth"
+            "/auth",
+            "/pharmacy"
         ]
     }
