@@ -1,0 +1,161 @@
+﻿python : E:\HealixPharm-1\Pyt
+honProject(Stock mannagement)
+\simulate_reminder.py:105: 
+DeprecationWarning: 
+datetime.datetime.utcnow() 
+is deprecated and scheduled 
+for removal in a future 
+version. Use timezone-aware 
+objects to represent 
+datetimes in UTC: datetime.da
+tetime.now(datetime.UTC).
+At line:1 char:111
++ ... 
+nv:PYTHONIOENCODING='utf-8'; 
+python simulate_reminder.py 
+2>&1 | Out-F ...
++                            
+      ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (E:\Heal  
+  ixPharm-...(datetime.UTC   
+ ).:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+  
+start_date=datetime.utcnow() 
+- timedelta(days=25),
+E:\HealixPharm-1\PythonProjec
+t(Stock mannagement)\simulate
+_reminder.py:121: 
+DeprecationWarning: 
+datetime.datetime.utcnow() 
+is deprecated and scheduled 
+for removal in a future 
+version. Use timezone-aware 
+objects to represent 
+datetimes in UTC: datetime.da
+tetime.now(datetime.UTC).
+  
+start_date=datetime.utcnow() 
+- timedelta(days=3),
+E:\HealixPharm-1\PythonProjec
+t(Stock mannagement)\simulate
+_reminder.py:137: 
+DeprecationWarning: 
+datetime.datetime.utcnow() 
+is deprecated and scheduled 
+for removal in a future 
+version. Use timezone-aware 
+objects to represent 
+datetimes in UTC: datetime.da
+tetime.now(datetime.UTC).
+  
+start_date=datetime.utcnow() 
+- timedelta(days=27),
+E:\HealixPharm-1\PythonProjec
+t(Stock mannagement)\simulate
+_reminder.py:153: 
+DeprecationWarning: 
+datetime.datetime.utcnow() 
+is deprecated and scheduled 
+for removal in a future 
+version. Use timezone-aware 
+objects to represent 
+datetimes in UTC: datetime.da
+tetime.now(datetime.UTC).
+  
+start_date=datetime.utcnow() 
+- timedelta(days=28),
+
+============================================================
+  STEP 1: Register Patients
+============================================================
+
+  + Created: Kamal Perera (consent: YES, phone: +94771234567)
+  + Created: Nimal Silva (consent: YES, phone: +94777654321)
+  + Created: Rani Fernando (consent: NO, phone: +94779999999)
+
+============================================================
+  STEP 2: Create Prescriptions
+============================================================
+
+  + Rx#1: Metformin 500mg for Kamal Perera
+    Dose: 2/day | Qty: 60 | Continuous: YES
+    Remaining days: 5.0
+    Needs refill? NO
+
+  + Rx#2: Amoxicillin 250mg for Kamal Perera
+    Dose: 3/day | Qty: 15 | Continuous: NO
+    Remaining days: 2.0
+    Needs refill? YES
+
+  + Rx#3: Amlodipine 5mg for Nimal Silva
+    Dose: 1/day | Qty: 30 | Continuous: YES
+    Remaining days: 3.0
+    Needs refill? YES
+
+  + Rx#4: Losartan 50mg for Rani Fernando
+    Dose: 1/day | Qty: 30 | Continuous: YES
+    Remaining days: 2.0
+    ** PATIENT HAS NO CONSENT - will NOT receive reminders **
+
+============================================================
+  STEP 3: Pharmacist One-Time Reminder (Checkbox Click)
+============================================================
+
+  Pharmacist clicks 'Send Reminder' for Rx#1 (Metformin 500mg)...
+[SIMULATED SMS] To: +94771234567 | Message: Hi Kamal Perera, this is a reminder from HealixPharm. Please take your medicine: Metformin 500mg (2 dose(s)/day). Contact your pharmacy if you need a refill.
+  Result: SUCCESS
+  Reminder ID: 1
+  Patient: Kamal Perera
+
+  Pharmacist clicks 'Send Reminder' for Rx#4 (Losartan 50mg)...
+  (Patient Rani Fernando has NO consent)
+  Result: BLOCKED
+  Reason: Patient has not given consent
+
+============================================================
+  STEP 4: Automated Refill Check (Scheduler Simulation)
+============================================================
+
+  Running daily refill check...
+  Found 1 prescriptions needing refill:
+
+    - Rx#3: Amlodipine 5mg (Nimal Silva)
+      3.0 days remaining | Continuous: True
+
+    >> Created refill reminder #2 for Rx#3
+
+============================================================
+  STEP 5: Process All Pending Reminders (Send SMS)
+============================================================
+
+  Sending all pending reminders...
+
+[SIMULATED SMS] To: +94777654321 | Message: Hi Nimal Silva, refill reminder from HealixPharm: Your medicine 'Amlodipine 5mg' is running low. Please visit the pharmacy for a refill.
+    [SENT] Reminder #2
+           Patient: Nimal Silva
+           Medicine: Amlodipine 5mg
+
+
+============================================================
+  SUMMARY
+============================================================
+
+  Total patients:       3 (2 consented, 1 not)
+  Total prescriptions:  4 (2 continuous+consent, 1 short-term, 1 no-consent)
+  Total reminders:      2
+    - Sent:             2
+    - Still pending:    0
+
+  Rani Fernando (no consent) was correctly EXCLUDED from all reminders.
+  Amoxicillin (short-term) was correctly EXCLUDED from refill reminders.
+
+============================================================
+  SIMULATION COMPLETE
+============================================================
+

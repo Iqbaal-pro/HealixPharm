@@ -1,0 +1,74 @@
+HEALIX PHARM - PRESCRIPTION MODULE STATUS
+========================================
+
+WHAT WE HAVE DONE SO FAR:
+-------------------------
+
+1. API TRANSITION & ROUTING
+   - Successfully transitioned the bot from Meta WhatsApp API to Twilio WhatsApp API.
+   - Fixed webhook routing to prioritize images (MediaUrl0) over text (Body) so prescriptions are never missed.
+   - Resolved a race condition where image captions would accidentally trigger the "Welcome" menu and reset the conversation.
+
+2. IMAGE CLARITY SERVICE (OpenCV)
+   - Implemented an automated "Clarity Check" that analyzes:
+     * Blur (Laplacian Variance): Ensures the text is sharp enough to read.
+     * Brightness: Ensures the photo isn't too dark.
+     * Edge Density: Verifies the photo contains actual document detail (text/lines).
+   - The bot now gives instant feedback to the user if the photo is unreadable.
+
+3. AWS S3 STORAGE INTEGRATION
+   - Connected the bot to Amazon S3 for secure prescription storage.
+   - Configured the system to:
+     * Upload images automatically upon successful clarity check.
+     * Generate temporary "Presigned URLs" so pharmacists can view images securely.
+   - Created a standalone connection tester (test_aws_connection.py) to verify AWS credentials.
+
+4. DATABASE & ORDER CREATION
+   - Integrated SQLAlchemy with a local SQLite database (healix.db).
+   - Automated the creation of:
+     * User profiles (if they don't exist).
+     * Orders with a 'PENDING_VERIFICATION' status.
+     * Prescription records linked to S3 keys.
+   - Implemented an Order Token system for tracking.
+
+5. ADMIN & NOTIFICATIONS
+   - Created Admin APIs to list all pending orders.
+   - Implemented Approve/Reject functionality.
+   - Automated Twilio SMS notifications to users if an order is rejected by a pharmacist.
+
+6. STOCK MANAGEMENT INTEGRATION (PHASE 2)
+   - Established a "Bridge" to the external MySQL database in the Stock Management project.
+   - Implemented itemized approval: Pharmacists now search and select real medicines from stock.
+   - Added "Stock Reservation" logic: Items are marked in MySQL when approved to prevent double-selling.
+   - Added "Stock Release" logic: Inventory is automatically returned to stock if an order is cancelled.
+
+7. AUTOMATED FULFILLMENT & MONITORING
+   - Integrated APScheduler for background order tracking.
+   - Implemented 15/30-minute automated reminders on WhatsApp to prompt customer payment selection.
+   - Implemented 2-hour "Auto-Cancellation": Orders are cancelled and stock is released if no response is received.
+   - Processed numeric replies (1 or 2) for Cash on Delivery vs Online Payment.
+
+TECHNICAL NOTES & RECENT CHALLENGES:
+------------------------------------
+- INTEGRATION FAIL: During the Phase 2 simulation, we discovered a "NoneType formatting" bug where reminders would fail if an order total was missing. This was successfully patched by adding default value fallbacks (`or 0.0`).
+- DATABASE DEPENDENCY: The MySQL server at `127.0.0.1:3306` must be active for the Stock Bridge to work live. A standalone diagnostic tool (`test_stock_conn.py`) was created to verify this.
+- REPOSITORY RECOVERY: Successfully removed accidentally committed secrets and restored the FAQ/Agent features that were missing in previous versions.
+
+WHAT WE HAVE TO DO:
+-------------------
+
+1. ADMIN UI/PORTAL
+   - The current admin system is API-only. We need a simple web dashboard for pharmacists to see prescription images and click "Approve" or "Reject".
+
+2. PERSISTENT USER STATE
+   - Currently, user conversation state (where they are in the menu) is stored in memory. If the server restarts, people in the middle of an order might get reset. We should move this to a database or Redis for production.
+
+3. REFILLS & HISTORY
+   - Add functionality for users to view their previous orders or request a refill based on an existing prescription.
+
+4. EXTENDED ERROR HANDLING
+   - Add retries for media downloads if Twilio's servers are slow.
+   - Handle edge cases like users sending multiple images in one go.
+
+5. PRODUCTION DEPLOYMENT
+   - Set up a permanent server (VPS/Cloud) instead of using local ngrok tunnels.

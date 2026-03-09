@@ -1,0 +1,279 @@
+HEALIXPHARM STOCK MANAGEMENT - USAGE EXAMPLES
+==============================================
+
+EXAMPLE 1: RECEIVING NEW STOCK
+==============================
+
+from sqlalchemy.orm import Session
+from app.services.batch_management_service import BatchManagementService
+from app.services.stock_add_service import StockAddService
+from app.repositories.inventory_repo import InventoryRepository
+from app.repositories.stock_update_repo import StockUpdateRepository
+
+db: Session = get_database_session()
+
+# Step 1: Create new batch when receiving stock
+batch_service = BatchManagementService(db)
+batch = batch_service.create_batch(
+    medicine_id=1,
+    batch_number="LOT2024001",
+    manufacture_date=datetime(2024, 1, 15),
+    expiry_date=datetime(2026, 1, 15),
+    cost_price=50.0,
+    supplier_id=5,
+    quantity_received=100
+)
+
+# Step 2: Record stock addition with batch information
+stock_add = StockAddService(
+    InventoryRepository(db),
+    StockUpdateRepository(db)
+)
+inventory = stock_add.add_stock(
+    medicine_id=1,
+    batch_id=batch.id,
+    batch_number="LOT2024001",
+    expiry_date=datetime(2026, 1, 15),
+    quantity_added=100,
+    cost_price=50.0,
+    supplier_id=5,
+    supplier_name="ABC Pharmaceuticals",
+    staff_id=10,
+    db=db
+)
+
+# Result: Stock received, batch created, inventory linked
+
+
+EXAMPLE 2: ISSUING MEDICINE USING FEFO
+========================================
+
+from app.services.stock_update_service import StockUpdateService
+
+db: Session = get_database_session()
+
+# When patient receives medicine, use FEFO deduction
+update_service = StockUpdateService()
+deductions = update_service.update_stock_fefo(
+    db=db,
+    medicine_id=1,
+    quantity_to_deduct=10,
+    issued_to=5,  # prescription ID
+    reference_type="prescription",
+    staff_id=3  # pharmacist ID
+)
+
+# Result: Automatically deducts from batch expiring earliest
+# Returns: [
+#     {"batch_id": 1, "batch_number": "LOT2023001", "quantity_deducted": 10}
+# ]
+
+
+EXAMPLE 3: DETECTING STOCK ALERTS
+==================================
+
+from app.services.enhanced_stock_alert_service import EnhancedStockAlertService
+
+db: Session = get_database_session()
+
+alert_service = EnhancedStockAlertService(db)
+
+# Run alert check for all medicines
+alerts = alert_service.check_all_alerts()
+
+# Check specific alert types:
+# Low stock alert
+low_stock = alert_service.check_low_stock_alert(medicine_id=5)
+
+# Critical stock alert
+critical = alert_service.check_critical_stock_alert(medicine_id=5)
+
+# Expiry warning
+expiry_alerts = alert_service.check_expiry_alert(medicine_id=5)
+
+# Overstock detection
+overstock = alert_service.check_overstock_alert(medicine_id=5)
+
+# Get all active alerts
+active = alert_service.get_active_alerts()
+
+# Acknowledge an alert
+alert_service.acknowledge_alert(alert_id=12, staff_id=3)
+
+# Resolve alert when action taken
+alert_service.resolve_alert(alert_id=12)
+
+
+EXAMPLE 4: HANDLING DAMAGED STOCK
+==================================
+
+from app.services.stock_adjustment_service import StockAdjustmentService
+
+db: Session = get_database_session()
+
+adjustment = StockAdjustmentService(db)
+
+# Record damaged medicine
+damaged = adjustment.adjust_stock_damaged(
+    medicine_id=2,
+    batch_id=5,
+    quantity=5,
+    staff_id=3,
+    reason="Damaged container found during inspection"
+)
+
+# Record expired medicine write-off
+expired = adjustment.adjust_stock_expired(
+    medicine_id=3,
+    batch_id=8,
+    quantity=20,
+    staff_id=3,
+    reason="Batch expired on 2025-12-31"
+)
+
+# Record waste (spillage, etc)
+waste = adjustment.adjust_stock_waste(
+    medicine_id=1,
+    batch_id=2,
+    quantity=3,
+    staff_id=3,
+    reason="Spillage during dispensing"
+)
+
+# Get adjustment history
+history = adjustment.get_adjustment_history(medicine_id=2)
+
+# Approve adjustment (manager action)
+approval = adjustment.approve_adjustment(
+    adjustment_id=1,
+    approved_by=1  # manager ID
+)
+
+
+EXAMPLE 5: ANALYTICS AND FORECASTING
+=====================================
+
+from app.services.stock_analytics_service import StockAnalyticsService
+
+db: Session = get_database_session()
+
+analytics = StockAnalyticsService(db)
+
+# Get consumption over last 90 days
+consumption = analytics.get_medicine_consumption_history(
+    medicine_id=1,
+    days=90
+)
+
+# Daily average consumption
+daily_avg = analytics.get_daily_average_consumption(
+    medicine_id=1,
+    days=30
+)
+
+# Top 10 most used medicines
+top_medicines = analytics.get_high_demand_medicines(limit=10)
+
+# Slow-moving medicines (potential overstock)
+slow = analytics.get_slow_moving_medicines(days=90)
+
+# Medicines with frequent stockouts
+stockouts = analytics.get_stockout_analysis(days=90)
+
+# Inventory turnover ratio
+turnover = analytics.calculate_inventory_turnover_ratio(medicine_id=1)
+
+# Get reorder recommendations
+recommendations = analytics.get_reorder_recommendations()
+
+# Get 6-month trend
+trend = analytics.get_monthly_consumption_trend(
+    medicine_id=1,
+    months=6
+)
+
+# Export all data for AI engine
+data = analytics.export_analytics_data()
+
+
+EXAMPLE 6: BATCH MANAGEMENT
+============================
+
+from app.services.batch_management_service import BatchManagementService
+
+db: Session = get_database_session()
+
+batch = BatchManagementService(db)
+
+# Mark expired batches (run daily)
+expired_count = batch.check_and_mark_expired_batches()
+
+# Get batches expiring within 30 days
+expiring_soon = batch.get_batches_expiring_soon(days=30)
+
+# Get all batches for a medicine
+batches = batch.get_medicine_batches(
+    medicine_id=1,
+    include_expired=False
+)
+
+# Get detailed batch information
+details = batch.get_batch_details(batch_id=5)
+
+# Stop using a batch (deactivate)
+batch.deactivate_batch(batch_id=5, reason="Quality issues found")
+
+# Find batch by number
+found = batch.get_batch_by_number(
+    batch_number="LOT2024001",
+    medicine_id=1
+)
+
+
+SCHEDULE THESE TASKS
+====================
+
+Use APScheduler to run automatically:
+
+1. Daily expiry check (midnight)
+   batch_service.check_and_mark_expired_batches()
+
+2. Hourly alert check (every 6 hours)
+   alert_service.check_all_alerts()
+
+3. Daily analytics update (end of day)
+   analytics.export_analytics_data()
+
+4. Weekly reorder recommendations (Monday morning)
+   recommendations = analytics.get_reorder_recommendations()
+   # Send to WhatsApp alert system
+
+
+DATABASE QUERIES NEEDED
+======================
+
+Total inventory across all batches:
+SELECT medicine_id, SUM(quantity_available) FROM inventory GROUP BY medicine_id
+
+Medicines below reorder level:
+SELECT m.*, i.quantity_available
+FROM medicines m
+JOIN inventory i ON m.id = i.medicine_id
+WHERE i.quantity_available <= m.minimum_stock_threshold
+
+Batches expiring soon:
+SELECT * FROM medicine_batches
+WHERE expiry_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)
+ORDER BY expiry_date
+
+Current stock value (for accounting):
+SELECT m.id, m.name, SUM(i.quantity_available * m.cost_price)
+FROM medicines m
+JOIN inventory i ON m.id = i.medicine_id
+GROUP BY m.id, m.name
+
+Stock adjustment summary:
+SELECT adjustment_type, SUM(adjustment_quantity)
+FROM stock_adjustments
+WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY adjustment_type
