@@ -165,6 +165,17 @@ class BatchManagementService:
             MedicineBatch.expiry_date.asc()
         ).all()
 
+    def get_all_batches(self, include_expired: bool = False):
+        """
+        Get all batches across all medicines
+        """
+        query = self.db.query(MedicineBatch)
+
+        if not include_expired:
+            query = query.filter(MedicineBatch.is_expired == False)
+
+        return query.order_by(MedicineBatch.expiry_date.asc()).all()
+
     def deactivate_batch(self, batch_id: int, reason: str = None):
         """
         Deactivate a batch (stop using it for new orders)

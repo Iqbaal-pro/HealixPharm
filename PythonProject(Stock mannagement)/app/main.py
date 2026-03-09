@@ -14,6 +14,9 @@ from app.routes.inventory_routes import router as inventory_router
 from app.routes.prescription_routes import router as prescription_router
 from app.routes.patient_routes import router as patient_router
 from app.routes.reminder_routes import router as reminder_router
+from app.routes.stock_adjustment_routes import router as stock_adjustment_router
+from app.routes.batch_routes import router as batch_router
+from app.routes.analytics_routes import router as analytics_router
 
 # ─── Import scheduler ──────────────────────────────────────────────
 from app.services.scheduler_service import start_scheduler, stop_scheduler
@@ -50,6 +53,9 @@ app.include_router(inventory_router)
 app.include_router(prescription_router)
 app.include_router(patient_router)
 app.include_router(reminder_router)
+app.include_router(stock_adjustment_router)
+app.include_router(batch_router)
+app.include_router(analytics_router)
 
 
 @app.get("/")
@@ -61,6 +67,9 @@ def root():
             "/inventory",
             "/prescriptions",
             "/patients",
-            "/reminders"
+            "/reminders",
+            "/stock-adjustments",
+            "/batches",
+            "/analytics"
         ]
     }

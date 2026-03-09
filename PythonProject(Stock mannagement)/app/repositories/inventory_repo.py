@@ -11,6 +11,7 @@ class InventoryRepository:
         ).first()
 
     def update(self, inventory):
+        self.db.add(inventory)
         self.db.commit()
         self.db.refresh(inventory)
         return inventory
