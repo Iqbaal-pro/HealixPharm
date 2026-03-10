@@ -1,7 +1,11 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database.db import SessionLocal
+from app.models.prescription import Prescription
 from app.services.stock_update_service import StockLogService
 from app.repositories.prescription_repo import PrescriptionRepository
 from app.repositories.inventory_repo import InventoryRepository
@@ -10,6 +14,16 @@ from app.utils.data_exporter import DataExporter
 from app.services import calculate_remaining_days
 
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
+
+
+class CreatePrescriptionPayload(BaseModel):
+    patient_id: int
+    uploaded_by_staff_id: int
+    medicine_name: str
+    dose_per_day: int
+    start_date: str
+    quantity_given: int
+    is_continuous: bool = False
 
 
 # Dependency to get DB session
@@ -49,6 +63,26 @@ def list_prescriptions(
             output.append(item)
 
     return output
+
+
+@router.post("/")
+def create_prescription(
+    payload: CreatePrescriptionPayload,
+    db: Session = Depends(get_db)
+):
+    prescription = Prescription(
+        patient_id=payload.patient_id,
+        uploaded_by_staff_id=payload.uploaded_by_staff_id,
+        medicine_name=payload.medicine_name,
+        dose_per_day=payload.dose_per_day,
+        start_date=datetime.fromisoformat(payload.start_date),
+        quantity_given=payload.quantity_given,
+        is_continuous=payload.is_continuous,
+    )
+    db.add(prescription)
+    db.commit()
+    db.refresh(prescription)
+    return {"message": "Prescription created", "id": prescription.id}
 
 
 @router.post("/issue")
