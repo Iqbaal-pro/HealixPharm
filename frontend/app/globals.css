@@ -1,0 +1,276 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #060d1a;
+  color: #cbd5e1;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Animations ── */
+@keyframes drift1 {
+  0%,100% { transform: translate(0,0); }
+  33%     { transform: translate(40px,-30px); }
+  66%     { transform: translate(-20px,20px); }
+}
+@keyframes drift2 {
+  0%,100% { transform: translate(0,0); }
+  33%     { transform: translate(-50px,40px); }
+  66%     { transform: translate(30px,-20px); }
+}
+@keyframes drift3 {
+  0%,100% { transform: translate(0,0); }
+  50%     { transform: translate(25px,35px); }
+}
+@keyframes fadeInUp {
+  0%   { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── Fade entrance classes ── */
+.fade-1 { animation: fadeInUp 0.5s ease 0.08s both; }
+.fade-2 { animation: fadeInUp 0.5s ease 0.16s both; }
+.fade-3 { animation: fadeInUp 0.5s ease 0.24s both; }
+.fade-4 { animation: fadeInUp 0.5s ease 0.32s both; }
+.fade-5 { animation: fadeInUp 0.5s ease 0.40s both; }
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  padding: 13px 32px;
+  background: linear-gradient(90deg, #0369a1 0%, #0369a1 60%, #0e7ab5 100%);
+  color: #bae6fd;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(3,105,161,0.25);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 24px rgba(14,165,233,0.35);
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  padding: 13px 32px;
+  background: rgba(148,163,184,0.06);
+  color: #94a3b8;
+  border-radius: 10px;
+  border: 1px solid rgba(148,163,184,0.15);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-ghost:hover {
+  background: rgba(148,163,184,0.1);
+  color: #cbd5e1;
+  border-color: rgba(148,163,184,0.25);
+  transform: translateY(-2px);
+}
+.btn-ghost:active {
+  transform: translateY(0);
+}
+
+/* ── Input fields ── */
+.input-field {
+  width: 100%;
+  background: rgba(6,13,26,0.9);
+  border: 1px solid rgba(148,163,184,0.1);
+  border-radius: 10px;
+  color: #f1f5f9;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 12px 16px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+.input-field::placeholder {
+  color: #475569;
+}
+.input-field:focus {
+  border-color: rgba(14,165,233,0.3);
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.06);
+}
+
+/* ── Glass card ── */
+.glass-card {
+  background: rgba(10,20,42,0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(148,163,184,0.08);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ── Nav links (sidebar) ── */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 16px;
+  margin: 2px 8px;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.18s, color 0.18s;
+  border-bottom: 1px solid transparent;
+}
+.nav-link:hover {
+  background: rgba(148,163,184,0.07);
+  color: #94a3b8;
+}
+.nav-link.active {
+  background: rgba(99,102,241,0.09);
+  color: #38bdf8;
+  border-bottom-color: rgba(99,102,241,0.22);
+}
+
+/* ── Table rows ── */
+.tr-hover {
+  transition: background 0.15s;
+}
+.tr-hover:hover {
+  background: rgba(148,163,184,0.03) !important;
+}
+
+/* ── Stat card ── */
+.stat-card {
+  background: rgba(10,20,42,0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(148,163,184,0.08);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  padding: 22px;
+  animation: fadeInUp 0.5s ease both;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(14,165,233,0.08),
+              inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+/* ── Glass panel (dashboard sections) ── */
+.glass-panel {
+  background: rgba(10,20,42,0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(148,163,184,0.08);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+/* ── Search input (topbar) ── */
+.search-input {
+  width: 100%;
+  background: rgba(6,13,26,0.9);
+  border: 1px solid rgba(148,163,184,0.1);
+  border-radius: 10px;
+  color: #f1f5f9;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  padding: 9px 14px 9px 38px;
+  outline: none;
+  transition: all 0.2s;
+}
+.search-input::placeholder {
+  color: #334155;
+}
+.search-input:focus {
+  border-color: rgba(14,165,233,0.3);
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.06);
+}
+
+/* ── Icon button (topbar) ── */
+.icon-btn {
+  background: rgba(148,163,184,0.06);
+  border: 1px solid rgba(148,163,184,0.1);
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background: rgba(148,163,184,0.1);
+  color: #94a3b8;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(148,163,184,0.1);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148,163,184,0.2);
+}
