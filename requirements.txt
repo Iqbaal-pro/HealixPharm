@@ -1,0 +1,35 @@
+# HealixPharm – Python Dependencies
+# Install: pip install -r requirements.txt
+
+# Web framework
+fastapi
+uvicorn[standard]
+
+# Database
+sqlalchemy
+pymysql
+mysql-connector-python
+
+# Data validation
+pydantic
+pydantic-settings
+
+# Communication
+twilio
+requests
+
+# AWS
+boto3
+
+# Image processing
+opencv-python-headless
+
+# Scheduling
+apscheduler
+
+# Utilities
+python-dotenv
+python-multipart
+
+# Testing
+pytest
