@@ -1,341 +1,339 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
-export default function SplashPage() {
-  const router = useRouter();
+const API = "http://localhost:8000";
+
+interface InventoryItem {
+  quantity_available: number;
+  quantity_damaged: number;
+  quantity_expired: number;
+  reorder_level: number;
+  minimum_stock_threshold?: number;
+}
+
+interface Batch {
+  expiry_date: string;
+  is_expired: boolean;
+  is_active: boolean;
+}
+
+interface ReorderItem { medicine_id: number; }
+
+const daysUntil = (dateStr: string) =>
+  Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+const modules = [
+  {
+    href:  "/stock-management/inventory",
+    title: "Inventory",
+    desc:  "Live stock levels per medicine & batch",
+    color: "#38bdf8",
+    bg:    "rgba(14,165,233,0.08)",
+    border:"rgba(14,165,233,0.18)",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    ),
+  },
+  {
+    href:  "/stock-management/batches",
+    title: "Batches",
+    desc:  "Batch tracking, expiry dates & FEFO",
+    color: "#818cf8",
+    bg:    "rgba(129,140,248,0.08)",
+    border:"rgba(129,140,248,0.18)",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <polyline points="21 8 21 21 3 21 3 8"/>
+        <rect x="1" y="3" width="22" height="5"/>
+        <line x1="10" y1="12" x2="14" y2="12"/>
+      </svg>
+    ),
+  },
+  {
+    href:  "/stock-management/alerts",
+    title: "Alerts",
+    desc:  "Low stock, critical & expiry warnings",
+    color: "#f59e0b",
+    bg:    "rgba(245,158,11,0.08)",
+    border:"rgba(245,158,11,0.18)",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    ),
+  },
+  {
+    href:  "/stock-management/analytics",
+    title: "Analytics",
+    desc:  "Consumption trends & reorder insights",
+    color: "#4ade80",
+    bg:    "rgba(74,222,128,0.08)",
+    border:"rgba(74,222,128,0.18)",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
+      </svg>
+    ),
+  },
+  {
+    href:  "/stock-management/adjustments",
+    title: "Adjustments",
+    desc:  "Damaged, expired & correction logs",
+    color: "#f87171",
+    bg:    "rgba(248,113,113,0.08)",
+    border:"rgba(248,113,113,0.18)",
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+    ),
+  },
+];
+
+export default function StockManagementPage() {
+  const [inventory, setInventory]   = useState<InventoryItem[]>([]);
+  const [batches, setBatches]       = useState<Batch[]>([]);
+  const [reorder, setReorder]       = useState<ReorderItem[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string>("");
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const fetchAll = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [invRes, batchRes, reorderRes] = await Promise.all([
+        fetch(`${API}/inventory/`),
+        fetch(`${API}/batches/?include_expired=false`),
+        fetch(`${API}/analytics/reorder-recommendations`),
+      ]);
+      if (!invRes.ok || !batchRes.ok) throw new Error("Failed to load stock data");
+      const [invData, batchData, reorderData] = await Promise.all([
+        invRes.json(),
+        batchRes.json(),
+        reorderRes.ok ? reorderRes.json() : [],
+      ]);
+      setInventory(invData);
+      setBatches(batchData);
+      setReorder(Array.isArray(reorderData) ? reorderData : []);
+      setLastUpdated(new Date().toLocaleTimeString());
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Derived stats from real data
+  const totalSKUs      = inventory.length;
+  const lowStock       = inventory.filter(i => i.quantity_available <= i.reorder_level && i.quantity_available > 0).length;
+  const criticalStock  = inventory.filter(i => i.quantity_available === 0 || (i.minimum_stock_threshold != null && i.quantity_available <= i.minimum_stock_threshold)).length;
+  const expiringSoon   = batches.filter(b => !b.is_expired && daysUntil(b.expiry_date) <= 30).length;
+  const totalDamaged   = inventory.reduce((s, i) => s + i.quantity_damaged, 0);
+  const reorderNeeded  = reorder.length;
+
+  const stats = [
+    { label:"Total SKUs",      value: loading ? "—" : totalSKUs,     color:"#38bdf8", sub:"medicines tracked"         },
+    { label:"Low Stock",       value: loading ? "—" : lowStock,      color:"#f59e0b", sub:"below reorder level"       },
+    { label:"Critical",        value: loading ? "—" : criticalStock,  color:"#ef4444", sub:"at or below minimum"       },
+    { label:"Expiring <30d",   value: loading ? "—" : expiringSoon,  color:"#f97316", sub:"batches expiring soon"     },
+    { label:"Damaged Units",   value: loading ? "—" : totalDamaged,  color:"#818cf8", sub:"write-off needed"          },
+    { label:"Reorder Needed",  value: loading ? "—" : reorderNeeded, color:"#4ade80", sub:"supplier orders pending"   },
+  ];
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
-        @keyframes drift1{0%,100%{transform:translate(0,0)}33%{transform:translate(40px,-30px)}66%{transform:translate(-20px,20px)}}
-        @keyframes drift2{0%,100%{transform:translate(0,0)}33%{transform:translate(-50px,40px)}66%{transform:translate(30px,-20px)}}
-        @keyframes drift3{0%,100%{transform:translate(0,0)}50%{transform:translate(25px,35px)}}
-        @keyframes fadeInUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
-        @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
+    <div style={{ padding:"28px", fontFamily:"'DM Sans',sans-serif" }}>
 
-        .fade-1{animation:fadeInUp 0.6s ease 0.1s both}
-        .fade-2{animation:fadeInUp 0.6s ease 0.2s both}
-        .fade-3{animation:fadeInUp 0.6s ease 0.3s both}
-        .fade-4{animation:fadeInUp 0.6s ease 0.4s both}
-        .fade-5{animation:fadeInUp 0.6s ease 0.5s both}
-
-        .btn-primary{
-          padding:13px 32px;
-          background:linear-gradient(90deg,#0369a1 0%,#0369a1 60%,#0e7ab5 100%);
-          color:#bae6fd;
-          border-radius:10px;
-          box-shadow:0 4px 12px rgba(3,105,161,0.25);
-          font-family:'DM Sans',sans-serif;
-          font-weight:600;
-          font-size:15px;
-          border:none;
-          cursor:pointer;
-          transition:all 0.2s ease;
-        }
-        .btn-primary:hover{
-          box-shadow:0 4px 24px rgba(14,165,233,0.35);
-          transform:translateY(-2px);
-          filter:brightness(1.08);
-        }
-        .btn-primary:active{transform:translateY(0)}
-
-        .btn-ghost{
-          padding:13px 32px;
-          background:rgba(148,163,184,0.06);
-          color:#94a3b8;
-          border-radius:10px;
-          border:1px solid rgba(148,163,184,0.15);
-          font-family:'DM Sans',sans-serif;
-          font-weight:500;
-          font-size:15px;
-          cursor:pointer;
-          transition:all 0.2s ease;
-        }
-        .btn-ghost:hover{
-          background:rgba(148,163,184,0.1);
-          color:#cbd5e1;
-          border-color:rgba(148,163,184,0.25);
-          transform:translateY(-2px);
-        }
-        .btn-ghost:active{transform:translateY(0)}
-
-        .feature-card{
-          background:rgba(10,20,42,0.8);
-          backdrop-filter:blur(16px);
-          border:1px solid rgba(148,163,184,0.08);
-          border-radius:18px;
-          box-shadow:inset 0 1px 0 rgba(255,255,255,0.03);
-          padding:28px 24px;
-          transition:transform 0.22s, border-color 0.22s, box-shadow 0.22s;
-        }
-        .feature-card:hover{
-          transform:translateY(-4px);
-          border-color:rgba(14,165,233,0.2);
-          box-shadow:0 8px 28px rgba(14,165,233,0.08), inset 0 1px 0 rgba(255,255,255,0.03);
-        }
-
-        .stat-card{
-          background:rgba(10,20,42,0.6);
-          backdrop-filter:blur(12px);
-          border:1px solid rgba(148,163,184,0.07);
-          border-radius:14px;
-          padding:20px 24px;
-          text-align:center;
-        }
-      `}</style>
-
-      {/* Aurora Background */}
-      <div style={{position:"fixed",inset:0,zIndex:0,background:"#060d1a",overflow:"hidden",pointerEvents:"none"}}>
-        <div style={{position:"absolute",width:600,height:600,top:-150,left:-100,borderRadius:"9999px",filter:"blur(90px)",background:"rgba(14,165,233,0.07)",animation:"drift1 18s ease-in-out infinite"}}/>
-        <div style={{position:"absolute",width:500,height:500,top:"40%",right:-120,borderRadius:"9999px",filter:"blur(90px)",background:"rgba(14,165,233,0.05)",animation:"drift2 24s ease-in-out infinite"}}/>
-        <div style={{position:"absolute",width:400,height:400,bottom:-80,left:"35%",borderRadius:"9999px",filter:"blur(90px)",background:"rgba(129,140,248,0.05)",animation:"drift3 20s ease-in-out infinite"}}/>
+      {/* Breadcrumb */}
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:20 }}>
+        <Link href="/dashboard" style={{ color:"#334155", fontSize:13, textDecoration:"none" }}>Dashboard</Link>
+        <span style={{ color:"#1e3a5f" }}>›</span>
+        <span style={{ color:"#38bdf8", fontSize:13, fontWeight:600 }}>Stock Management</span>
       </div>
 
-      <div style={{position:"relative",zIndex:1,minHeight:"100vh",fontFamily:"'DM Sans',sans-serif",background:"transparent"}}>
-
-        {/* ── Navbar ── */}
-        <nav style={{
-          height:64, display:"flex", alignItems:"center",
-          justifyContent:"space-between", padding:"0 40px",
-          background:"rgba(6,13,26,0.7)",
-          backdropFilter:"blur(20px)",
-          borderBottom:"1px solid rgba(255,255,255,0.04)",
-          position:"sticky", top:0, zIndex:10,
-        }}>
-          {/* Logo */}
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:34,height:34,borderRadius:9,background:"linear-gradient(135deg,#0369a1,#818cf8)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#fff",fontFamily:"'Syne',sans-serif"}}>H</div>
-            <span style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:18,color:"#f1f5f9",letterSpacing:"-0.02em"}}>
-              Healix<span style={{background:"linear-gradient(90deg,#38bdf8,#818cf8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Pharm</span>
-            </span>
-          </div>
-
-          {/* Nav buttons */}
-          <div style={{display:"flex",gap:10}}>
-            <button className="btn-ghost" style={{padding:"8px 20px",fontSize:13}} onClick={()=>router.push("/login")}>
-              Sign in
-            </button>
-            <button className="btn-primary" style={{padding:"8px 20px",fontSize:13}} onClick={()=>router.push("/signup")}>
-              Get started
-            </button>
-          </div>
-        </nav>
-
-        {/* ── Hero ── */}
-        <section style={{
-          display:"flex", flexDirection:"column",
-          alignItems:"center", justifyContent:"center",
-          textAlign:"center", padding:"100px 24px 80px",
-        }}>
-          {/* Badge */}
-          <div className="fade-1" style={{
-            display:"inline-flex", alignItems:"center", gap:8,
-            background:"rgba(14,165,233,0.08)",
-            border:"1px solid rgba(14,165,233,0.2)",
-            borderRadius:99, padding:"6px 16px", marginBottom:28,
+      {/* Header */}
+      <div className="fade-1" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, flexWrap:"wrap", gap:12 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+          <div style={{
+            width:50, height:50, borderRadius:14,
+            background:"rgba(14,165,233,0.1)", border:"1px solid rgba(14,165,233,0.22)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            color:"#38bdf8", boxShadow:"0 0 22px rgba(14,165,233,0.12)", flexShrink:0,
           }}>
-            <div style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",boxShadow:"0 0 6px #4ade80"}}/>
-            <span style={{fontSize:12,color:"#7dd3fc",fontWeight:500,letterSpacing:"0.04em"}}>
-              Smart Pharmacy Platform — Now Live
-            </span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
           </div>
-
-          {/* Headline */}
-          <h1 className="fade-2" style={{
-            fontFamily:"'Syne',sans-serif", fontWeight:800,
-            fontSize:"clamp(36px, 6vw, 68px)",
-            lineHeight:1.08, letterSpacing:"-0.03em",
-            color:"#f1f5f9", margin:0, marginBottom:20,
-            maxWidth:780,
-          }}>
-            The smarter way to{" "}
-            <span style={{background:"linear-gradient(90deg,#38bdf8,#818cf8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
-              manage your pharmacy
-            </span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="fade-3" style={{
-            fontSize:"clamp(15px, 2vw, 18px)",
-            color:"#64748b", lineHeight:1.7,
-            maxWidth:560, margin:"0 0 40px",
-          }}>
-            HealixPharm automates inventory, tracks prescriptions, sends refill reminders via WhatsApp, and keeps your pharmacy running without manual errors.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="fade-4" style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center"}}>
-            <button className="btn-primary" onClick={()=>router.push("/signup")}>
-              Get started free →
-            </button>
-            <button className="btn-ghost" onClick={()=>router.push("/login")}>
-              Sign in to dashboard
-            </button>
-          </div>
-        </section>
-
-        {/* ── Stats ── */}
-        <section className="fade-4" style={{
-          display:"grid",
-          gridTemplateColumns:"repeat(auto-fit, minmax(160px,1fr))",
-          gap:16, maxWidth:900, margin:"0 auto 80px",
-          padding:"0 24px",
-        }}>
-          {[
-            { value:"99.9%", label:"Uptime" },
-            { value:"< 2s",  label:"Avg response time" },
-            { value:"10k+",  label:"Prescriptions processed" },
-            { value:"24/7",  label:"WhatsApp bot active" },
-          ].map(s => (
-            <div key={s.label} className="stat-card">
-              <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:28,background:"linear-gradient(90deg,#38bdf8,#818cf8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:4}}>
-                {s.value}
-              </div>
-              <div style={{fontSize:12,color:"#475569",fontWeight:500}}>{s.label}</div>
-            </div>
-          ))}
-        </section>
-
-        {/* ── Features ── */}
-        <section style={{maxWidth:1000,margin:"0 auto 100px",padding:"0 24px"}}>
-          <div className="fade-4" style={{textAlign:"center",marginBottom:48}}>
-            <h2 style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"clamp(24px,4vw,36px)",color:"#f1f5f9",letterSpacing:"-0.02em",margin:0,marginBottom:10}}>
-              Everything your pharmacy needs
-            </h2>
-            <p style={{color:"#475569",fontSize:15,margin:0}}>
-              One platform. Every workflow covered.
+          <div>
+            <h1 className="gradient-text" style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:28, margin:0, letterSpacing:"-0.02em" }}>
+              Stock Management
+            </h1>
+            <p style={{ color:"#475569", fontSize:13.5, margin:"3px 0 0" }}>
+              Unified view of inventory, batches, alerts & analytics
             </p>
           </div>
-
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:18}}>
-            {[
-              {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                ),
-                accent:"#38bdf8",
-                title:"Smart Inventory",
-                desc:"Track stock levels, batch numbers and expiry dates in real-time. FEFO dispatch enforced automatically.",
-              },
-              {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
-                  </svg>
-                ),
-                accent:"#818cf8",
-                title:"Prescription Queue",
-                desc:"Manage incoming prescriptions, track dispensing status and maintain a full audit trail.",
-              },
-              {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                  </svg>
-                ),
-                accent:"#4ade80",
-                title:"WhatsApp Bot",
-                desc:"Patients order medicines, channel doctors and get refill reminders — all through WhatsApp.",
-              },
-              {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                  </svg>
-                ),
-                accent:"#f59e0b",
-                title:"Refill Reminders",
-                desc:"Automated SMS and WhatsApp alerts sent to patients before they run out of medication.",
-              },
-              {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <rect x="1" y="3" width="15" height="13" rx="2"/>
-                    <path d="M16 8h4l3 3v5h-7V8z"/>
-                    <circle cx="5.5" cy="18.5" r="2.5"/>
-                    <circle cx="18.5" cy="18.5" r="2.5"/>
-                  </svg>
-                ),
-                accent:"#a78bfa",
-                title:"Delivery Tracking",
-                desc:"Manage medicine deliveries, track status and notify patients automatically on dispatch.",
-              },
-              {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                  </svg>
-                ),
-                accent:"#ef4444",
-                title:"Low Stock Alerts",
-                desc:"Get notified before medicines run out. Critical items flagged instantly with reorder suggestions.",
-              },
-            ].map(f => (
-              <div key={f.title} className="feature-card">
-                <div style={{
-                  width:44, height:44, borderRadius:12,
-                  background:`${f.accent}14`,
-                  border:`1px solid ${f.accent}30`,
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  color:f.accent, marginBottom:18,
-                }}>
-                  {f.icon}
-                </div>
-                <h3 style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:16,color:"#f1f5f9",margin:0,marginBottom:8,letterSpacing:"-0.01em"}}>
-                  {f.title}
-                </h3>
-                <p style={{fontSize:13.5,color:"#64748b",lineHeight:1.65,margin:0}}>
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Bottom CTA ── */}
-        <section style={{
-          textAlign:"center", padding:"60px 24px 100px",
-          borderTop:"1px solid rgba(148,163,184,0.06)",
-        }}>
-          <h2 className="fade-5" style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"clamp(24px,4vw,40px)",color:"#f1f5f9",letterSpacing:"-0.02em",margin:0,marginBottom:12}}>
-            Ready to modernise your pharmacy?
-          </h2>
-          <p className="fade-5" style={{color:"#475569",fontSize:15,marginBottom:36}}>
-            Join HealixPharm today — free to get started.
-          </p>
-          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-            <button className="btn-primary" onClick={()=>router.push("/signup")}>
-              Create free account →
-            </button>
-            <button className="btn-ghost" onClick={()=>router.push("/login")}>
-              Sign in
-            </button>
-          </div>
-        </section>
-
-        {/* ── Footer ── */}
-        <footer style={{
-          borderTop:"1px solid rgba(148,163,184,0.06)",
-          padding:"24px 40px",
-          display:"flex", justifyContent:"space-between", alignItems:"center",
-          flexWrap:"wrap", gap:12,
-        }}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:26,height:26,borderRadius:7,background:"linear-gradient(135deg,#0369a1,#818cf8)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",fontFamily:"'Syne',sans-serif"}}>H</div>
-            <span style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:14,color:"#334155"}}>HealixPharm</span>
-          </div>
-          <span style={{fontSize:12,color:"#1e3a5f"}}>© 2025 HealixPharm. All rights reserved.</span>
-        </footer>
-
+        </div>
+        <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+          {lastUpdated && (
+            <span style={{ fontSize:12, color:"#334155" }}>Updated {lastUpdated}</span>
+          )}
+          <button className="btn-ghost" style={{ padding:"9px 16px", fontSize:13 }} onClick={fetchAll}>
+            ↻ Refresh
+          </button>
+        </div>
       </div>
-    </>
+
+      {/* Error */}
+      {error && (
+        <div style={{ marginBottom:20, padding:"12px 16px", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:10, color:"#f87171", fontSize:13 }}>
+          ⚠ {error} — <span style={{ cursor:"pointer", textDecoration:"underline" }} onClick={fetchAll}>retry</span>
+        </div>
+      )}
+
+      {/* Stat Cards */}
+      <div className="fade-2" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:14, marginBottom:32 }}>
+        {stats.map(s => (
+          <div key={s.label} className="stat-card">
+            <div style={{ fontSize:11, color:"#334155", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:10 }}>
+              {s.label}
+            </div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:36, color:s.color, lineHeight:1, marginBottom:6 }}>
+              {loading ? (
+                <div style={{ width:40, height:36, background:"rgba(148,163,184,0.06)", borderRadius:8, animation:"pulse 1.5s ease infinite" }}/>
+              ) : s.value}
+            </div>
+            <div style={{ fontSize:11, color:"#334155" }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Alert Banner — show if critical issues */}
+      {!loading && (criticalStock > 0 || expiringSoon > 0) && (
+        <div className="fade-3" style={{
+          marginBottom:24, padding:"14px 20px",
+          background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)",
+          borderRadius:12, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10,
+        }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:"#ef4444", boxShadow:"0 0 8px #ef4444", flexShrink:0, animation:"pulse 1.5s ease infinite" }}/>
+            <span style={{ fontSize:13.5, color:"#f87171", fontWeight:500 }}>
+              {criticalStock > 0 && `${criticalStock} medicine${criticalStock > 1 ? "s" : ""} critically low`}
+              {criticalStock > 0 && expiringSoon > 0 && " · "}
+              {expiringSoon > 0 && `${expiringSoon} batch${expiringSoon > 1 ? "es" : ""} expiring within 30 days`}
+            </span>
+          </div>
+          <Link href="/stock-management/alerts" style={{
+            fontSize:12, color:"#ef4444", fontWeight:600, textDecoration:"none",
+            padding:"5px 12px", borderRadius:7, background:"rgba(239,68,68,0.1)",
+          }}>
+            View Alerts →
+          </Link>
+        </div>
+      )}
+
+      {/* Module Cards */}
+      <div className="fade-3">
+        <h2 style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15, color:"#94a3b8", margin:"0 0 16px", letterSpacing:"0.04em", textTransform:"uppercase" }}>
+          Modules
+        </h2>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))", gap:16 }}>
+          {modules.map(mod => (
+            <Link key={mod.href} href={mod.href} style={{ textDecoration:"none" }}>
+              <div style={{
+                background:"rgba(10,20,42,0.8)",
+                border:`1px solid ${mod.border}`,
+                borderRadius:18, padding:"24px",
+                cursor:"pointer", transition:"all 0.22s ease",
+                backdropFilter:"blur(16px)",
+              }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(-4px)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 12px 32px ${mod.bg}`;
+                  (e.currentTarget as HTMLDivElement).style.borderColor = mod.color + "55";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+                  (e.currentTarget as HTMLDivElement).style.borderColor = mod.border;
+                }}
+              >
+                <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:16 }}>
+                  <div style={{
+                    width:46, height:46, borderRadius:13,
+                    background:mod.bg, border:`1px solid ${mod.border}`,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    color:mod.color,
+                  }}>
+                    {mod.icon}
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </div>
+                <div style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:17, color:"#f1f5f9", marginBottom:6 }}>
+                  {mod.title}
+                </div>
+                <div style={{ fontSize:13, color:"#475569", lineHeight:1.5 }}>
+                  {mod.desc}
+                </div>
+
+                {/* Live badge per module */}
+                {!loading && (
+                  <div style={{ marginTop:14 }}>
+                    {mod.title === "Inventory" && (
+                      <span className="badge" style={{ background:"rgba(56,189,248,0.08)", color:"#38bdf8" }}>
+                        {totalSKUs} SKUs tracked
+                      </span>
+                    )}
+                    {mod.title === "Batches" && (
+                      <span className="badge" style={{ background: expiringSoon > 0 ? "rgba(249,115,22,0.08)" : "rgba(74,222,128,0.08)", color: expiringSoon > 0 ? "#f97316" : "#4ade80" }}>
+                        {expiringSoon > 0 ? `${expiringSoon} expiring soon` : "All batches healthy"}
+                      </span>
+                    )}
+                    {mod.title === "Alerts" && (
+                      <span className="badge" style={{ background: criticalStock > 0 ? "rgba(239,68,68,0.08)" : "rgba(74,222,128,0.08)", color: criticalStock > 0 ? "#ef4444" : "#4ade80" }}>
+                        {criticalStock > 0 ? `${criticalStock} critical alerts` : "No critical alerts"}
+                      </span>
+                    )}
+                    {mod.title === "Analytics" && (
+                      <span className="badge" style={{ background:"rgba(129,140,248,0.08)", color:"#818cf8" }}>
+                        {reorderNeeded > 0 ? `${reorderNeeded} reorders needed` : "Stock levels OK"}
+                      </span>
+                    )}
+                    {mod.title === "Adjustments" && (
+                      <span className="badge" style={{ background: totalDamaged > 0 ? "rgba(248,113,113,0.08)" : "rgba(74,222,128,0.08)", color: totalDamaged > 0 ? "#f87171" : "#4ade80" }}>
+                        {totalDamaged > 0 ? `${totalDamaged} damaged units` : "No damaged stock"}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer status */}
+      <div className="fade-4" style={{ marginTop:28, padding:"14px 20px", borderTop:"1px solid rgba(148,163,184,0.06)", display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ width:6, height:6, borderRadius:"50%", background:"#4ade80", boxShadow:"0 0 6px #4ade80", flexShrink:0 }}/>
+        <span style={{ color:"#334155", fontSize:12 }}>
+          Live data from HealixPharm backend · FEFO enforced · Auto-alerts active
+        </span>
+      </div>
+
+    </div>
   );
 }
