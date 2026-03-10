@@ -111,7 +111,13 @@ export default function SettingsPage() {
 
       const data = await res.json();
       // Update localStorage so the rest of the app stays in sync
-      if (user) saveAuthToStorage(token, user, data.pharmacy);
+      saveAuthToStorage({
+        access_token: token,
+        token_type: "bearer",
+        message: "updated",
+        user: user!,
+        pharmacy: data.pharmacy,
+      });
       setPharma(data.pharmacy);
       setPSuccess("Pharmacy profile updated successfully.");
       setTimeout(() => setPSuccess(""), 4000);
