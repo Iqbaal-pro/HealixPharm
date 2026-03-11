@@ -8,12 +8,9 @@ from app.admin.routes import router as admin_router
 
 # Payments router
 from app.payments.routes import router as payments_router
-
-# E-Channelling
-from app.channelling_routes import router as channelling_router
-from app.channelling_db import engine_channelling, BaseChannelling
+# echannelling
 from app import channelling_models
-
+from app.channelling_routes import router as channelling_router
 # Scheduler
 from app.core.scheduler import scheduler
 from app.core.fulfillment_scheduler import monitor_fulfillment
@@ -35,10 +32,6 @@ app.include_router(channelling_router)
 # Ensure database tables exist
 Base.metadata.create_all(bind=engine)
 logger.info("[WB_MAIN] Pharmacy database tables ensured")
-
-BaseChannelling.metadata.create_all(bind=engine_channelling)
-logger.info("[WB_MAIN] Channelling database tables ensured")
-
 
 @app.on_event("startup")
 async def startup_event():

@@ -1,0 +1,33 @@
+﻿Testing signup for: testuser_d6e50471 (test_d6e50471@example.com)
+2026-03-11 11:05:20,525 INFO sqlalchemy.engine.Engine SELECT DATABASE()
+2026-03-11 11:05:20,525 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-03-11 11:05:22,221 INFO sqlalchemy.engine.Engine SELECT @@sql_mode
+2026-03-11 11:05:22,221 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-03-11 11:05:23,053 INFO sqlalchemy.engine.Engine SELECT @@lower_case_table_names
+2026-03-11 11:05:23,053 INFO sqlalchemy.engine.Engine [raw sql] {}
+2026-03-11 11:05:23,886 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-03-11 11:05:24,301 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password AS users_password, users.created_at AS users_created_at 
+FROM users 
+WHERE users.username = %(username_1)s OR users.email = %(email_1)s 
+ LIMIT %(param_1)s
+2026-03-11 11:05:24,301 INFO sqlalchemy.engine.Engine [generated in 0.41255s] {'username_1': 'testuser_d6e50471', 'email_1': 'test_d6e50471@example.com', 'param_1': 1}
+2026-03-11 11:05:25,212 INFO sqlalchemy.engine.Engine INSERT INTO users (username, email, password) VALUES (%(username)s, %(email)s, %(password)s)
+2026-03-11 11:05:25,212 INFO sqlalchemy.engine.Engine [generated in 0.44133s] {'username': 'testuser_d6e50471', 'email': 'test_d6e50471@example.com', 'password': 'pbkdf2_sha256$200000$a72191c415f2219f33ea47486eeda6b6$98624d93757fdb175c99e7dfaa74d8c7a0e2b11760f0f67eff6fb31446fc657c'}
+2026-03-11 11:05:26,174 INFO sqlalchemy.engine.Engine INSERT INTO pharmacies (user_id, pharmacy_name, contact_number, whatsapp_number, address, opening_hours, estimated_delivery_time, service_areas, service_charge, prescription_policy, refund_policy) VALUES (%(user_id)s, %(pharmacy_name)s, %(contact_number)s, %(whatsapp_number)s, %(address)s, %(opening_hours)s, %(estimated_delivery_time)s, %(service_areas)s, %(service_charge)s, %(prescription_policy)s, %(refund_policy)s)
+2026-03-11 11:05:26,175 INFO sqlalchemy.engine.Engine [generated in 0.40680s] {'user_id': 2, 'pharmacy_name': 'Test Pharmacy d6e50471', 'contact_number': '0771234567', 'whatsapp_number': '0777654321', 'address': '123 Test Street, Colombo', 'opening_hours': None, 'estimated_delivery_time': None, 'service_areas': None, 'service_charge': 250.0, 'prescription_policy': None, 'refund_policy': None}
+2026-03-11 11:05:26,577 INFO sqlalchemy.engine.Engine COMMIT
+2026-03-11 11:05:27,414 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-03-11 11:05:27,845 INFO sqlalchemy.engine.Engine SELECT users.id, users.username, users.email, users.password, users.created_at 
+FROM users 
+WHERE users.id = %(pk_1)s
+2026-03-11 11:05:27,845 INFO sqlalchemy.engine.Engine [generated in 0.42654s] {'pk_1': 2}
+2026-03-11 11:05:28,684 INFO sqlalchemy.engine.Engine SELECT pharmacies.id, pharmacies.user_id, pharmacies.pharmacy_name, pharmacies.contact_number, pharmacies.whatsapp_number, pharmacies.address, pharmacies.opening_hours, pharmacies.estimated_delivery_time, pharmacies.service_areas, pharmacies.service_charge, pharmacies.prescription_policy, pharmacies.refund_policy, pharmacies.created_at 
+FROM pharmacies 
+WHERE pharmacies.id = %(pk_1)s
+2026-03-11 11:05:28,684 INFO sqlalchemy.engine.Engine [generated in 0.39835s] {'pk_1': 2}
+
+SUCCESS!
+User created: ID=2, Username=testuser_d6e50471
+Pharmacy created: ID=2, Name=Test Pharmacy d6e50471, UserID=2
+Verified: Pharmacy is correctly linked to User via user_id.
+2026-03-11 11:05:29,086 INFO sqlalchemy.engine.Engine ROLLBACK

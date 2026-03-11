@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime, text
 
-from app.database.user_base import UserBase
+from app.database.base import Base
 
 
-class User(UserBase):
+class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)

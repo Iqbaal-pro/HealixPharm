@@ -1,0 +1,4 @@
+﻿Databases:
+  information_schema
+  performance_schema
+  stock_management_db
