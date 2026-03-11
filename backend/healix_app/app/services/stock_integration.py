@@ -174,4 +174,21 @@ class StockIntegrationService:
             return False
         finally:
             db.close()
-
+            
+                
+    def get_channelling_service_charge(self) -> float:
+        """
+        Fetch channelling service charge from pharmacy registration.
+        """
+        db = StockSession()
+        try:
+            sql = text("SELECT service_charge FROM pharmacies LIMIT 1")
+            row = db.execute(sql).first()
+            if row and row._mapping["service_charge"]:
+                return float(row._mapping["service_charge"])
+            return 0.0
+        except Exception as e:
+            logger.error(f"[STOCK_BRIDGE] Failed to fetch service charge: {e}")
+            return 0.0
+        finally:
+            db.close()

@@ -1,135 +1,198 @@
+import hashlib
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
-from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
-from app.channelling_db import get_db_channelling
-from app.echannelling_service import list_doctors, generate_mock_slots, create_pending_appointment, update_appointment_status
-from app.payment_service import generate_payhere_hash, verify_payhere_signature
+from pydantic import BaseModel
+from typing import Optional
+from app.db import get_db
 from app.core.config import settings
-from app.channelling_models import Doctor, Appointment
-from datetime import datetime
+from app.echannelling_service import (
+    list_doctors, get_doctor, get_slots,
+    create_pending_appointment, confirm_appointment, cancel_appointment
+)
 
-router = APIRouter(prefix="/channelling", tags=["Channelling"])
+router = APIRouter(prefix="/api", tags=["Channelling"])
+logger = logging.getLogger(__name__)
 
-@router.get("/success", response_class=HTMLResponse)
-async def payment_success():
-    """Payment success page."""
-    return """
-    <html>
-        <head><title>Payment Success - HealixPharm</title></head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1 style="color: #4CAF50;">Payment Successful!</h1>
-            <p>Your appointment has been confirmed. You will receive a confirmation message on WhatsApp shortly.</p>
-            <p><a href="/">Return to Home</a></p>
-        </body>
-    </html>
-    """
 
-@router.get("/cancel", response_class=HTMLResponse)
-async def payment_cancel():
-    """Payment cancellation page."""
-    return """
-    <html>
-        <head><title>Payment Cancelled - HealixPharm</title></head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-            <h1 style="color: #f44336;">Payment Cancelled</h1>
-            <p>Your payment process was cancelled. You can try booking again from the portal.</p>
-            <p><a href="/channelling">Try Again</a></p>
-        </body>
-    </html>
-    """
+# ── Schemas ──────────────────────────────────────────────────────
+class PatientIn(BaseModel):
+    full_name: str
+    id_type:   str
+    id_number: str
+    email:     Optional[str] = ""
+    phone:     str
+    address:   Optional[str] = ""
+    notes:     Optional[str] = ""
 
-@router.get("/api/doctors")
-async def get_doctors(db: Session = Depends(get_db_channelling)):
-    """List all available doctors."""
-    doctors = list_doctors(db)
-    return doctors
+class AppointmentIn(BaseModel):
+    doctor_id: int
+    hospital:  str
+    slot_id:   int
+    slot_time: str
+    date:      str
+    patient:   PatientIn
 
-@router.get("/api/slots")
-async def get_slots(doctor_id: int):
-    """Get available time slots for a doctor."""
-    slots = generate_mock_slots(doctor_id)
-    return slots
 
-@router.post("/api/book")
-async def book_appointment(
-    user_id: int, 
-    user_phone: str, 
-    doctor_id: int, 
-    appointment_time: str,
-    db: Session = Depends(get_db_channelling)
+# ── Doctors ──────────────────────────────────────────────────────
+@router.get("/doctors")
+async def get_doctors(
+    spec:     str = "",
+    hospital: str = "",
+    name:     str = "",
+    db: Session = Depends(get_db)
 ):
-    """Create a pending appointment and return PayHere checkout parameters."""
-    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    return list_doctors(db, spec=spec, hospital=hospital, name=name)
+
+
+@router.get("/doctors/{doctor_id}")
+async def get_single_doctor(
+    doctor_id: int,
+    db: Session = Depends(get_db)
+):
+    doctor = get_doctor(db, doctor_id)
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")
-    
-    try:
-        app_time = datetime.strptime(appointment_time, "%Y-%m-%d %H:%M:%S")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD HH:MM:SS")
+    return doctor
 
-    appointment = create_pending_appointment(db, user_id, user_phone, doctor, app_time)
-    
-    # Generate PayHere hash
-    amount = float(appointment.fee)
-    payhere_hash = generate_payhere_hash(
-        settings.PAYHERE_MERCHANT_ID,
-        appointment.payhere_order_id,
-        amount,
-        "LKR"
-    )
-    
+
+# ── Slots ────────────────────────────────────────────────────────
+@router.get("/doctors/{doctor_id}/slots")
+async def get_doctor_slots(
+    doctor_id: int,
+    hospital:  str,
+    date:      str,
+    db: Session = Depends(get_db)
+):
+    return get_slots(db, doctor_id=doctor_id, hospital=hospital, date=date)
+
+
+# ── Book ─────────────────────────────────────────────────────────
+@router.post("/appointments")
+async def book_appointment(
+    body: AppointmentIn,
+    db:   Session = Depends(get_db)
+):
+    appointment, error = create_pending_appointment(db, {
+        "doctor_id": body.doctor_id,
+        "hospital":  body.hospital,
+        "slot_id":   body.slot_id,
+        "slot_time": body.slot_time,
+        "date":      body.date,
+        "notes":     body.patient.notes,
+        "patient": {
+            "full_name": body.patient.full_name,
+            "id_type":   body.patient.id_type,
+            "id_number": body.patient.id_number,
+            "email":     body.patient.email,
+            "phone":     body.patient.phone,
+            "address":   body.patient.address,
+        }
+    })
+
+    if error == "slot_taken":
+        raise HTTPException(status_code=409, detail="This time slot has just been booked. Please select another.")
+    if error == "slot_not_found":
+        raise HTTPException(status_code=404, detail="Slot not found")
+    if error == "doctor_not_found":
+        raise HTTPException(status_code=404, detail="Doctor not found")
+
+    # Generate PayHere hash for service charge only
+    payhere_order_id   = f"CHANN_{appointment.booking_ref}"
+    amount             = appointment.service_fee
+    amount_formatted   = "{:.2f}".format(amount)
+    secret_hash        = hashlib.md5(settings.PAYHERE_MERCHANT_SECRET.encode()).hexdigest().upper()
+    hash_string        = settings.PAYHERE_MERCHANT_ID + payhere_order_id + amount_formatted + "LKR" + secret_hash
+    payhere_hash       = hashlib.md5(hash_string.encode()).hexdigest().upper()
+
+    # Save payhere_order_id to appointment
+    from app.channelling_models import ChannellingAppointment
+    appt = db.query(ChannellingAppointment).filter(
+        ChannellingAppointment.id == appointment.id
+    ).first()
+    appt.payhere_order_id = payhere_order_id
+    db.commit()
+
     return {
+        "booking_ref":    appointment.booking_ref,
         "appointment_id": appointment.id,
-        "payhere_order_id": appointment.payhere_order_id,
-        "checkout_params": {
+        "status":         appointment.status,
+        "service_fee":    appointment.service_fee,
+        "total_fee":      appointment.total_fee,
+        "payhere": {
             "merchant_id": settings.PAYHERE_MERCHANT_ID,
-            "return_url": f"{settings.BASE_URL}/channelling/success",
-            "cancel_url": f"{settings.BASE_URL}/channelling/cancel",
-            "notify_url": f"{settings.BASE_URL}/channelling/api/payhere-notify",
-            "order_id": appointment.payhere_order_id,
-            "items": f"Doctor Appointment - {doctor.name}",
-            "currency": "LKR",
-            "amount": amount,
-            "hash": payhere_hash,
-            "first_name": "User",
-            "last_name": str(user_id),
-            "email": "user@example.com",
-            "phone": user_phone,
-            "address": "Colombo, Sri Lanka",
-            "city": "Colombo",
-            "country": "Sri Lanka"
+            "order_id":    payhere_order_id,
+            "amount":      amount_formatted,
+            "currency":    "LKR",
+            "hash":        payhere_hash,
+            "notify_url":  f"{settings.BASE_URL}/api/channelling/payhere-notify",
+            "return_url":  f"{settings.BASE_URL}/channelling/success",
+            "cancel_url":  f"{settings.BASE_URL}/channelling/cancel",
+            "items":       f"Doctor Appointment - {appointment.booking_ref}",
         }
     }
 
-@router.post("/api/payhere-notify")
-async def payhere_notify(
+
+# ── PayHere Notify ───────────────────────────────────────────────
+@router.post("/channelling/payhere-notify")
+async def channelling_payhere_notify(
     request: Request,
-    merchant_id: str = Form(...),
-    order_id: str = Form(...),
-    payhere_amount: str = Form(...),
-    payhere_currency: str = Form(...),
-    status_code: int = Form(...),
-    md5sig: str = Form(...),
-    db: Session = Depends(get_db_channelling)
+    db:      Session = Depends(get_db)
 ):
-    """Handle PayHere payment notification callback."""
+    form_data  = await request.form()
+    payload    = dict(form_data)
+    order_id   = payload.get("order_id", "")
+    status_code= payload.get("status_code")
+
+    logger.info(f"[CHANNELLING] PayHere IPN | Order: {order_id} | Status: {status_code}")
+
     # Verify signature
-    is_valid = verify_payhere_signature(
-        merchant_id,
-        order_id,
-        payhere_amount,
-        payhere_currency,
-        status_code,
-        md5sig
-    )
-    
-    if not is_valid:
+    merchant_id      = payload.get("merchant_id", "")
+    payhere_amount   = payload.get("payhere_amount", "")
+    payhere_currency = payload.get("payhere_currency", "")
+    md5sig           = payload.get("md5sig", "")
+    secret_hash      = hashlib.md5(settings.PAYHERE_MERCHANT_SECRET.encode()).hexdigest().upper()
+    check_string     = merchant_id + order_id + payhere_amount + payhere_currency + str(status_code) + secret_hash
+    generated_sig    = hashlib.md5(check_string.encode()).hexdigest().upper()
+
+    if generated_sig != md5sig:
+        logger.error("[CHANNELLING] Invalid PayHere signature")
         raise HTTPException(status_code=400, detail="Invalid signature")
-    
-    # Update appointment status
-    appointment = update_appointment_status(db, order_id, status_code)
-    if not appointment:
+
+    if status_code == "2":
+        # Payment successful — confirm appointment
+        appointment = confirm_appointment(db, order_id)
+        if appointment:
+            logger.info(f"[CHANNELLING] Appointment {appointment.booking_ref} CONFIRMED")
+    elif status_code in ["-1", "-2"]:
+        # Payment failed or cancelled — free the slot
+        appointment = cancel_appointment(db, order_id)
+        if appointment:
+            logger.info(f"[CHANNELLING] Appointment {appointment.booking_ref} CANCELLED")
+
+    return {"status": "ok"}
+
+
+# ── Lookup ───────────────────────────────────────────────────────
+@router.get("/appointments/{booking_ref}")
+async def get_appointment(
+    booking_ref: str,
+    db: Session = Depends(get_db)
+):
+    from app.channelling_models import ChannellingAppointment
+    appt = db.query(ChannellingAppointment).filter(
+        ChannellingAppointment.booking_ref == booking_ref
+    ).first()
+    if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    
-    return {"status": "success", "appointment_id": appointment.id, "new_status": appointment.status}
+    return {
+        "booking_ref":    appt.booking_ref,
+        "doctor":         appt.doctor.name,
+        "hospital":       appt.hospital,
+        "slot_time":      appt.slot_time,
+        "date":           appt.date,
+        "patient":        appt.patient.full_name,
+        "total_fee":      appt.total_fee,
+        "service_fee":    appt.service_fee,
+        "status":         appt.status,
+    }

@@ -1,31 +1,50 @@
-from app.channelling_db import SessionLocalChannelling, engine_channelling, BaseChannelling
-from app.channelling_models import Doctor
-from sqlalchemy.orm import Session
+from datetime import date, timedelta
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.db import Base
+from app.channelling_models import Doctor, TimeSlot
+import os
+
+# Force SQLite for local testing environment
+DATABASE_URL = "sqlite:///test_healix.db"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def verify_and_seed():
-    # Ensure tables are created
-    BaseChannelling.metadata.create_all(bind=engine_channelling)
-    print("Channelling database tables ensured.")
+    # Use the actual Base from app.db which the models already use
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    print(f"Database {DATABASE_URL} reset and tables created.")
 
-    db = SessionLocalChannelling()
+    db = SessionLocal()
     try:
-        # Check if doctors exist
-        doctor_count = db.query(Doctor).count()
-        if doctor_count == 0:
-            print("Seeding initial doctors...")
-            doctors = [
-                Doctor(name="Dr. Aris", specialty="General Physician", fee="1500.00"),
-                Doctor(name="Dr. Saman", specialty="Cardiologist", fee="2500.00"),
-                Doctor(name="Dr. Kumari", specialty="Pediatrician", fee="1800.00")
-            ]
-            db.add_all(doctors)
-            db.commit()
-            print(f"Created {len(doctors)} doctors.")
-        else:
-            print(f"{doctor_count} doctors already exist in database.")
-        print("\nListing Doctors:")
-        for d in db.query(Doctor).all():
-            print(f"- {d.name} ({d.specialty}) | Fee: {d.fee}")
+        print("Seeding test data...")
+        # Doctor Silva at Nawaloka Hospital
+        doctor_silva = Doctor(
+            name="Dr. Silva", 
+            specialization="Cardiologist", 
+            hospital="Nawaloka Hospital", 
+            fee=2000.00, 
+            service_fee=500.00,
+            initials="DS"
+        )
+        db.add(doctor_silva)
+        db.commit()
+        db.refresh(doctor_silva)
+        
+        # Test Slot
+        test_slot = TimeSlot(
+            doctor_id=doctor_silva.id, 
+            hospital_name="Nawaloka Hospital", 
+            time="09:00 AM", 
+            date="2026-03-15"
+        )
+        db.add(test_slot)
+        db.commit()
+        
+        print("\nListing seeded data:")
+        print(f"Doctor: {doctor_silva.name} (ID: {doctor_silva.id}) at {doctor_silva.hospital}")
+        print(f"Slot: {test_slot.time} on {test_slot.date} (ID: {test_slot.id})")
 
     finally:
         db.close()

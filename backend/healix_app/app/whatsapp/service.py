@@ -26,14 +26,14 @@ class WhatsAppService_wb:
         logger.info("[WB_SERVICE] WhatsAppService_wb initialized with Twilio")
         self.notifications = NotificationService()
         self.payhere = PayHereService()
-        
+
     def handle_user_message(self, user_id: str, message_type: str, message_data: dict):
         """
         Main message handler
         Routes message to appropriate handler based on type
         """
         logger.info(f"[WB_SERVICE] Handling message from user {user_id} | Type: {message_type}")
-        
+
         # 1. Patient Verification Check
         db = SessionLocal()
         try:
@@ -46,14 +46,13 @@ class WhatsAppService_wb:
 
         state = UserState_wb.get_user_state(user_id)
         is_first = state.get("is_first_message", False)
-        
+
         if is_first:
             logger.info(f"[WB_SERVICE] First interaction from user {user_id}")
             UserState_wb.set_user_state(user_id, state["current_step"], {"is_first_message": False})
-            
-            # Welcome & Guidance (sent in order)
+
             self.twilio_wa.send_text(user_id, "Welcome to Healix Pharm")
-            
+
             guidance = (
                 "📖 *How to use Healix Pharm Bot:*\n\n"
                 "1️⃣ *Select* an option from the menu below.\n"
@@ -85,12 +84,11 @@ class WhatsAppService_wb:
         body = message_data.get("body", "").strip().lower()
         print(f"[DEBUG_SERVICE] Text Body: {body}")
         logger.info(f"[WB_SERVICE] TEXT_MESSAGE | User: {user_id} | Message: {body}")
-        
+
         # 1. GREETINGS & GLOBAL RESET
         if body in ["hi", "hello", "hey", "hii", "menu"]:
             logger.info(f"[WB_SERVICE] User {user_id} requested menu/greeting: {body}. Resetting.")
-            
-            # Close any active support tickets
+
             db = SessionLocal()
             try:
                 user = get_or_create_user(db, phone=user_id)
@@ -104,18 +102,17 @@ class WhatsAppService_wb:
         # 2. STATE CHECK
         state = UserState_wb.get_user_state(user_id)
         current_step = state.get("current_step", "main_menu")
-        
-        # Mappings
+
         faq_menu_mapping = {
             "1": "faq_hours", "2": "faq_delivery_areas", "3": "faq_prescription",
             "4": "faq_order_status", "5": "faq_delivery_charges", "6": "faq_refunds",
             "7": "back_to_main"
         }
-        
+
         agent_menu_mapping = {
             "1": "agent_chat", "2": "agent_call", "3": "back_to_main"
         }
-        
+
         delay_menu_mapping = {
             "1": "agent_faq", "2": "agent_continue"
         }
@@ -153,7 +150,7 @@ class WhatsAppService_wb:
                 db.close()
             return
 
-        # NEW: Handle Payment Selection
+        # Handle Payment Selection
         if current_step == "awaiting_payment_selection":
             db = SessionLocal()
             try:
@@ -164,7 +161,7 @@ class WhatsAppService_wb:
                 ).order_by(models.Order.created_at.desc()).first()
 
                 if order:
-                    if body == "1": # COD
+                    if body == "1":  # COD
                         order.payment_method = "COD"
                         order.status = "CONFIRMED"
                         order.payment_status = "PENDING_ON_DELIVERY"
@@ -172,18 +169,18 @@ class WhatsAppService_wb:
                         self.twilio_wa.send_text(user_id, f"Order {order.token} confirmed! ✅\nYou chose Cash on Delivery. We will deliver your medicine shortly.")
                         UserState_wb.set_user_state(user_id, "main_menu")
                         return
-                    elif body == "2": # Online
+                    elif body == "2":  # Online
                         order.payment_method = "ONLINE"
                         order.payment_provider = "PAYHERE"
                         order.status = "AWAITING_PAYMENT"
                         db.commit()
-                        
+
                         pay_url = self.payhere.generate_checkout_url(
-                            order.token, 
+                            order.token,
                             order.total_amount,
                             {"phone": user_id, "first_name": user.name or "Valued"}
                         )
-                        
+
                         self.twilio_wa.send_text(user_id, f"Order {order.token} updated. 💳\n\nPlease use this secure link to complete your payment:\n{pay_url}\n\n⚠️ Payment must be made within 2 hours.")
                         UserState_wb.set_user_state(user_id, "main_menu")
                         return
@@ -196,11 +193,10 @@ class WhatsAppService_wb:
             if body in menu_mapping:
                 self._handle_button_click(user_id, menu_mapping[body])
                 return
-            
-            # Explicit order keywords
+
             if body in ["order medicine", "order now", "order"]:
                 self.twilio_wa.send_menu(
-                    user_id, 
+                    user_id,
                     "Please upload your prescription photo.",
                     [{"id": "back_to_main", "title": "Back to Main Menu"}]
                 )
@@ -211,7 +207,7 @@ class WhatsAppService_wb:
         if current_step == "awaiting_prescription" or state.get("last_action") == "sending_image":
             logger.info(f"[WB_SERVICE] Ignoring potential caption text: '{body}'")
             return
-        
+
         # Default
         self.send_main_menu(user_id)
 
@@ -220,10 +216,10 @@ class WhatsAppService_wb:
         Handle button clicks from interactive menus
         """
         logger.info(f"[WB_SERVICE] BUTTON_CLICK_HANDLER | User: {user_id} | Button: {button_id}")
-        
+
         if button_id == "order":
             self.twilio_wa.send_menu(
-                user_id, 
+                user_id,
                 "Please upload your prescription photo.",
                 [{"id": "back_to_main", "title": "Back to Main Menu"}]
             )
@@ -249,8 +245,7 @@ class WhatsAppService_wb:
 
             UserState_wb.set_user_state(user_id, "waiting_for_agent")
             self.twilio_wa.send_text(user_id, "You have been added to the queue.\nPlease wait for an available agent.\nType 'menu' to return to main menu.")
-            
-            # Schedule delay menu check after 20 seconds
+
             scheduler.add_job(
                 check_agent_delay,
                 'date',
@@ -263,29 +258,51 @@ class WhatsAppService_wb:
 
         elif button_id == "agent_faq":
             self.send_faq_menu(user_id)
-            
+
         elif button_id == "agent_continue":
             self.twilio_wa.send_text(user_id, "Thank you for your patience. An agent will be with you shortly.")
-            
+
         elif button_id == "back_to_main":
             self.send_main_menu(user_id)
-            
+
     def _handle_doctor_button(self, user_id: str):
         """
         Handles the doctor button click.
-        Sends instructions or interactive portal link.
-        Payment occurs on the portal
+        Checks if eChannelling is enabled for this pharmacy first.
         """
         logger.info(f"[WB_SERVICE] User {user_id} clicked DOCTOR button")
         from app.core.config import settings
-        
-    
+        from app.db import SessionLocal
+        from app import models
+
+        db = SessionLocal()
+        try:
+            setting    = db.query(models.PharmacySetting).filter_by(key="echannelling_enabled").first()
+            is_enabled = setting and setting.value.strip().lower() == "true"
+        finally:
+            db.close()
+
+        if not is_enabled:
+            self.twilio_wa.send_menu(
+                user_id,
+                (
+                    "*eChannelling Not Available*\n\n"
+                    "Sorry, this pharmacy does not currently offer doctor channelling services.\n\n"
+                    "Please contact the pharmacy directly for assistance.\n"
+                    "Type 'menu' to return to the main menu."
+                ),
+                [{"id": "back_to_main", "title": "Back to Main Menu"}]
+            )
+            UserState_wb.set_user_state(user_id, "main_menu")
+            return
+
         message = (
             "*Channel a Doctor*\n\n"
             "To book an appointment, please visit our secure portal:\n"
             f"🔗 {settings.BASE_URL}/channelling\n\n"
-            "Choose your doctor, pick a slot, and pay online.\n"
-            "We'll confirm it here instantly!\n\n"
+            "Choose your doctor, pick a slot, and complete your booking.\n"
+            "A small service charge is payable online at the time of booking.\n"
+            "Consultation fee is paid at the hospital.\n\n"
             "Tap Back to Main Menu or type 'menu' anytime."
         )
         self.twilio_wa.send_menu(
@@ -294,7 +311,6 @@ class WhatsAppService_wb:
             [{"id": "back_to_main", "title": "Back to Main Menu"}]
         )
         UserState_wb.set_user_state(user_id, "doctor_info")
-         
 
     def _handle_disease_updates(self, user_id: str):
         """
@@ -334,12 +350,11 @@ class WhatsAppService_wb:
         """
         logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id}")
         buttons = [
-            {"id": "order", "title": "Order Medicine"},
-            {"id": "doctor", "title": "Channel Doctor"},
+            {"id": "order",   "title": "Order Medicine"},
+            {"id": "doctor",  "title": "Channel Doctor"},
             {"id": "disease", "title": "Disease Updates"},
-            {"id": "agent", "title": "Contact Agent"}
+            {"id": "agent",   "title": "Contact Agent"}
         ]
-
         res = self.twilio_wa.send_menu(user_id, "Welcome Healix Pharm\nChoose an option:", buttons)
         logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id} | Response: {res['status']}")
         UserState_wb.set_user_state(user_id, "main_menu")
@@ -363,7 +378,7 @@ class WhatsAppService_wb:
         """
         logger.info(f"[WB_SERVICE] DELAY_MENU_SENT | User: {user_id}")
         buttons = [
-            {"id": "agent_faq", "title": "Try help bot"},
+            {"id": "agent_faq",      "title": "Try help bot"},
             {"id": "agent_continue", "title": "Continue waiting"}
         ]
         self.twilio_wa.send_menu(user_id, "We are experiencing a delay. Please choose:", buttons)
@@ -396,8 +411,8 @@ class WhatsAppService_wb:
         try:
             if selection == "faq_hours":
                 hours = db.query(models.PharmacySetting).filter_by(key="opening_hours").first()
-                loc = db.query(models.PharmacySetting).filter_by(key="location").first()
-                msg = f"📍 *Location & Hours*\n\n*Hours:* {hours.value if hours else 'Not set'}\n*Address:* {loc.value if loc else 'Not set'}"
+                loc   = db.query(models.PharmacySetting).filter_by(key="location").first()
+                msg   = f"📍 *Location & Hours*\n\n*Hours:* {hours.value if hours else 'Not set'}\n*Address:* {loc.value if loc else 'Not set'}"
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_delivery_areas":
@@ -420,7 +435,7 @@ class WhatsAppService_wb:
                         models.Order.user_id == user.id,
                         models.Order.status != "DELIVERED"
                     ).order_by(models.Order.created_at.desc()).first()
-                    
+
                     if order:
                         msg = f"📦 *Order Status*\n\nOrder Token: `{order.token}`\nCurrent Status: *{order.status}*\nPlaced on: {order.created_at.strftime('%Y-%m-%d')}"
                     else:
@@ -446,7 +461,7 @@ class WhatsAppService_wb:
             elif selection == "back_to_main":
                 self.send_main_menu(user_id)
                 return
-            
+
             self.send_faq_menu(user_id)
 
         finally:
@@ -458,7 +473,7 @@ class WhatsAppService_wb:
         """
         media_url = message_data.get("media_url")
         UserState_wb.set_last_action(user_id, "sending_image")
-        
+
         if not media_url:
             self.twilio_wa.send_text(user_id, "Couldn't process the image. Please re-upload.")
             return
@@ -473,12 +488,12 @@ class WhatsAppService_wb:
                 return
 
             presc_id = __import__("uuid").uuid4().hex
-            s3_key = upload_prescription(presc_id, image_bytes)
-            s3_url = generate_presigned_url(s3_key)
+            s3_key   = upload_prescription(presc_id, image_bytes)
+            s3_url   = generate_presigned_url(s3_key)
 
             db = SessionLocal()
             try:
-                user = get_or_create_user(db, phone=user_id)
+                user  = get_or_create_user(db, phone=user_id)
                 order, prescription = create_order_with_prescription(db, user, s3_key, s3_url)
                 token = order.token
             finally:
@@ -494,6 +509,7 @@ class WhatsAppService_wb:
     def send_order_flow(self, user_id: str): pass
     def send_reminder_flow(self, user_id: str): pass
     def send_disease_alert(self, user_id: str, alert_data: dict): pass
+
 
 def check_agent_delay(user_id: str):
     """
@@ -513,9 +529,9 @@ def check_agent_delay(user_id: str):
         ).first()
 
         if ticket:
-            state = UserState_wb.get_user_state(user_id)
+            state        = UserState_wb.get_user_state(user_id)
             current_step = state.get("current_step")
-            
+
             if current_step == "waiting_for_agent":
                 logger.info(f"[TIMER] Triggering delay menu for {user_id}")
                 service = WhatsAppService_wb()
