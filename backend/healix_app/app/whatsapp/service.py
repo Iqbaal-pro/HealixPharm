@@ -300,7 +300,7 @@ class WhatsAppService_wb:
                 ),
                 [{"id": "back_to_main", "title": "Back to Main Menu"}]
             )
-            UserState_wb.set_user_state(user_id, "main_menu")
+            UserState_wb.set_user_state(user_id, "doctor_info")
             return
 
         message = (
@@ -480,7 +480,7 @@ class WhatsAppService_wb:
         Process incoming prescription image
         """
         media_url = message_data.get("media_url")
-        UserState_wb.set_last_action(user_id, "sending_image")
+        UserState_wb.set_last_action(user_id, None)
 
         if not media_url:
             self.twilio_wa.send_text(user_id, "Couldn't process the image. Please re-upload.")
