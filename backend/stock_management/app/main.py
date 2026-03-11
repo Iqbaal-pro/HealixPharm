@@ -8,8 +8,6 @@ from fastapi import FastAPI
 
 from app.database.db import engine
 from app.database.base import Base
-from app.database.user_db import user_engine
-from app.database.user_base import UserBase
 from app.models.user import User  # noqa: F401
 from app.models.pharmacy import Pharmacy  # noqa: F401
 
@@ -38,9 +36,8 @@ logging.basicConfig(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start the refill scheduler on startup, stop on shutdown."""
-    # Startup
+    # Startup — single DB for everything
     Base.metadata.create_all(bind=engine)
-    UserBase.metadata.create_all(bind=user_engine)
     start_scheduler()
     yield
     # Shutdown

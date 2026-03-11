@@ -1,0 +1,45 @@
+﻿
+======================================================================
+RAILWAY DB VERIFICATION REPORT
+Tables in DB: 27
+Tables expected by code: 24
+======================================================================
+python : Traceback (most 
+recent call last):
+At line:1 char:1
++ python verify_db.py 2>&1 | 
+Out-File -FilePath 
+verify_output.txt -Enco ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecifi    ed: 
+(Traceback (mo    st recent 
+call las    t)::String) [], 
+Re    moteException
+    + FullyQualifiedEr    
+rorId : NativeComm    
+andError
+ 
+  File "E:\download\HealixPha
+rm\backend\stock_management\v
+erify_db.py", line 143, in 
+<module>
+    print(f"\n\u2705 
+MATCHING TABLES 
+({len(ok_tables)}):")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ADMIN\Deskto
+p\Lib\encodings\cp1252.py", 
+line 19, in encode
+    return codecs.charmap_enc
+ode(input,self.errors,encodin
+g_table)[0]
+           ~~~~~~~~~~~~~~~~~~
+~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't encode 
+character '\u2705' in 
+position 2: character maps 
+to <undefined>

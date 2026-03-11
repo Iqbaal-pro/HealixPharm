@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.database.user_db import UserSessionLocal
+from app.database.db import SessionLocal
 from app.services.auth_service import AuthService
 from app.services.auth_token_service import create_access_token, decode_access_token
 
@@ -33,7 +33,7 @@ class LoginRequest(BaseModel):
 
 
 def get_user_db():
-    db = UserSessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:

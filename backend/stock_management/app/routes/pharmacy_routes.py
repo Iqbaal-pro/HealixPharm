@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.database.user_db import UserSessionLocal
+from app.database.db import SessionLocal
 from app.routes.auth_routes import get_current_auth_context
 from app.services.auth_service import AuthService
 
@@ -23,7 +23,7 @@ class PharmacyUpdateRequest(BaseModel):
 
 
 def get_user_db():
-    db = UserSessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:

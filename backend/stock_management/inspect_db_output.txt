@@ -1,159 +1,162 @@
 ﻿
-DATABASE: healixpharm
+DATABASE: railway (Railway)
 TABLES FOUND: 12
-============================================================
+======================================================================
 
 --- inventory (12 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  medicine_id                    int                       FK    NOT NULL   
-  batch_id                       int                             nullable   
-  quantity_available             int                             NOT NULL   
-  quantity_reserved              int                             NOT NULL   0
-  quantity_damaged               int                             NOT NULL   0
-  quantity_expired               int                             NOT NULL   0
-  reorder_level                  int                             NOT NULL   
-  reorder_quantity               int                             nullable   
-  turnover_rate                  float                           nullable   
-  last_stock_update              datetime                        nullable   CURRENT_TIMESTAMP
-  last_dispensed_at              datetime                        nullable   
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  medicine_id                    int                            FK    nullable   
+  batch_id                       int                            FK    nullable   
+  quantity_available             int                                  nullable   0
+  quantity_reserved              int                                  nullable   0
+  quantity_damaged               int                                  nullable   0
+  quantity_expired               int                                  nullable   0
+  reorder_level                  int                                  nullable   20
+  reorder_quantity               int                                  nullable   
+  turnover_rate                  decimal(10,4)                        nullable   
+  last_stock_update              datetime                             nullable   
+  last_dispensed_at              datetime                             nullable   
 
---- issued_items (4 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  prescription_id                int                       FK    NOT NULL   
-  medicine_id                    int                       FK    NOT NULL   
-  quantity_issued                int                             NOT NULL   
-
---- medicine_batches (11 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  medicine_id                    int                       FK    NOT NULL   
-  batch_number                   varchar(50)                     NOT NULL   
-  supplier_id                    int                             nullable   
-  manufacture_date               datetime                        NOT NULL   
-  expiry_date                    datetime                        NOT NULL   
-  cost_price                     float                           NOT NULL   
-  received_date                  datetime                        nullable   
-  created_at                     datetime                        nullable   
-  is_active                      tinyint(1)                      nullable   
-  is_expired                     tinyint(1)                      nullable   
+--- medicine_batches (12 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  medicine_id                    int                            FK    nullable   
+  batch_number                   varchar(50)                          nullable   
+  manufacture_date               datetime                             nullable   
+  expiry_date                    datetime                             nullable   
+  received_date                  datetime                             nullable   CURRENT_TIMESTAMP
+  cost_price                     float                                nullable   
+  supplier_id                    int                                  nullable   
+  supplier_name                  varchar(100)                         nullable   
+  is_active                      tinyint(1)                           nullable   
+  is_expired                     tinyint(1)                           nullable   
+  created_at                     datetime                             nullable   CURRENT_TIMESTAMP
 
 --- medicines (15 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  name                           varchar(100)                    NOT NULL   
-  sku                            varchar(50)               UNI   nullable   
-  dosage_form                    varchar(50)                     NOT NULL   
-  strength                       varchar(50)                     nullable   
-  unit_of_measurement            varchar(20)                     NOT NULL   tablet
-  category                       varchar(100)                    nullable   
-  manufacturer                   varchar(100)                    nullable   
-  registration_number            varchar(50)                     nullable   
-  cost_price                     float                           NOT NULL   0
-  selling_price                  float                           NOT NULL   0
-  minimum_stock_threshold        int                             nullable   10
-  maximum_stock_level            int                             nullable   
-  is_active                      tinyint(1)                      nullable   1
-  created_at                     datetime                        nullable   CURRENT_TIMESTAMP
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  name                           varchar(100)                         nullable   
+  sku                            varchar(50)                    UNI   nullable   
+  dosage_form                    varchar(50)                          nullable   
+  strength                       varchar(50)                          nullable   
+  unit_of_measurement            varchar(20)                          nullable   tablets
+  category                       varchar(100)                         nullable   
+  manufacturer                   varchar(100)                         nullable   
+  registration_number            varchar(50)                          nullable   
+  cost_price                     decimal(10,2)                        nullable   
+  selling_price                  decimal(10,2)                        nullable   
+  minimum_stock_threshold        int                                  nullable   10
+  maximum_stock_level            int                                  nullable   
+  is_active                      tinyint(1)                           nullable   
+  created_at                     datetime                             nullable   CURRENT_TIMESTAMP
 
---- patients (6 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  name                           varchar(100)                    NOT NULL   
-  phone_number                   varchar(20)                     NOT NULL   
-  language                       varchar(10)                     nullable   
-  consent                        tinyint(1)                      nullable   
-  created_at                     datetime                        nullable   
+--- patients (5 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  name                           varchar(600)                         nullable   
+  phone_number                   varchar(600)                   UNI   nullable   
+  language                       varchar(600)                         nullable   
+  date_of_birth                  varchar(600)                         nullable   
 
---- prescriptions (9 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  patient_id                     int                             NOT NULL   
-  doctor_id                      int                             NOT NULL   
-  uploaded_by_staff_id           int                             NOT NULL   
-  medicine_name                  varchar(100)                    NOT NULL   
-  dose_quantity                  int                             NOT NULL   
-  interval_hours                 int                             NOT NULL   
-  meal_timing                    varchar(50)                     NOT NULL   
-  start_time                     datetime                        NOT NULL   
+--- pharmacies (13 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  user_id                        int                            FK    NOT NULL   
+  pharmacy_name                  varchar(100)                         NOT NULL   
+  contact_number                 varchar(20)                          nullable   
+  whatsapp_number                varchar(20)                          nullable   
+  address                        text                                 nullable   
+  opening_hours                  text                                 nullable   
+  estimated_delivery_time        varchar(50)                          nullable   
+  service_areas                  varchar(100)                         nullable   
+  service_charge                 float                                nullable   
+  prescription_policy            text                                 nullable   
+  refund_policy                  text                                 nullable   
+  created_at                     datetime                             nullable   CURRENT_TIMESTAMP
 
---- reminder_logs (6 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  reminder_id                    int                       FK    NOT NULL   
-  attempt_time                   datetime                        nullable   
-  channel                        varchar(20)                     nullable   
-  result                         varchar(20)                     NOT NULL   
-  error_message                  text                            nullable   
+--- prescriptions (13 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  patient_id                     int                                  NOT NULL   
+  staff_id                       int                                  NOT NULL   
+  medicine_id                    int                                  NOT NULL   
+  prescription_type              enum('dose','refill','stock','general')       NOT NULL   
+  total_quantity                 int                                  nullable   
+  dose_quantity                  int                                  nullable   
+  dose_per_day                   int                                  nullable   
+  interval_hours                 int                                  nullable   
+  meal_timing                    varchar(50)                          nullable   
+  start_time                     datetime                             nullable   
+  duration_days                  int                                  nullable   
+  status                         enum('active','completed','cancelled')       nullable   active
 
---- reminders (8 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  prescription_id                int                             NOT NULL   
-  medicine_name                  varchar(255)                    NOT NULL   
-  dose_quantity                  int                             NOT NULL   
-  meal_timing                    varchar(50)                     NOT NULL   
-  reminder_time                  datetime                        NOT NULL   
-  status                         varchar(20)                     nullable   pending
-  created_at                     timestamp                       nullable   CURRENT_TIMESTAMP
+--- reminder_logs (5 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  reminder_id                    int                            FK    nullable   
+  attempt_time                   datetime                             nullable   
+  result                         varchar(20)                          nullable   
+  error_message                  varchar(255)                         nullable   
 
---- stock_adjustments (11 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  medicine_id                    int                       FK    NOT NULL   
-  batch_id                       int                       FK    NOT NULL   
-  adjustment_quantity            int                             NOT NULL   
-  adjustment_type                varchar(50)                     NOT NULL   
-  reason                         text                            nullable   
-  cost_impact                    int                             nullable   
-  staff_id                       int                             NOT NULL   
-  approved_by                    int                             nullable   
-  approved_at                    datetime                        nullable   
-  created_at                     datetime                        nullable   
+--- reminders (5 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  prescription_id                int                            FK    NOT NULL   
+  reminder_type                  enum('dose','refill')                NOT NULL   
+  reminder_time                  datetime                             NOT NULL   
+  status                         enum('pending','sent','failed')       NOT NULL   pending
 
---- stock_alerts (12 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  medicine_id                    int                       FK    NOT NULL   
-  batch_id                       int                       FK    nullable   
-  alert_type                     varchar(50)                     NOT NULL   
-  current_quantity               int                             NOT NULL   
-  threshold_value                int                             NOT NULL   
-  is_active                      tinyint(1)                      nullable   
-  is_acknowledged                tinyint(1)                      nullable   
-  acknowledged_by                int                             nullable   
-  acknowledged_at                datetime                        nullable   
-  created_at                     datetime                        nullable   
-  resolved_at                    datetime                        nullable   
+--- staff (8 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  name                           varchar(100)                         NOT NULL   
+  email                          varbinary(255)                 UNI   nullable   
+  phone                          varbinary(255)                       nullable   
+  role                           varchar(50)                          nullable   
+  is_active                      int                                  nullable   1
+  created_at                     datetime                             nullable   CURRENT_TIMESTAMP
+  password_hash                  varchar(255)                         NOT NULL   
 
---- stock_logs (4 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  medicine_id                    int                       FK    NOT NULL   
-  quantity_used                  int                             NOT NULL   
-  logged_at                      datetime                        nullable   CURRENT_TIMESTAMP
+--- stock_transactions (9 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  medicine_id                    int                                  NOT NULL   
+  batch_id                       int                                  NOT NULL   
+  transaction_type               enum('received_stock','dispensed','damaged','expired')       NOT NULL   
+  quantity_change                int                                  NOT NULL   
+  reference_id                   int                                  nullable   
+  staff_id                       int                                  NOT NULL   
+  reason                         varchar(255)                         nullable   
+  created_at                     datetime                             NOT NULL   CURRENT_TIMESTAMP
 
---- stock_updates (6 columns) ---
-  Column                         Type                      Key   Null       Default
-  ------------------------------ ------------------------- ----- ---------- ---------------
-  id                             int                       PK    NOT NULL   
-  medicine_id                    int                       FK    NOT NULL   
-  quantity_added                 int                             NOT NULL   
-  supplier_name                  varchar(100)                    nullable   
-  staff_id                       int                             NOT NULL   
-  updated_at                     datetime                        nullable   CURRENT_TIMESTAMP
+--- users (5 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  username                       varchar(50)                    UNI   NOT NULL   
+  email                          varchar(100)                   UNI   NOT NULL   
+  password                       varchar(255)                         NOT NULL   
+  created_at                     datetime                             nullable   CURRENT_TIMESTAMP
 
-============================================================
+--- whatsapp_users (5 columns) ---
+  Column                         Type                           Key   Null       Default
+  ------------------------------ ------------------------------ ----- ---------- ---------------
+  id                             int                            PK    NOT NULL   
+  name                           varchar(100)                         nullable   
+  phone_number                   varchar(20)                    UNI   nullable   
+  role                           varchar(20)                          nullable   
+  created_at                     timestamp                            nullable   CURRENT_TIMESTAMP
+
+======================================================================
 Done!

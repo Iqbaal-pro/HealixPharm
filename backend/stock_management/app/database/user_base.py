@@ -1,4 +1,7 @@
-from sqlalchemy.orm import declarative_base
+# ──────────────────────────────────────────────────────────────
+# This file is no longer used.
+# All models now use the main Base from app.database.base.
+# Kept for reference only — safe to delete.
+# ──────────────────────────────────────────────────────────────
 
-# Separate base for user-management database models
-UserBase = declarative_base()
+# User and Pharmacy models now use: from app.database.base import Base

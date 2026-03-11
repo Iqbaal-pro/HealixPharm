@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, text
 
-from app.database.user_base import UserBase
+from app.database.base import Base
 
 
-class Pharmacy(UserBase):
+class Pharmacy(Base):
     __tablename__ = "pharmacies"
 
     id = Column(Integer, primary_key=True, index=True)
