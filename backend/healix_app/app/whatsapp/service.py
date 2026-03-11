@@ -7,7 +7,7 @@ from app.services.s3_service import upload_prescription, generate_presigned_url
 from app.services.order_service import get_or_create_user, create_order_with_prescription, create_support_ticket, close_all_user_tickets, add_support_message
 from app.services.notification_service import NotificationService
 from app.services.payhere_service import PayHereService
-from app.services.whatsapp_auth_service import WhatsAppAuthService
+# from app.services.whatsapp_auth_service import WhatsAppAuthService
 from app.db import SessionLocal
 from app import models
 from app.core.scheduler import scheduler
@@ -35,14 +35,14 @@ class WhatsAppService_wb:
         logger.info(f"[WB_SERVICE] Handling message from user {user_id} | Type: {message_type}")
         
         # 1. Patient Verification Check
-        db = SessionLocal()
-        try:
-            if not WhatsAppAuthService.is_authenticated(db, user_id):
-                logger.warning(f"[WB_SERVICE] Access denied for unregistered user: {user_id}")
-                self.twilio_wa.send_text(user_id, "Sorry, this service is only available for registered patients of Healix Pharm. Please contact the pharmacy to register.")
-                return
-        finally:
-            db.close()
+        # db = SessionLocal()
+        # try:
+        #     if not WhatsAppAuthService.is_authenticated(db, user_id):
+        #         logger.warning(f"[WB_SERVICE] Access denied for unregistered user: {user_id}")
+        #         self.twilio_wa.send_text(user_id, "Sorry, this service is only available for registered patients of Healix Pharm. Please contact the pharmacy to register.")
+        #         return
+        # finally:
+        #     db.close()
 
         state = UserState_wb.get_user_state(user_id)
         is_first = state.get("is_first_message", False)
@@ -52,12 +52,12 @@ class WhatsAppService_wb:
             UserState_wb.set_user_state(user_id, state["current_step"], {"is_first_message": False})
             
             # Welcome & Guidance (sent in order)
-            self.twilio_wa.send_text(user_id, "Welcome to Healix Pharm")
+            self.twilio_wa.send_text(user_id, "Welcome to HealixPharm")
             
             guidance = (
                 "📖 *How to use Healix Pharm Bot:*\n\n"
-                "1️⃣ *Select* an option from the menu below.\n"
-                "2️⃣ *Follow* the prompts (e.g., upload prescription).\n"
+                "1️⃣ *Select* an option from the menu below.\n\n"
+                "2️⃣ *Follow* the prompts (e.g., upload prescription).\n\n"
                 "3️⃣ *Type* 'menu' or 'hi' anytime to return home."
             )
             self.twilio_wa.send_text(user_id, guidance)
@@ -104,6 +104,12 @@ class WhatsAppService_wb:
         # 2. STATE CHECK
         state = UserState_wb.get_user_state(user_id)
         current_step = state.get("current_step", "main_menu")
+        
+        # Universal Back to Main Menu handler
+        if body == "1" and current_step in ["disease_info", "doctor_info"]:
+            logger.info(f"[WB_SERVICE] User {user_id} selected Back to Main Menu")
+            self.send_main_menu(user_id)
+            return
         
         # Mappings
         faq_menu_mapping = {
@@ -340,7 +346,7 @@ class WhatsAppService_wb:
             {"id": "agent", "title": "Contact Agent"}
         ]
 
-        res = self.twilio_wa.send_menu(user_id, "Welcome Healix Pharm\nChoose an option:", buttons)
+        res = self.twilio_wa.send_menu(user_id, "Choose an option:", buttons)
         logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id} | Response: {res['status']}")
         UserState_wb.set_user_state(user_id, "main_menu")
 
