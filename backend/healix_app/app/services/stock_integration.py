@@ -88,3 +88,90 @@ class StockIntegrationService:
             return False
         finally:
             db.close()
+
+    def check_stock_availability(self, medicine_id: int, quantity: int) -> dict:
+        """
+        Check if enough stock is available for a medicine.
+        Available = quantity_available - quantity_reserved
+        """
+        db = StockSession()
+        try:
+            sql = text("""
+                SELECT quantity_available, quantity_reserved,
+                       (quantity_available - quantity_reserved) AS available
+                FROM inventory
+                WHERE medicine_id = :mid
+                LIMIT 1
+            """)
+            row = db.execute(sql, {"mid": medicine_id}).first()
+            if not row:
+                return {"available": 0, "sufficient": False, "message": "No inventory record found"}
+            mapping = row._mapping
+            available = mapping["available"]
+            return {
+                "quantity_available": mapping["quantity_available"],
+                "quantity_reserved": mapping["quantity_reserved"],
+                "available": available,
+                "requested": quantity,
+                "sufficient": available >= quantity,
+            }
+        except Exception as e:
+            logger.error(f"[STOCK_BRIDGE] Availability check failed: {e}")
+            return {"available": 0, "sufficient": False, "message": str(e)}
+        finally:
+            db.close()
+
+    def get_available_stock(self, medicine_id: int) -> dict:
+        """
+        Get full stock info for a medicine including name and pricing.
+        """
+        db = StockSession()
+        try:
+            sql = text("""
+                SELECT m.id, m.name, m.selling_price, m.cost_price,
+                       m.unit_of_measurement, m.is_active,
+                       COALESCE(i.quantity_available, 0) AS quantity_available,
+                       COALESCE(i.quantity_reserved, 0) AS quantity_reserved,
+                       COALESCE(i.quantity_damaged, 0) AS quantity_damaged,
+                       COALESCE(i.quantity_available - i.quantity_reserved, 0) AS net_available
+                FROM medicines m
+                LEFT JOIN inventory i ON m.id = i.medicine_id
+                WHERE m.id = :mid
+            """)
+            row = db.execute(sql, {"mid": medicine_id}).first()
+            if not row:
+                return None
+            return dict(row._mapping)
+        except Exception as e:
+            logger.error(f"[STOCK_BRIDGE] Get stock failed: {e}")
+            return None
+        finally:
+            db.close()
+
+    def deduct_stock(self, medicine_id: int, quantity: int):
+        """
+        Finalize stock deduction when order is fulfilled/delivered.
+        Decreases quantity_available and clears the reserved amount.
+        """
+        db = StockSession()
+        try:
+            sql = text("""
+                UPDATE inventory 
+                SET quantity_available = GREATEST(0, quantity_available - :qty),
+                    quantity_reserved = GREATEST(0, quantity_reserved - :qty),
+                    last_dispensed_at = NOW(),
+                    last_stock_update = NOW()
+                WHERE medicine_id = :mid 
+                LIMIT 1
+            """)
+            db.execute(sql, {"qty": quantity, "mid": medicine_id})
+            db.commit()
+            logger.info(f"[STOCK_BRIDGE] Deducted {quantity} units for med_id {medicine_id}")
+            return True
+        except Exception as e:
+            logger.error(f"[STOCK_BRIDGE] Deduction failed: {e}")
+            db.rollback()
+            return False
+        finally:
+            db.close()
+

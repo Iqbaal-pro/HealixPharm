@@ -72,10 +72,23 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
     total_amount = 0.0
     order_items = []
 
+    # First pass: check availability for ALL items before reserving any
     for item in payload.items:
         med_details = stock_bridge.get_medicine_details(item.medicine_id)
         if not med_details:
             raise HTTPException(status_code=400, detail=f"Medicine ID {item.medicine_id} not found in Stock DB")
+
+        availability = stock_bridge.check_stock_availability(item.medicine_id, item.quantity)
+        if not availability["sufficient"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient stock for {med_details['name']}: "
+                       f"requested {item.quantity}, available {availability['available']}"
+            )
+
+    # Second pass: reserve stock and build order items
+    for item in payload.items:
+        med_details = stock_bridge.get_medicine_details(item.medicine_id)
 
         success = stock_bridge.reserve_stock(item.medicine_id, item.quantity)
         if not success:
@@ -178,6 +191,104 @@ def confirm_payment(order_id: int, db: Session = Depends(get_db)):
         logger.error(f"Failed to send payment confirmation: {e}")
         
     return {"status": "PAID", "order_id": order.id}
+
+
+@router.get("/medicines/{medicine_id}/stock")
+def get_medicine_stock(medicine_id: int):
+    """
+    Get real-time stock availability for a medicine from the Stock Management DB.
+    Returns price, available quantity, reserved quantity, and net available.
+    """
+    stock_info = stock_bridge.get_available_stock(medicine_id)
+    if not stock_info:
+        raise HTTPException(status_code=404, detail="Medicine not found in Stock DB")
+    return stock_info
+
+
+@router.post("/orders/{order_id}/fulfill")
+def fulfill_order(order_id: int, db: Session = Depends(get_db)):
+    """
+    Mark order as delivered/fulfilled.
+    Deducts stock from quantity_available and clears quantity_reserved in Stock DB.
+    Sends WhatsApp delivery confirmation to customer.
+    """
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if order.status not in ["PAID", "CONFIRMED"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot fulfill order in '{order.status}' status. Must be PAID or CONFIRMED."
+        )
+
+    # Deduct stock for each order item
+    for item in order.items:
+        success = stock_bridge.deduct_stock(item.medicine_id, item.quantity)
+        if not success:
+            logger.error(f"Failed to deduct stock for med_id {item.medicine_id} in order {order_id}")
+
+    order.status = "DELIVERED"
+    db.commit()
+
+    # Notify customer
+    try:
+        item_lines = "\n".join([f"  • {i.medicine_name} x{i.quantity} — Rs. {i.subtotal:.2f}" for i in order.items])
+        msg = (
+            f"Your order {order.token} has been delivered! 🚚✅\n\n"
+            f"Items:\n{item_lines}\n\n"
+            f"Total: Rs. {order.total_amount:.2f}\n\n"
+            f"Thank you for choosing Healix Pharm! 💊"
+        )
+        notif.twilio_wa.send_text(order.user.phone, msg)
+    except Exception as e:
+        logger.error(f"Failed to send delivery notification: {e}")
+
+    return {
+        "id": order.id,
+        "token": order.token,
+        "status": "DELIVERED",
+        "items_fulfilled": len(order.items)
+    }
+
+
+@router.post("/orders/{order_id}/cancel")
+def cancel_order(order_id: int, db: Session = Depends(get_db)):
+    """
+    Cancel an order and release all reserved stock.
+    Sends WhatsApp cancellation notification to customer.
+    """
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    if order.status == "DELIVERED":
+        raise HTTPException(status_code=400, detail="Cannot cancel a delivered order")
+
+    # Release reserved stock for each item
+    for item in order.items:
+        stock_bridge.release_stock(item.medicine_id, item.quantity)
+
+    order.status = "CANCELLED"
+    order.cancelled_at = datetime.utcnow()
+    db.commit()
+
+    # Notify customer
+    try:
+        notif.twilio_wa.send_text(
+            order.user.phone,
+            f"Your order {order.token} has been cancelled. ❌\n"
+            f"If you need help, type 'menu' to reach us."
+        )
+    except Exception as e:
+        logger.error(f"Failed to send cancellation notification: {e}")
+
+    return {
+        "id": order.id,
+        "token": order.token,
+        "status": "CANCELLED"
+    }
+
 
 @router.get("/support/queue")
 def list_support_queue(db: Session = Depends(get_db)):
