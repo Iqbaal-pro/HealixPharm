@@ -7,7 +7,7 @@ import {
   saveAuthToStorage,
   type PharmacyResponse,
   type UserResponse,
-} from "../routes/authRoutes";
+} from "@/app/routes/authRoutes";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
