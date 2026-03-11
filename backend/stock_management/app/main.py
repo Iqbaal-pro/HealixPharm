@@ -64,6 +64,37 @@ app.include_router(auth_router)
 app.include_router(pharmacy_router)
 
 
+# ─── Custom OpenAPI for Swagger BearerAuth ──────────────────────────
+from fastapi.openapi.utils import get_openapi
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Define Security Scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    
+    # Apply security globally or to specific paths if needed
+    # Here we just define the scheme so the Authorize button appears
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
+
 @app.get("/")
 def root():
     return {
