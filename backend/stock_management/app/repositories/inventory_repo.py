@@ -20,3 +20,14 @@ class InventoryRepository:
         return not self.db.query(Inventory).filter(
             Inventory.medicine_name == name
         ).first()
+
+    def get_all(self):
+        return self.db.query(Inventory).all()
+
+    def get_low_stock(self):
+        return self.db.query(Inventory).filter(
+            Inventory.quantity_available <= Inventory.reorder_level
+        ).all()
+
+    def get_low_stocks(self):
+        return self.get_low_stock()
