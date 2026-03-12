@@ -298,8 +298,8 @@ def list_support_queue(db: Session = Depends(get_db)):
     for t in tickets:
         result.append({
             "id": t.id,
-            "user_id": t.user_id,
-            "user_phone": t.user.phone if t.user else None,
+            "patient_id": t.patient_id,
+            "user_phone": t.patient.phone_number if t.patient else None,
             "created_at": t.created_at.isoformat() if t.created_at else None,
         })
     return result

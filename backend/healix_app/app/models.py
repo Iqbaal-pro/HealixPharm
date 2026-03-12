@@ -13,22 +13,17 @@ class User(Base):
     name = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    orders = relationship("Order", back_populates="user")
-    support_tickets = relationship("SupportTicket", back_populates="user")
-
 
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Staff ID
-    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=True) # WhatsApp Patient ID
+    patient_id = Column("user_id", Integer, ForeignKey("patients.id"), nullable=True)
     agent_id = Column(String(50), nullable=True)  # Name or ID of the pharmacy agent
     status = Column(String(50), default="WAITING")  # WAITING, ACTIVE, COMPLETED
     created_at = Column(DateTime, default=datetime.utcnow)  # using datetime.utcnow
     accepted_at = Column(DateTime, nullable=True)
 
-    user = relationship("User", back_populates="support_tickets")
     patient = relationship("Patient", back_populates="support_tickets")
     messages = relationship("SupportMessage", back_populates="ticket")
 
@@ -54,7 +49,6 @@ class Patient(Base):
     date_of_birth = Column(String(600), nullable=True)
     consent = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
-    is_active = Column(Boolean, default=True)
 
     orders = relationship("Order", back_populates="patient")
     support_tickets = relationship("SupportTicket", back_populates="patient")
@@ -94,8 +88,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     token = Column(String(64), unique=True, index=True, nullable=False)
     status = Column(String(64), nullable=False, default="PENDING_VERIFICATION")
-    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Staff link
+    patient_id = Column("user_id", Integer, ForeignKey("patients.id"), nullable=False)
     
     # Fulfillment & Payment Fields
     total_amount = Column(Float, nullable=True)
@@ -112,7 +105,6 @@ class Order(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     patient = relationship("Patient", back_populates="orders")
-    user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order")
     prescription = relationship("Prescription", back_populates="order", uselist=False)
     payments = relationship("Payment", back_populates="order")
