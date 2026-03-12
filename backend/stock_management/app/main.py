@@ -5,6 +5,7 @@ Registers all routers and starts the background refill scheduler.
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.db import engine
 from app.database.base import Base
@@ -50,6 +51,16 @@ app = FastAPI(
     description="Stock management with patient reminders and refill tracking",
     version="2.0.0",
     lifespan=lifespan
+)
+
+# ─── CORS Middleware ───────────────────────────────────────────────
+# Allow all origins for now (can be restricted to Vercel URL later)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace with specific Vercel URL if desired
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ─── Register all routers ──────────────────────────────────────────
