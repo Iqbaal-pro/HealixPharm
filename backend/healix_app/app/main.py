@@ -9,8 +9,11 @@ from app.admin.routes import router as admin_router
 # Payments router
 from app.payments.routes import router as payments_router
 # echannelling
-from app import channelling_models
 from app.channelling_routes import router as channelling_router
+from app.image_routes import router as image_router
+from app.notification_routes import router as notification_router
+from app.storage_routes import router as storage_router
+from app.auth_routes import router as auth_router
 # Scheduler
 from app.core.scheduler import scheduler
 from app.core.fulfillment_scheduler import monitor_fulfillment
@@ -28,6 +31,10 @@ app.include_router(whatsapp_router)
 app.include_router(admin_router)
 app.include_router(payments_router)
 app.include_router(channelling_router)
+app.include_router(image_router)
+app.include_router(notification_router)
+app.include_router(storage_router)
+app.include_router(auth_router)
 
 # Ensure database tables exist
 Base.metadata.create_all(bind=engine)

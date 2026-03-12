@@ -27,6 +27,12 @@ def get_db():
         db.close()
 
 
+from pydantic import BaseModel
+
+class CreateReminderRequest(BaseModel):
+    prescription_id: int
+    one_time: bool = False
+
 # ─── Pharmacist checkbox: send one-time reminder immediately ────────
 @router.post("/send-one-time/{prescription_id}")
 def send_one_time(prescription_id: int, db: Session = Depends(get_db)):
@@ -45,6 +51,21 @@ def send_one_time(prescription_id: int, db: Session = Depends(get_db)):
         "patient": result["patient_name"],
         "medicine": result["medicine"]
     }
+
+
+# ─── Create a new reminder manually ───────────────────────────────
+@router.post("/create")
+def create_new_reminder(payload: CreateReminderRequest, db: Session = Depends(get_db)):
+    """Insert a new reminder row in the REMINDERS table."""
+    try:
+        reminder = create_reminder(db, payload.prescription_id, payload.one_time)
+        return {
+            "message": "Reminder created successfully",
+            "reminder_id": reminder.id,
+            "status": reminder.status
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 # ─── Pharmacist checkbox: mark prescription as continuous ───────────
