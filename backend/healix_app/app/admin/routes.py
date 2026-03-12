@@ -7,6 +7,7 @@ from app import models
 from app.admin import schemas
 from app.services.notification_service import NotificationService
 from app.services.stock_integration import StockIntegrationService
+from app.services import alert_service
 from app.whatsapp.state import UserState_wb
 import logging
 from datetime import datetime
@@ -437,3 +438,8 @@ def create_moh_alert(payload: schemas.AlertCreate, db: Session = Depends(get_db)
     db.refresh(new_alert)
 
     return new_alert
+
+@router.get("/alerts/active", response_model=List[schemas.AlertResponseSchema])
+def list_active_moh_alerts(db: Session = Depends(get_db)):
+    """List all currently active MOH disease alerts."""
+    return alert_service.get_all_active_alerts(db)

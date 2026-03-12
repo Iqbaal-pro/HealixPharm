@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database.db import SessionLocal
-from app.services.stock_update_service import StockLogService
+from app.services.stock_update_service import StockUpdateService
 from app.repositories.prescription_repo import PrescriptionRepository
 from app.repositories.inventory_repo import InventoryRepository
 from app.repositories.stock_log_repo import StockLogRepository
@@ -109,15 +109,14 @@ def issue_medicine(
     """
 
     inventory_repo = InventoryRepository(db)
-    stock_log_repo = StockLogRepository(db)
-    stock_service = StockLogService(
-        inventory_repo,
-        stock_log_repo
-    )
+    stock_service = StockUpdateService()
 
     inventory = inventory_repo.get_by_medicine_id(medicine_id)
+    if not inventory:
+        raise HTTPException(status_code=404, detail="Inventory record not found")
 
     updated_inventory = stock_service.issue_medicine(
+        db=db,
         inventory=inventory,
         issued_quantity=quantity
     )

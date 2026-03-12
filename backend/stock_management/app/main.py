@@ -21,11 +21,8 @@ from app.routes.batch_routes import router as batch_router
 from app.routes.analytics_routes import router as analytics_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.pharmacy_routes import router as pharmacy_router
-<<<<<<< HEAD
 from app.routes.alert_routes import router as alert_router
-=======
 from app.routes.refill_routes import router as refill_router
->>>>>>> 19e1ec98e3c6fb8a69bd6b0e04a8281d0acec018
 
 # ─── Import scheduler ──────────────────────────────────────────────
 from app.services.scheduler_service import start_scheduler, stop_scheduler
@@ -67,11 +64,8 @@ app.include_router(batch_router)
 app.include_router(analytics_router)
 app.include_router(auth_router)
 app.include_router(pharmacy_router)
-<<<<<<< HEAD
 app.include_router(alert_router)
-=======
 app.include_router(refill_router)
->>>>>>> 19e1ec98e3c6fb8a69bd6b0e04a8281d0acec018
 
 
 # ─── Custom OpenAPI for Swagger BearerAuth ──────────────────────────
@@ -120,10 +114,7 @@ def root():
             "/analytics",
             "/auth",
             "/pharmacy",
-<<<<<<< HEAD
-            "/alerts"
-=======
+            "/alerts",
             "/refill"
->>>>>>> 19e1ec98e3c6fb8a69bd6b0e04a8281d0acec018
         ]
     }

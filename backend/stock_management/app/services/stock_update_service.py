@@ -123,13 +123,46 @@ class StockUpdateService:
         """
         Check if enough stock is available for a medicine
         """
-        total_available = db.query(Inventory).filter(
+        inventory = db.query(Inventory).filter(
             Inventory.medicine_id == medicine_id
-        ).with_entities(
-            db.func.sum(Inventory.quantity_available)
-        ).scalar()
+        ).first()
+        
+        if not inventory:
+            return False
+            
+        return inventory.quantity_available >= required_quantity
 
-        return total_available >= required_quantity if total_available else False
+    def issue_medicine(
+        self,
+        db: Session,
+        inventory: Inventory,
+        issued_quantity: int,
+        staff_id: int = None
+    ):
+        """
+        Issue medicine from specific inventory record
+        Records log and updates quantity
+        """
+        if inventory.quantity_available < issued_quantity:
+            raise ValueError("Not enough stock in this batch")
+            
+        inventory.quantity_available -= issued_quantity
+        inventory.last_stock_update = datetime.utcnow()
+        db.add(inventory)
+        
+        # Log it
+        log = StockLog(
+            medicine_id=inventory.medicine_id,
+            batch_id=inventory.batch_id,
+            quantity_used=issued_quantity,
+            reason="prescription",
+            staff_id=staff_id,
+            logged_at=datetime.utcnow()
+        )
+        db.add(log)
+        db.commit()
+        db.refresh(inventory)
+        return inventory
 
 
 class StockLogService:
