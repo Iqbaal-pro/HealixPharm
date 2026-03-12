@@ -60,3 +60,14 @@ services:
         sync: false
       - key: S3_BUCKET_NAME
         sync: false
+
+  - type: web
+    name: healix-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NEXT_PUBLIC_BOT_API_URL
+        sync: false
