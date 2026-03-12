@@ -34,7 +34,7 @@ def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
     result = []
     for o in orders:
         res = schemas.OrderSimpleSchema.from_orm(o)
-        res.phone = o.user.phone
+        res.phone = o.patient.phone_number
         result.append(res)
     return result
 
@@ -47,7 +47,7 @@ def get_order_details(order_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Order not found")
     
     res = schemas.OrderDetailSchema.from_orm(order)
-    res.phone = order.user.phone
+    res.phone = order.patient.phone_number
     if order.prescription:
         res.prescription_url = order.prescription.s3_url
     return res
@@ -112,7 +112,7 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
     order.total_amount = total_amount
     order.approved_at = datetime.utcnow()
     
-    UserState_wb.set_user_state(order.user.phone, "awaiting_payment_selection")
+    UserState_wb.set_user_state(order.patient.phone_number, "awaiting_payment_selection")
     
     db.commit()
 
@@ -125,9 +125,9 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
             f"2️⃣ Online Payment\n\n"
             f"⚠️ Please confirm within 2 hours or the order will be cancelled."
         )
-        notif.twilio_wa.send_text(order.user.phone, msg)
+        notif.twilio_wa.send_text(order.patient.phone_number, msg)
     except Exception as e:
-        logger.error(f"Failed to send approval message to {order.user.phone}: {e}")
+        logger.error(f"Failed to send approval message to {order.patient.phone_number}: {e}")
 
     return {
         "id": order.id,
@@ -162,7 +162,7 @@ def update_order_status(order_id: int, payload: schemas.StatusUpdate, db: Sessio
             stock_bridge.release_stock(item.medicine_id, item.quantity)
             
         try:
-            user_phone = order.user.phone if order.user else None
+            user_phone = order.patient.phone_number if order.patient else None
             if user_phone:
                 notif.send_rejection_sms(user_phone, order.token)
         except Exception as e:
@@ -186,7 +186,7 @@ def confirm_payment(order_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     try:
-        notif.twilio_wa.send_text(order.user.phone, f"Payment received for Order {order.token}! ✅ Your medicine is being prepared for delivery.")
+        notif.twilio_wa.send_text(order.patient.phone_number, f"Payment received for Order {order.token}! ✅ Your medicine is being prepared for delivery.")
     except Exception as e:
         logger.error(f"Failed to send payment confirmation: {e}")
         
@@ -240,7 +240,7 @@ def fulfill_order(order_id: int, db: Session = Depends(get_db)):
             f"Total: Rs. {order.total_amount:.2f}\n\n"
             f"Thank you for choosing Healix Pharm! 💊"
         )
-        notif.twilio_wa.send_text(order.user.phone, msg)
+        notif.twilio_wa.send_text(order.patient.phone_number, msg)
     except Exception as e:
         logger.error(f"Failed to send delivery notification: {e}")
 
@@ -276,7 +276,7 @@ def cancel_order(order_id: int, db: Session = Depends(get_db)):
     # Notify customer
     try:
         notif.twilio_wa.send_text(
-            order.user.phone,
+            order.patient.phone_number,
             f"Your order {order.token} has been cancelled. ❌\n"
             f"If you need help, type 'menu' to reach us."
         )
@@ -329,7 +329,7 @@ def accept_support_ticket(ticket_id: int, agent_name: str, db: Session = Depends
 
     # Update User State for WhatsApp Bot
 
-    user_phone = ticket.user.phone if ticket.user else None
+    user_phone = ticket.patient.phone_number if ticket.patient else None
     if user_phone:
         UserState_wb.set_user_state(user_phone, "live_chat")
         UserState_wb.set_last_action(user_phone, "agent_connected")
@@ -354,7 +354,7 @@ def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = De
     if not ticket or ticket.status != "ACTIVE":
         raise HTTPException(status_code=400, detail="Active ticket not found")
 
-    user_phone = ticket.user.phone if ticket.user else None
+    user_phone = ticket.patient.phone_number if ticket.patient else None
     if not user_phone:
         raise HTTPException(status_code=400, detail="User phone not found")
 
@@ -386,7 +386,7 @@ def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    user_phone = ticket.user.phone if ticket.user else None
+    user_phone = ticket.patient.phone_number if ticket.patient else None
 
     # Update DB
     close_ticket(db, ticket_id)

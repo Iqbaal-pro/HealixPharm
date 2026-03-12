@@ -4,7 +4,7 @@ from app.whatsapp.twilio_client import TwilioWhatsAppClient
 from app.whatsapp.state import UserState_wb
 from app.services.image_service import is_image_clear
 from app.services.s3_service import upload_prescription, generate_presigned_url
-from app.services.order_service import get_or_create_user, create_order_with_prescription, create_support_ticket, close_all_user_tickets, add_support_message
+from app.services.order_service import get_or_create_patient, create_order_with_prescription, create_support_ticket, close_all_user_tickets, add_support_message
 from app.services.notification_service import NotificationService
 from app.services.payhere_service import PayHereService
 # from app.services.whatsapp_auth_service import WhatsAppAuthService
@@ -91,8 +91,8 @@ class WhatsAppService_wb:
 
             db = SessionLocal()
             try:
-                user = get_or_create_user(db, phone=user_id)
-                close_all_user_tickets(db, user)
+                patient = get_or_create_patient(db, phone=user_id)
+                close_all_user_tickets(db, patient)
             finally:
                 db.close()
 
@@ -146,9 +146,9 @@ class WhatsAppService_wb:
         if current_step == "live_chat":
             db = SessionLocal()
             try:
-                user = get_or_create_user(db, phone=user_id)
+                patient = get_or_create_patient(db, phone=user_id)
                 ticket = db.query(models.SupportTicket).filter(
-                    models.SupportTicket.user_id == user.id,
+                    models.SupportTicket.patient_id == patient.id,
                     models.SupportTicket.status == "ACTIVE"
                 ).first()
                 if ticket:
@@ -161,11 +161,12 @@ class WhatsAppService_wb:
         if current_step == "awaiting_payment_selection":
             db = SessionLocal()
             try:
-                user = db.query(models.User).filter(models.User.phone == user_id).first()
-                order = db.query(models.Order).filter(
-                    models.Order.user_id == user.id,
-                    models.Order.status == "AWAITING_PAYMENT_SELECTION"
-                ).order_by(models.Order.created_at.desc()).first()
+                patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
+                if patient:
+                    order = db.query(models.Order).filter(
+                        models.Order.patient_id == patient.id,
+                        models.Order.status == "AWAITING_PAYMENT_SELECTION"
+                    ).order_by(models.Order.created_at.desc()).first()
 
                 if order:
                     if body == "1":  # COD
@@ -185,7 +186,7 @@ class WhatsAppService_wb:
                         pay_url = self.payhere.generate_checkout_url(
                             order.token,
                             order.total_amount,
-                            {"phone": user_id, "first_name": user.name or "Valued"}
+                            {"phone": user_id, "first_name": patient.name or "Valued"}
                         )
 
                         self.twilio_wa.send_text(user_id, f"Order {order.token} updated. 💳\n\nPlease use this secure link to complete your payment:\n{pay_url}\n\n⚠️ Payment must be made within 2 hours.")
@@ -245,8 +246,8 @@ class WhatsAppService_wb:
         elif button_id == "agent_chat":
             db = SessionLocal()
             try:
-                user = get_or_create_user(db, phone=user_id)
-                create_support_ticket(db, user)
+                patient = get_or_create_patient(db, phone=user_id)
+                create_support_ticket(db, patient)
             finally:
                 db.close()
 
@@ -437,10 +438,10 @@ class WhatsAppService_wb:
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_order_status":
-                user = db.query(models.User).filter_by(phone=user_id).first()
-                if user:
+                patient = db.query(models.Patient).filter_by(phone_number=user_id).first()
+                if patient:
                     order = db.query(models.Order).filter(
-                        models.Order.user_id == user.id,
+                        models.Order.patient_id == patient.id,
                         models.Order.status != "DELIVERED"
                     ).order_by(models.Order.created_at.desc()).first()
 
@@ -449,7 +450,7 @@ class WhatsAppService_wb:
                     else:
                         msg = "No active orders found for your number."
                 else:
-                    msg = "No user profile found."
+                    msg = "No patient profile found."
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_delivery_charges":
@@ -501,8 +502,8 @@ class WhatsAppService_wb:
 
             db = SessionLocal()
             try:
-                user  = get_or_create_user(db, phone=user_id)
-                order, prescription = create_order_with_prescription(db, user, s3_key, s3_url)
+                patient = get_or_create_patient(db, phone=user_id)
+                order, prescription = create_order_with_prescription(db, patient, s3_key, s3_url)
                 token = order.token
             finally:
                 db.close()
@@ -526,13 +527,13 @@ def check_agent_delay(user_id: str):
     logger.info(f"[TIMER] Checking delay for user {user_id}")
     db = SessionLocal()
     try:
-        user = db.query(models.User).filter(models.User.phone == user_id).first()
-        if not user:
-            logger.warning(f"[TIMER] User {user_id} not found in DB")
+        patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
+        if not patient:
+            logger.warning(f"[TIMER] Patient {user_id} not found in DB")
             return
 
         ticket = db.query(models.SupportTicket).filter(
-            models.SupportTicket.user_id == user.id,
+            models.SupportTicket.patient_id == patient.id,
             models.SupportTicket.status == "WAITING"
         ).first()
 
