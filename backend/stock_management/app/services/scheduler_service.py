@@ -73,12 +73,39 @@ def refill_check_job():
     logger.info("✅ Refill check complete")
 
 
+def dose_reminder_check_job():
+    """
+    Background job to ensure dose-based reminders are scheduled.
+    Runs more frequently (e.g. hourly).
+    """
+    logger.info("🕒 Running dose reminder check...")
+    db = SessionLocal()
+    try:
+        from app.models.prescription import Prescription
+        # Check all prescriptions that have dose info and are continuous
+        prescriptions = db.query(Prescription).filter(
+            Prescription.interval_hours > 0,
+            Prescription.dose_quantity > 0
+        ).all()
+
+        for rx in prescriptions:
+            schedule_dose_reminders(db, rx.id)
+
+        # Also process any pending ones immediately
+        process_pending_reminders(db)
+
+    except Exception as e:
+        logger.error(f"Dose reminder job failed: {e}")
+    finally:
+        db.close()
+    logger.info("🕒 Dose reminder check complete")
+
+
 def start_scheduler():
     """
-    Start the background scheduler with a daily refill check.
-    Call this once at application startup.
+    Start the background scheduler with daily refill and hourly dose checks.
     """
-    # Run the refill check every 24 hours (can be changed to hourly)
+    # 1. Refill check every 24 hours
     scheduler.add_job(
         refill_check_job,
         trigger="interval",
@@ -86,8 +113,18 @@ def start_scheduler():
         id="daily_refill_check",
         replace_existing=True
     )
+
+    # 2. Dose reminder check every hour (Migrated from healix_extra)
+    scheduler.add_job(
+        dose_reminder_check_job,
+        trigger="interval",
+        hours=1,
+        id="hourly_dose_check",
+        replace_existing=True
+    )
+
     scheduler.start()
-    logger.info("📅 Scheduler started – refill check runs every 24 hours")
+    logger.info("📅 Scheduler started – Daily refills & Hourly dose checks")
 
 
 def stop_scheduler():

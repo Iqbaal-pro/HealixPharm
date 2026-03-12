@@ -20,6 +20,14 @@ class Prescription(Base):
     # Medicine details for reminders
     medicine_name = Column(String(100), nullable=False)
     dose_per_day = Column(Integer, nullable=False, default=1)
+    
+    # --- New Dose Reminder Fields (Migrated from healix_extra) ---
+    dose_quantity = Column(Integer, nullable=True, default=0)
+    interval_hours = Column(Integer, nullable=True, default=0)
+    meal_timing = Column(String(100), nullable=True)
+    start_time = Column(DateTime, nullable=True)
+    # -----------------------------------------------------------
+
     start_date = Column(DateTime, default=datetime.utcnow)
     quantity_given = Column(Integer, nullable=False, default=0)
 

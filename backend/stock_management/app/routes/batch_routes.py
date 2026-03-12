@@ -132,3 +132,21 @@ def deactivate_batch(
         return _serialize_batch(batch)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.post("/check-expired")
+def check_expired_batches(db: Session = Depends(get_db)):
+    """Scan all batches and mark as expired if past expiry date."""
+    service = BatchManagementService(db)
+    count = service.check_and_mark_expired_batches()
+    return {"message": f"Processed batches. {count} newly marked as expired."}
+
+
+@router.get("/number/{batch_number}")
+def get_batch_by_number(batch_number: str, medicine_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """Find batch by batch number."""
+    service = BatchManagementService(db)
+    batch = service.get_batch_by_number(batch_number, medicine_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail=f"Batch {batch_number} not found")
+    return _serialize_batch(batch)
