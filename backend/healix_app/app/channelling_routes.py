@@ -196,3 +196,14 @@ async def get_appointment(
         "service_fee":    appt.service_fee,
         "status":         appt.status,
     }
+
+@router.post(/"appointments/{payhere_order_id}/cancel/")
+async def cancel_existing_appointment(
+    payhere_order_id: str,
+    db: Session = Depends(get_db)
+):
+    """Manually cancel an appointment and free its slot."""
+    appointment = cancel_appointment(db, payhere_order_id)
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    return {"message": "Appointment cancelled", "booking_ref": appointment.booking_ref}
