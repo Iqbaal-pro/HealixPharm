@@ -117,6 +117,7 @@ def issue_medicine(
 
     updated_inventory = stock_service.issue_medicine(
         db=db,
+        prescription_id=prescription_id,
         inventory=inventory,
         issued_quantity=quantity
     )

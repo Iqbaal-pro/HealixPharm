@@ -1,7 +1,7 @@
-from datetime import datetime
 from app.models.inventory import Inventory
 from app.models.batch import MedicineBatch
 from app.models.stock_log import StockLog
+from app.models.issued_item import IssuedItem
 from sqlalchemy.orm import Session
 
 class StockUpdateService:
@@ -135,13 +135,14 @@ class StockUpdateService:
     def issue_medicine(
         self,
         db: Session,
+        prescription_id: int,
         inventory: Inventory,
         issued_quantity: int,
         staff_id: int = None
     ):
         """
         Issue medicine from specific inventory record
-        Records log and updates quantity
+        Records log, updates quantity, and creates IssuedItem entry
         """
         if inventory.quantity_available < issued_quantity:
             raise ValueError("Not enough stock in this batch")
@@ -150,7 +151,7 @@ class StockUpdateService:
         inventory.last_stock_update = datetime.utcnow()
         db.add(inventory)
         
-        # Log it
+        # 1. Log the stock movement
         log = StockLog(
             medicine_id=inventory.medicine_id,
             batch_id=inventory.batch_id,
@@ -160,6 +161,18 @@ class StockUpdateService:
             logged_at=datetime.utcnow()
         )
         db.add(log)
+
+        # 2. Record as Issued Item for the prescription (Migrated from healix_extra logic)
+        issued_item = IssuedItem(
+            prescription_id=prescription_id,
+            medicine_id=inventory.medicine_id,
+            batch_id=inventory.batch_id,
+            quantity_issued=issued_quantity,
+            issued_at=datetime.utcnow(),
+            issued_by=staff_id
+        )
+        db.add(issued_item)
+        
         db.commit()
         db.refresh(inventory)
         return inventory

@@ -113,6 +113,25 @@ def list_pending_reminders(db: Session = Depends(get_db)):
     ]
 
 
+# ─── Manually trigger dose-based reminder scheduling ────────────────
+@router.post("/schedule-dose/{prescription_id}")
+def schedule_dose(prescription_id: int, db: Session = Depends(get_db)):
+    """
+    Manually trigger dose-based reminder scheduling (Migrated from healix_extra).
+    Calculates next dose based on issued stock and interval.
+    """
+    reminder = schedule_dose_reminders(db, prescription_id)
+    if not reminder:
+        return {"message": "No dose reminder needed or could not be scheduled at this time"}
+        
+    return {
+        "message": "Dose reminder scheduled successfully",
+        "reminder_id": reminder.id,
+        "time": reminder.reminder_time,
+        "status": reminder.status
+    }
+
+
 # ─── Manually trigger processing pending reminders ──────────────────
 @router.post("/process")
 def process_reminders(db: Session = Depends(get_db)):
