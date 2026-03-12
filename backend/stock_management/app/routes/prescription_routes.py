@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends
+from datetime import datetime
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database.db import SessionLocal
@@ -7,9 +10,20 @@ from app.repositories.prescription_repo import PrescriptionRepository
 from app.repositories.inventory_repo import InventoryRepository
 from app.repositories.stock_log_repo import StockLogRepository
 from app.utils.data_exporter import DataExporter
+from app.models.prescription import Prescription
 from app.services.refill_service import calculate_remaining_days
 
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
+
+
+class PrescriptionCreate(BaseModel):
+    patient_id: int
+    uploaded_by_staff_id: int
+    medicine_name: str
+    dose_per_day: int = 1
+    quantity_given: int = 0
+    is_continuous: bool = False
+    start_date: Optional[datetime] = None
 
 
 # Dependency to get DB session
@@ -54,6 +68,33 @@ def list_prescriptions(
             output.append(item)
 
     return output
+
+
+@router.post("/")
+def create_prescription(
+    payload: PrescriptionCreate,
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new prescription record.
+    """
+    repo = PrescriptionRepository(db)
+    
+    prescription = Prescription(
+        patient_id=payload.patient_id,
+        uploaded_by_staff_id=payload.uploaded_by_staff_id,
+        medicine_name=payload.medicine_name,
+        dose_per_day=payload.dose_per_day,
+        quantity_given=payload.quantity_given,
+        is_continuous=payload.is_continuous,
+        start_date=payload.start_date or datetime.utcnow()
+    )
+    
+    created = repo.create(prescription)
+    return {
+        "message": "Prescription created successfully",
+        "prescription_id": created.id
+    }
 
 
 @router.post("/issue")
