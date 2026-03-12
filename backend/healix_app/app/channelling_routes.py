@@ -197,7 +197,7 @@ async def get_appointment(
         "status":         appt.status,
     }
 
-@router.post(/"appointments/{payhere_order_id}/cancel/")
+@router.post("/appointments/{payhere_order_id}/cancel")
 async def cancel_existing_appointment(
     payhere_order_id: str,
     db: Session = Depends(get_db)
