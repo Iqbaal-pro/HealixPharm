@@ -1,7 +1,7 @@
-from datetime import datetime
 from app.models.inventory import Inventory
 from app.models.batch import MedicineBatch
 from app.models.stock_log import StockLog
+from app.models.issued_item import IssuedItem
 from sqlalchemy.orm import Session
 
 class StockUpdateService:
@@ -123,13 +123,59 @@ class StockUpdateService:
         """
         Check if enough stock is available for a medicine
         """
-        total_available = db.query(Inventory).filter(
+        inventory = db.query(Inventory).filter(
             Inventory.medicine_id == medicine_id
-        ).with_entities(
-            db.func.sum(Inventory.quantity_available)
-        ).scalar()
+        ).first()
+        
+        if not inventory:
+            return False
+            
+        return inventory.quantity_available >= required_quantity
 
-        return total_available >= required_quantity if total_available else False
+    def issue_medicine(
+        self,
+        db: Session,
+        prescription_id: int,
+        inventory: Inventory,
+        issued_quantity: int,
+        staff_id: int = None
+    ):
+        """
+        Issue medicine from specific inventory record
+        Records log, updates quantity, and creates IssuedItem entry
+        """
+        if inventory.quantity_available < issued_quantity:
+            raise ValueError("Not enough stock in this batch")
+            
+        inventory.quantity_available -= issued_quantity
+        inventory.last_stock_update = datetime.utcnow()
+        db.add(inventory)
+        
+        # 1. Log the stock movement
+        log = StockLog(
+            medicine_id=inventory.medicine_id,
+            batch_id=inventory.batch_id,
+            quantity_used=issued_quantity,
+            reason="prescription",
+            staff_id=staff_id,
+            logged_at=datetime.utcnow()
+        )
+        db.add(log)
+
+        # 2. Record as Issued Item for the prescription (Migrated from healix_extra logic)
+        issued_item = IssuedItem(
+            prescription_id=prescription_id,
+            medicine_id=inventory.medicine_id,
+            batch_id=inventory.batch_id,
+            quantity_issued=issued_quantity,
+            issued_at=datetime.utcnow(),
+            issued_by=staff_id
+        )
+        db.add(issued_item)
+        
+        db.commit()
+        db.refresh(inventory)
+        return inventory
 
 
 class StockLogService:

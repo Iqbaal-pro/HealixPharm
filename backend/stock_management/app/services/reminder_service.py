@@ -3,11 +3,12 @@ Reminder Service – creates, processes, and sends reminders.
 Handles both one-time (pharmacist checkbox) and recurring reminders.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.reminder import Reminder
 from app.models.patient import Patient
+from app.models.issued_item import IssuedItem
 from app.repositories.reminder_repo import ReminderRepository
 from app.repositories.prescription_repo import PrescriptionRepository
 from app.services.sms_service import send_sms
@@ -169,3 +170,77 @@ def process_pending_reminders(db: Session) -> list:
         })
 
     return results
+
+
+def schedule_dose_reminders(db: Session, prescription_id: int):
+    """
+    Migrated from healix_extra:
+    Creates dose-based reminders (e.g., every 8 hours) based on issued stock.
+    """
+    rx_repo = PrescriptionRepository(db)
+    reminder_repo = ReminderRepository(db)
+    
+    prescription = rx_repo.get_by_id(prescription_id)
+    if not prescription or not prescription.interval_hours or not prescription.dose_quantity:
+        logger.warning(f"Skipping dose scheduling for Rx {prescription_id}: Missing dose info")
+        return None
+
+    # 1. Check issued stock
+    issued_items = db.query(IssuedItem).filter(
+        IssuedItem.prescription_id == prescription_id
+    ).all()
+    
+    if not issued_items:
+        logger.warning(f"No issued stock found for Rx {prescription_id}")
+        return None
+
+    total_issued = sum(item.quantity_issued for item in issued_items)
+    
+    # 2. Calculate how many doses are covered by this stock
+    total_doses = total_issued // prescription.dose_quantity
+    
+    if total_doses <= 0:
+        return None
+
+    # 3. Schedule reminders
+    # For now, we follow healix_extra's lead and just schedule the NEXT one
+    # If there are already pending reminders, we don't duplicate
+    existing = reminder_repo.get_by_prescription_id(prescription_id)
+    if any(r.status == "pending" for r in existing):
+        return None
+
+    # Calculate next time: if no reminders sent, start_time + interval
+    # else, last_reminder_time + interval
+    last_reminder = (
+        db.query(Reminder)
+        .filter(Reminder.prescription_id == prescription_id)
+        .order_by(Reminder.reminder_time.desc())
+        .first()
+    )
+
+    if last_reminder:
+        next_time = last_reminder.reminder_time + timedelta(hours=prescription.interval_hours)
+    else:
+        # First dose reminder
+        base_time = prescription.start_time or prescription.created_at
+        next_time = base_time + timedelta(hours=prescription.interval_hours)
+
+    # Don't schedule if next_time is too far in the past or in the future
+    if next_time < datetime.utcnow():
+        # If missed, set to now + a small buffer or catch up?
+        # Healix_extra logic just uses the calculation.
+        next_time = datetime.utcnow() + timedelta(minutes=5)
+
+    reminder = Reminder(
+        prescription_id=prescription_id,
+        reminder_time=next_time,
+        status="pending",
+        one_time=False
+    )
+    
+    db.add(reminder)
+    db.commit()
+    db.refresh(reminder)
+    
+    logger.info(f"Scheduled dose reminder for Rx {prescription_id} at {next_time}")
+    return reminder
