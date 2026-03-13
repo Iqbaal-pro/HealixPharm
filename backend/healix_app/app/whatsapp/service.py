@@ -294,10 +294,11 @@ class WhatsAppService_wb:
             self.twilio_wa.send_menu(
                 user_id,
                 (
-                    "*eChannelling Not Available*\n\n"
-                    "Sorry, this pharmacy does not currently offer doctor channelling services.\n\n"
-                    "Please contact the pharmacy directly for assistance.\n"
-                    "Type 'menu' to return to the main menu."
+                    "🏥 *Doctor Channelling*\n\n"
+                    "This pharmacy doesn't offer online channelling just yet.\n\n"
+                    "To book a doctor appointment, please reach us directly:\n"
+                    "📞 Call or WhatsApp the pharmacy\n\n"
+                    "Type *menu* anytime to go back."
                 ),
                 [{"id": "back_to_main", "title": "Back to Main Menu"}]
             )
@@ -305,13 +306,13 @@ class WhatsAppService_wb:
             return
 
         message = (
-            "*Channel a Doctor*\n\n"
-            "To book an appointment, please visit our secure portal:\n"
+            "🩺 *Book a Doctor Appointment*\n\n"
+            "Ready to see a doctor? It's quick and easy!\n\n"
+            "👉 Visit our portal to choose your doctor and pick a time slot:\n"
             f"🔗 {settings.BASE_URL}/channelling\n\n"
-            "Choose your doctor, pick a slot, and complete your booking.\n"
-            "A small service charge is payable online at the time of booking.\n"
-            "Consultation fee is paid at the hospital.\n\n"
-            "Tap Back to Main Menu or type 'menu' anytime."
+            "💳 A small service fee is charged at booking.\n"
+            "🏥 Consultation fee is paid directly at the hospital.\n\n"
+            "Need help? Type *agent* to chat with us, or *menu* to go back."
         )
         self.twilio_wa.send_menu(
             user_id,
