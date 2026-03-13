@@ -294,10 +294,10 @@ class WhatsAppService_wb:
             self.twilio_wa.send_menu(
                 user_id,
                 (
-                    "🏥 *Doctor Channelling*\n\n"
+                    "*Doctor Channelling*\n\n"
                     "This pharmacy doesn't offer online channelling just yet.\n\n"
                     "To book a doctor appointment, please reach us directly:\n"
-                    "📞 Call or WhatsApp the pharmacy\n\n"
+                    "Call or WhatsApp the pharmacy\n\n"
                     "Type *menu* anytime to go back."
                 ),
                 [{"id": "back_to_main", "title": "Back to Main Menu"}]
@@ -306,12 +306,12 @@ class WhatsAppService_wb:
             return
 
         message = (
-            "🩺 *Book a Doctor Appointment*\n\n"
+            "*Book a Doctor Appointment*\n\n"
             "Ready to see a doctor? It's quick and easy!\n\n"
-            "👉 Visit our portal to choose your doctor and pick a time slot:\n"
+            "Visit our portal to choose your doctor and pick a time slot:\n"
             f"🔗 {settings.BASE_URL}/channelling\n\n"
-            "💳 A small service fee is charged at booking.\n"
-            "🏥 Consultation fee is paid directly at the hospital.\n\n"
+            "A small service fee is charged at booking.\n"
+            "Consultation fee is paid directly at the hospital.\n\n"
             "Need help? Type *agent* to chat with us, or *menu* to go back."
         )
         self.twilio_wa.send_menu(
