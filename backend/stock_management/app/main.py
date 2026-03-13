@@ -55,13 +55,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# ─── Configure CORS ─────────────────────────────────────────────────
+# ─── CORS Middleware ───────────────────────────────────────────────
+# Allow all origins for now (can be restricted to Vercel URL later)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],  # Replace with specific Vercel URL if desired
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ─── Register all routers ──────────────────────────────────────────
