@@ -5,8 +5,10 @@ from datetime import datetime  #SupportTicket
 from app.db import Base
 
 
-class User(Base):
-    __tablename__ = "users"
+from app.utils.encryption import encrypt_data, decrypt_data
+
+class WhatsAppUser(Base):
+    __tablename__ = "whatsapp_users"
 
     id = Column(Integer, primary_key=True, index=True)
     phone = Column(String(64), unique=True, index=True, nullable=False)
@@ -21,13 +23,13 @@ class SupportTicket(Base):
     __tablename__ = "support_tickets"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("whatsapp_users.id"))
     agent_id = Column(String(50), nullable=True)  # Name or ID of the pharmacy agent
     status = Column(String(50), default="WAITING")  # WAITING, ACTIVE, COMPLETED
     created_at = Column(DateTime, default=datetime.utcnow)  # using datetime.utcnow
     accepted_at = Column(DateTime, nullable=True)
 
-    user = relationship("User", back_populates="support_tickets")
+    user = relationship("WhatsAppUser", back_populates="support_tickets")
     messages = relationship("SupportMessage", back_populates="ticket")
 
 
@@ -43,11 +45,57 @@ class SupportMessage(Base):
     ticket = relationship("SupportTicket", back_populates="messages")
 
 class Patient(Base):
+    """
+    Stores patient information for reminder/consent management.
+    Sensitive data (name, phone, DOB) is encrypted in the database.
+    """
     __tablename__ = "patients"
 
     id = Column(Integer, primary_key=True, index=True)
-    phone_number = Column(String(64), unique=True, index=True, nullable=False)
+    
+    # Internal (encrypted) columns mapped to the database
+    _name = Column("name", String(600), nullable=False)
+    _phone_number = Column("phone_number", String(600), nullable=False)
+    _date_of_birth = Column("date_of_birth", String(600), nullable=True)
+    
+    language = Column(String(10), default="en")  # e.g. "en", "si", "ta"
+    consent = Column(Boolean, default=False)      # must be True to send SMS
     is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # --- name ---
+    @property
+    def name(self) -> str:
+        """Return decrypted patient name."""
+        return decrypt_data(self._name)
+
+    @name.setter
+    def name(self, value: str):
+        """Encrypt and store patient name."""
+        self._name = encrypt_data(value)
+
+    # --- phone_number ---
+    @property
+    def phone_number(self) -> str:
+        """Return decrypted phone number."""
+        return decrypt_data(self._phone_number)
+
+    @phone_number.setter
+    def phone_number(self, value: str):
+        """Encrypt and store phone number."""
+        self._phone_number = encrypt_data(value)
+
+    # --- date_of_birth ---
+    @property
+    def date_of_birth(self) -> str:
+        """Return decrypted date of birth."""
+        return decrypt_data(self._date_of_birth)
+
+    @date_of_birth.setter
+    def date_of_birth(self, value: str):
+        """Encrypt and store date of birth."""
+        self._date_of_birth = encrypt_data(value)
 
 
 class MOHDiseaseAlert(Base):

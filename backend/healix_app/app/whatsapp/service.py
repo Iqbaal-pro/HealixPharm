@@ -161,7 +161,7 @@ class WhatsAppService_wb:
         if current_step == "awaiting_payment_selection":
             db = SessionLocal()
             try:
-                user = db.query(models.User).filter(models.User.phone == user_id).first()
+                user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == user_id).first()
                 order = db.query(models.Order).filter(
                     models.Order.user_id == user.id,
                     models.Order.status == "AWAITING_PAYMENT_SELECTION"
@@ -437,7 +437,7 @@ class WhatsAppService_wb:
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_order_status":
-                user = db.query(models.User).filter_by(phone=user_id).first()
+                user = db.query(models.WhatsAppUser).filter_by(phone=user_id).first()
                 if user:
                     order = db.query(models.Order).filter(
                         models.Order.user_id == user.id,
@@ -526,7 +526,7 @@ def check_agent_delay(user_id: str):
     logger.info(f"[TIMER] Checking delay for user {user_id}")
     db = SessionLocal()
     try:
-        user = db.query(models.User).filter(models.User.phone == user_id).first()
+        user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == user_id).first()
         if not user:
             logger.warning(f"[TIMER] User {user_id} not found in DB")
             return

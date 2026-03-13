@@ -6,16 +6,16 @@ from app import models
 logger = logging.getLogger(__name__)
 
 
-def get_or_create_user(db: Session, phone: str, name: str = None) -> models.User:
+def get_or_create_user(db: Session, phone: str, name: str = None) -> models.WhatsAppUser:
     """
     Get a user by phone or create if not exists.
     """
-    user = db.query(models.User).filter(models.User.phone == phone).first()
+    user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == phone).first()
     if user:
         logger.info(f"[ORDER_SERVICE] Found existing user for phone {phone}")
         return user
 
-    user = models.User(phone=phone, name=name)
+    user = models.WhatsAppUser(phone=phone, name=name)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -23,7 +23,7 @@ def get_or_create_user(db: Session, phone: str, name: str = None) -> models.User
     return user
 
 
-def create_order_with_prescription(db: Session, user: models.User, image_s3_key: str, s3_url: str = None) -> (models.Order, models.Prescription):
+def create_order_with_prescription(db: Session, user: models.WhatsAppUser, image_s3_key: str, s3_url: str = None) -> (models.Order, models.Prescription):
     """
     Create an order and associated prescription record automatically.
     Returns (order, prescription)
@@ -51,7 +51,7 @@ def create_order_with_prescription(db: Session, user: models.User, image_s3_key:
     return order, prescription
 
 
-def create_support_ticket(db: Session, user: models.User) -> models.SupportTicket:
+def create_support_ticket(db: Session, user: models.WhatsAppUser) -> models.SupportTicket:
     """
     Create a new support ticket for a user.
     """
@@ -63,7 +63,7 @@ def create_support_ticket(db: Session, user: models.User) -> models.SupportTicke
     return ticket
 
 
-def close_all_user_tickets(db: Session, user: models.User):
+def close_all_user_tickets(db: Session, user: models.WhatsAppUser):
     """
     Find and close all active or waiting tickets for a user.
     """

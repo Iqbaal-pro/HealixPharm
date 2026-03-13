@@ -3,11 +3,13 @@ Reminder Service – creates, processes, and sends reminders.
 Handles both one-time (pharmacist checkbox) and recurring reminders.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, time
 from sqlalchemy.orm import Session
 
 from app.models.reminder import Reminder
 from app.models.patient import Patient
+from app.models.prescription import Prescription
+from app.models.medicine import Medicine
 from app.repositories.reminder_repo import ReminderRepository
 from app.repositories.prescription_repo import PrescriptionRepository
 from app.services.sms_service import send_sms
@@ -66,8 +68,9 @@ def send_one_time_reminder(db: Session, prescription_id: int) -> dict:
     if not patient:
         return {"success": False, "error": "Patient not found"}
 
-    if not patient.consent:
-        return {"success": False, "error": "Patient has not given consent"}
+    # ─── Fetch medicine name ────────────────────────────────────
+    medicine = db.query(Medicine).filter(Medicine.id == prescription.medicine_id).first()
+    med_name = medicine.name if medicine else "your medicine"
 
     # ─── Create one-time reminder row ───────────────────────────
     reminder = create_reminder(db, prescription_id, one_time=True)
@@ -75,7 +78,7 @@ def send_one_time_reminder(db: Session, prescription_id: int) -> dict:
     # ─── Send SMS immediately ───────────────────────────────────
     message = (
         f"Hi {patient.name}, this is a reminder from HealixPharm. "
-        f"Please take your medicine: {prescription.medicine_name} "
+        f"Please take your medicine: {med_name} "
         f"({prescription.dose_per_day} dose(s)/day). "
         f"Contact your pharmacy if you need a refill."
     )
@@ -96,9 +99,101 @@ def send_one_time_reminder(db: Session, prescription_id: int) -> dict:
         "success": result["success"],
         "reminder_id": reminder.id,
         "patient_name": patient.name,
-        "medicine": prescription.medicine_name,
+        "medicine": med_name,
         "error": result.get("error")
     }
+
+
+def generate_schedule_reminders(db: Session, rx: Prescription):
+    """
+    Generate the full schedule of reminders for a prescription.
+    Creates entries in the REMINDERS table from rx.start_date to rx.end_date.
+    """
+    from datetime import time
+
+    logger.info(f"[REMINDER_GEN] Generating schedule for Rx {rx.id} | Type: {rx.reminder_type}")
+    
+    current_date = rx.start_date.date()
+    end_date = rx.end_date.date()
+    
+    # 1. Refill Reminder (3 days before end_date)
+    refill_date = rx.end_date - timedelta(days=3)
+    # Ensure refill reminder isn't in the past and doesn't already exist
+    reminder_repo = ReminderRepository(db)
+    if refill_date > datetime.utcnow():
+        if not reminder_repo.reminder_exists(rx.id, refill_date, "REFILL"):
+            refill_reminder = Reminder(
+                prescription_id=rx.id,
+                reminder_time=refill_date,
+                status="pending",
+                one_time=False,
+                channel="sms",
+                reminder_type="REFILL"
+            )
+            db.add(refill_reminder)
+            logger.info(f"[REMINDER_GEN] Queued refill reminder for {refill_date}")
+        else:
+            logger.info(f"[REMINDER_GEN] Refill reminder already exists for Rx {rx.id}")
+
+    # 2. Daily Medication Reminders
+    while current_date <= end_date:
+        reminder_times = []
+        
+        if rx.reminder_type == "TIME_BASED":
+            # Interval = 24 / dose_per_day
+            interval_hours = 24 / (rx.dose_per_day if rx.dose_per_day > 0 else 1)
+            
+            # Start from first_dose_time on current_date
+            # Note: first_dose_time carries the time component
+            base_time = rx.first_dose_time.time() if rx.first_dose_time else time(8, 0)
+            base_dt = datetime.combine(current_date, base_time)
+            
+            for i in range(rx.dose_per_day):
+                r_time = base_dt + timedelta(hours=i * interval_hours)
+                # Only add if it's on the correct date and in the future
+                if r_time.date() == current_date and r_time > datetime.utcnow():
+                    reminder_times.append(r_time)
+
+        elif rx.reminder_type == "MEAL_BASED":
+            # Meal Times: Breakfast (07:30), Lunch (13:00), Dinner (19:30)
+            meal_schedules = {
+                "BREAKFAST": time(7, 30),
+                "LUNCH": time(13, 0),
+                "DINNER": time(19, 30)
+            }
+            
+            selected_meals = [m.strip().upper() for m in rx.meal_types.split(",")] if rx.meal_types else []
+            
+            for meal in selected_meals:
+                if meal in meal_schedules:
+                    m_time = meal_schedules[meal]
+                    dt = datetime.combine(current_date, m_time)
+                    
+                    # Offset if BEFORE_MEAL (-30 mins)
+                    if rx.meal_instruction == "BEFORE_MEAL":
+                        dt -= timedelta(minutes=30)
+                    
+                    if dt > datetime.utcnow():
+                        reminder_times.append(dt)
+
+        # Bulk add for the day
+        for t in reminder_times:
+            if not reminder_repo.reminder_exists(rx.id, t, "DOSE"):
+                r = Reminder(
+                    prescription_id=rx.id,
+                    reminder_time=t,
+                    status="pending",
+                    one_time=False,
+                    channel="sms",
+                    reminder_type="DOSE"
+                )
+                db.add(r)
+            else:
+                logger.debug(f"Reminder for {t} already exists for Rx {rx.id}")
+            
+        current_date += timedelta(days=1)
+
+    logger.info(f"[REMINDER_GEN] Finished queuing reminders for Rx {rx.id}")
 
 
 def process_pending_reminders(db: Session) -> list:
@@ -119,6 +214,10 @@ def process_pending_reminders(db: Session) -> list:
     logger.info(f"Processing {len(pending)} pending reminders")
 
     for reminder in pending:
+        # ATOMIC LOCK: Try to mark as 'processing'. If someone else got it, skip.
+        if not reminder_repo.mark_processing(reminder.id):
+            continue
+
         # ── Fetch prescription + patient ─────────────────────────
         prescription = rx_repo.get_by_id(reminder.prescription_id)
         if not prescription:
@@ -143,12 +242,22 @@ def process_pending_reminders(db: Session) -> list:
             )
             continue
 
+        # ── Fetch medicine ───────────────────────────────────────
+        medicine = db.query(Medicine).filter(Medicine.id == prescription.medicine_id).first()
+        med_name = medicine.name if medicine else "your medicine"
+
         # ── Build & send SMS ─────────────────────────────────────
-        message = (
-            f"Hi {patient.name}, refill reminder from HealixPharm: "
-            f"Your medicine '{prescription.medicine_name}' is running low. "
-            f"Please visit the pharmacy for a refill."
-        )
+        if reminder.reminder_type == "REFILL":
+            message = (
+                f"Hi {patient.name}, this is HealixPharm. Your medicine '{med_name}' "
+                f"is near to finish. Do you need a refill?"
+            )
+        else:
+            message = (
+                f"Hi {patient.name}, this is your reminder from HealixPharm. "
+                f"Please take your medicine: {med_name}."
+            )
+            
         sms_result = send_sms(patient.phone_number, message)
 
         # ── Update status & log ──────────────────────────────────
@@ -163,7 +272,7 @@ def process_pending_reminders(db: Session) -> list:
         results.append({
             "reminder_id": reminder.id,
             "patient": patient.name,
-            "medicine": prescription.medicine_name,
+            "medicine": med_name,
             "success": sms_result["success"],
             "error": sms_result.get("error")
         })

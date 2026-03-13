@@ -15,13 +15,25 @@ class Prescription(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    uploaded_by_staff_id = Column(Integer, nullable=False)
+    medicine_id = Column(Integer, ForeignKey("medicines.id"), nullable=False)
+    staff_id = Column(Integer, nullable=False)
+    uploaded_by_staff_id = Column(Integer, nullable=True) # For compatibility/tracking
 
-    # Medicine details for reminders
-    medicine_name = Column(String(100), nullable=False)
+    # Scheduling details
     dose_per_day = Column(Integer, nullable=False, default=1)
-    start_date = Column(DateTime, default=datetime.utcnow)
     quantity_given = Column(Integer, nullable=False, default=0)
+    start_date = Column(DateTime, default=datetime.utcnow)
+    end_date = Column(DateTime, nullable=False)
+    
+    # Reminder Configuration
+    reminder_type = Column(String(20), nullable=False)  # TIME_BASED | MEAL_BASED
+    
+    # For Time-Based
+    first_dose_time = Column(DateTime, nullable=True)
+    
+    # For Meal-Based
+    meal_instruction = Column(String(20), nullable=True) # BEFORE_MEAL | AFTER_MEAL
+    meal_types = Column(String(100), nullable=True)      # Comma-separated: BREAKFAST,LUNCH,DINNER
 
     # Pharmacist checkbox: long-term / continuous medication
     is_continuous = Column(Boolean, default=False)
