@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pymysql
+mysql-connector-python
+pydantic
+pydantic-settings
+twilio
+requests
+boto3
+opencv-python-headless
+apscheduler
+python-dotenv
+python-multipart
+pytest

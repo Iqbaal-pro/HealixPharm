@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
@@ -9,8 +10,11 @@ from app.admin.routes import router as admin_router
 # Payments router
 from app.payments.routes import router as payments_router
 # echannelling
-from app import channelling_models
 from app.channelling_routes import router as channelling_router
+from app.image_routes import router as image_router
+from app.notification_routes import router as notification_router
+from app.storage_routes import router as storage_router
+from app.auth_routes import router as auth_router
 # Scheduler
 from app.core.scheduler import scheduler
 from app.core.fulfillment_scheduler import monitor_fulfillment
@@ -23,11 +27,24 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="HealixPharm - WhatsApp Bot")
 
+# ─── CORS Middleware ───────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Include Routers
 app.include_router(whatsapp_router)
 app.include_router(admin_router)
 app.include_router(payments_router)
 app.include_router(channelling_router)
+app.include_router(image_router)
+app.include_router(notification_router)
+app.include_router(storage_router)
+app.include_router(auth_router)
 
 # Ensure database tables exist
 Base.metadata.create_all(bind=engine)

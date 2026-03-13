@@ -47,32 +47,14 @@ const navItems = [
     ),
   },
   {
-    label: "Patients",
-    href: "/patients",
+    label: "Deliveries",
+    href: "/deliveries",
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-    ),
-  },
-  {
-    label: "Live Support",
-    href: "/support",
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-    ),
-  },
-  {
-    label: "MOH Alerts",
-    href: "/moh-alerts",
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
+        <rect x="1" y="3" width="15" height="13" rx="2"/>
+        <path d="M16 8h4l3 3v5h-7V8z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/>
+        <circle cx="18.5" cy="18.5" r="2.5"/>
       </svg>
     ),
   },
@@ -96,54 +78,151 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside style={{
-      width: collapsed ? 64 : 224,
-      minHeight: "100vh",
-      flexShrink: 0,
-      background: "rgba(13,24,45,0.98)",
-      borderRight: "1px solid rgba(148,163,184,0.07)",
-      display: "flex",
-      flexDirection: "column",
-      paddingTop: 20,
-      paddingBottom: 20,
-      position: "sticky",
-      top: 0,
-      height: "100vh",
-      transition: "width 0.3s ease",
-      overflow: "hidden",
-      zIndex: 20,
-    }}>
+    <aside
+      style={{
+        width: collapsed ? 64 : 224,
+        minHeight: "100vh",
+        flexShrink: 0,
+        background: "rgba(7,18,30,0.98)",
+        borderRight: "1px solid rgba(148,163,184,0.07)",
+        display: "flex",
+        flexDirection: "column",
+        paddingTop: 20,
+        paddingBottom: 20,
+        position: "sticky",
+        top: 0,
+        height: "100vh",
+        transition: "width 0.3s ease",
+        overflow: "hidden",
+        zIndex: 20,
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+        .nav-link {
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          padding: 10px 16px;
+          margin: 2px 8px;
+          border-radius: 10px;
+          color: #475569;
+          font-size: 13.5px;
+          font-weight: 500;
+          font-family: 'DM Sans', sans-serif;
+          text-decoration: none;
+          white-space: nowrap;
+          transition: background 0.18s, color 0.18s;
+          border-bottom: 1px solid transparent;
+        }
+        .nav-link:hover {
+          background: rgba(148,163,184,0.07);
+          color: #94a3b8;
+        }
+        .nav-link.active {
+          background: rgba(99,102,241,0.09);
+          color: #38bdf8;
+          border-bottom-color: rgba(99,102,241,0.22);
+        }
+      `}</style>
 
       {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 16px 20px", borderBottom: "1px solid rgba(148,163,184,0.06)", marginBottom: 10, overflow: "hidden" }}>
-        <div style={{ width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg, #0369a1, #818cf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#fff", fontFamily: "'Syne', sans-serif", flexShrink: 0 }}>H</div>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "0 16px 20px",
+        borderBottom: "1px solid rgba(148,163,184,0.06)",
+        marginBottom: 10,
+        overflow: "hidden",
+      }}>
+        <div style={{
+          width: 34, height: 34,
+          borderRadius: 9,
+          background: "linear-gradient(135deg, #0369a1, #818cf8)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 16, fontWeight: 700, color: "#fff",
+          fontFamily: "'Syne', sans-serif",
+          flexShrink: 0,
+        }}>H</div>
+
         {!collapsed && (
-          <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 17, color: "#f1f5f9", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
-            Healix<span className="gradient-text">Pharm</span>
+          <span style={{
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 700, fontSize: 17,
+            color: "#f1f5f9", letterSpacing: "-0.02em",
+            whiteSpace: "nowrap",
+          }}>
+            Healix
+            <span style={{
+              background: "linear-gradient(90deg, #38bdf8, #818cf8)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}>Pharm</span>
           </span>
         )}
       </div>
 
       {/* Nav Items */}
-      <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, overflowY: "auto", overflowX: "hidden" }}>
+      <nav style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        overflowY: "auto",
+        overflowX: "hidden",
+      }}>
         {navItems.map(item => {
-          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
           return (
-            <Link key={item.href} href={item.href} className={`nav-link${isActive ? " active" : ""}`} title={collapsed ? item.label : undefined}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-link${isActive ? " active" : ""}`}
+              title={collapsed ? item.label : undefined}
+            >
               {item.icon}
-              {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{item.label}</span>}
+              {!collapsed && (
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {item.label}
+                </span>
+              )}
             </Link>
           );
         })}
       </nav>
 
       {/* User */}
-      <div style={{ padding: "14px 16px 0", borderTop: "1px solid rgba(148,163,184,0.07)", marginTop: 8, display: "flex", alignItems: "center", gap: 10, overflow: "hidden" }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #0369a1, #818cf8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#fff", flexShrink: 0, fontFamily: "'Syne', sans-serif" }}>A</div>
+      <div style={{
+        padding: "14px 16px 0",
+        borderTop: "1px solid rgba(148,163,184,0.07)",
+        marginTop: 8,
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        overflow: "hidden",
+      }}>
+        <div style={{
+          width: 32, height: 32,
+          borderRadius: "50%",
+          background: "linear-gradient(135deg, #0369a1, #818cf8)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 13, fontWeight: 700, color: "#fff",
+          flexShrink: 0,
+          fontFamily: "'Syne', sans-serif",
+        }}>A</div>
+
         {!collapsed && (
           <div style={{ overflow: "hidden" }}>
-            <div style={{ fontSize: 13, color: "#cbd5e1", fontWeight: 500, whiteSpace: "nowrap" }}>Admin User</div>
-            <div style={{ fontSize: 11, color: "#334155", whiteSpace: "nowrap" }}>Pharmacist</div>
+            <div style={{ fontSize: 13, color: "#cbd5e1", fontWeight: 500, whiteSpace: "nowrap" }}>
+              Admin User
+            </div>
+            <div style={{ fontSize: 11, color: "#334155", whiteSpace: "nowrap" }}>
+              Pharmacist
+            </div>
           </div>
         )}
       </div>

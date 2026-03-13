@@ -7,7 +7,11 @@ from app.database.db import SessionLocal
 from app.services.auth_service import AuthService
 from app.services.auth_token_service import create_access_token, decode_access_token
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"],
+    responses={401: {"description": "Unauthorized"}},
+)
 security = HTTPBearer()
 
 

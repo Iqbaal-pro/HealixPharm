@@ -1,0 +1,194 @@
+2026-03-11 14:03:34,145 [INFO] SMS Reminder Scheduler started.
+2026-03-11 14:03:34,145 [INFO] Monitoring 2 reminder(s):
+2026-03-11 14:03:34,145 [INFO]   [1] 14:05 → Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+2026-03-11 14:03:34,145 [INFO]   [2] 14:10 → Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:05:14,165 [INFO] 
+>>> Reminder 1 triggered at 14:05 <<<
+    Message: Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+2026-03-11 14:05:14,166 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 14:05:15,617 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator HealixPharm is not authorized to send this message"}
+2026-03-11 14:05:15,617 [WARNING] Non-success status 403 on attempt 1.
+2026-03-11 14:05:15,617 [INFO] Retrying immediately…
+2026-03-11 14:05:15,617 [INFO] Attempt 2/3 — sending SMS to +94771443155
+2026-03-11 14:05:16,375 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator HealixPharm is not authorized to send this message"}
+2026-03-11 14:05:16,376 [WARNING] Non-success status 403 on attempt 2.
+2026-03-11 14:05:16,376 [INFO] Retrying immediately…
+2026-03-11 14:05:16,376 [INFO] Attempt 3/3 — sending SMS to +94771443155
+2026-03-11 14:05:17,343 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator HealixPharm is not authorized to send this message"}
+2026-03-11 14:05:17,343 [WARNING] Non-success status 403 on attempt 3.
+2026-03-11 14:05:17,346 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+Scheduled Time : 14:05
+Actual Time    : 2026-03-11 14:05:17
+Delivery Status: Failed
+API Response   : All retries exhausted.
+======================================================================
+2026-03-11 14:06:11,747 [INFO] SMS Reminder Scheduler started.
+2026-03-11 14:06:11,747 [INFO] Monitoring 2 reminder(s):
+2026-03-11 14:06:11,748 [INFO]   [1] 14:05 → Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+2026-03-11 14:06:11,748 [INFO]   [2] 14:10 → Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:08:17,944 [INFO] SMS Reminder Scheduler started.
+2026-03-11 14:08:17,944 [INFO] Monitoring 2 reminder(s):
+2026-03-11 14:08:17,944 [INFO]   [1] 14:05 → Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+2026-03-11 14:08:17,944 [INFO]   [2] 14:10 → Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:10:11,796 [INFO] 
+>>> Reminder 2 triggered at 14:10 <<<
+    Message: Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:10:11,803 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 14:10:13,048 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator  is not authorized to send this message"}
+2026-03-11 14:10:13,048 [WARNING] Non-success status 403 on attempt 1.
+2026-03-11 14:10:13,049 [INFO] Retrying immediately…
+2026-03-11 14:10:13,049 [INFO] Attempt 2/3 — sending SMS to +94771443155
+2026-03-11 14:10:14,057 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator  is not authorized to send this message"}
+2026-03-11 14:10:14,057 [WARNING] Non-success status 403 on attempt 2.
+2026-03-11 14:10:14,057 [INFO] Retrying immediately…
+2026-03-11 14:10:14,057 [INFO] Attempt 3/3 — sending SMS to +94771443155
+2026-03-11 14:10:14,823 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator  is not authorized to send this message"}
+2026-03-11 14:10:14,823 [WARNING] Non-success status 403 on attempt 3.
+2026-03-11 14:10:14,824 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+Scheduled Time : 14:10
+Actual Time    : 2026-03-11 14:10:14
+Delivery Status: Failed
+API Response   : All retries exhausted.
+======================================================================
+2026-03-11 14:10:17,404 [INFO] 
+>>> Reminder 2 triggered at 14:10 <<<
+    Message: Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:10:17,404 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 14:10:17,968 [INFO] 
+>>> Reminder 2 triggered at 14:10 <<<
+    Message: Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:10:17,968 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 14:10:18,650 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator HealixPharm is not authorized to send this message"}
+2026-03-11 14:10:18,650 [WARNING] Non-success status 403 on attempt 1.
+2026-03-11 14:10:18,650 [INFO] Retrying immediately…
+2026-03-11 14:10:18,650 [INFO] Attempt 2/3 — sending SMS to +94771443155
+2026-03-11 14:10:19,570 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator HealixPharm is not authorized to send this message"}
+2026-03-11 14:10:19,571 [WARNING] Non-success status 403 on attempt 2.
+2026-03-11 14:10:19,571 [INFO] Retrying immediately…
+2026-03-11 14:10:19,571 [INFO] Attempt 3/3 — sending SMS to +94771443155
+2026-03-11 14:10:20,701 [INFO] Response: HTTP 403 — {"status":"error","message":"Originator HealixPharm is not authorized to send this message"}
+2026-03-11 14:10:20,701 [WARNING] Non-success status 403 on attempt 3.
+2026-03-11 14:10:20,701 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+Scheduled Time : 14:10
+Actual Time    : 2026-03-11 14:10:20
+Delivery Status: Failed
+API Response   : All retries exhausted.
+======================================================================
+2026-03-11 14:10:21,335 [INFO] Response: HTTP 200 — {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12a7598d6e","updated_at":"2026-03-11T08:40:21.000000Z","created_at":"2026-03-11T08:40:21.000000Z","id":203232}}
+2026-03-11 14:10:21,338 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+Scheduled Time : 14:10
+Actual Time    : 2026-03-11 14:10:21
+Delivery Status: Success
+API Response   : {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12a7598d6e","updated_at":"2026-03-11T08:40:21.000000Z","created_at":"2026-03-11T08:40:21.000000Z","id":203232}}
+======================================================================
+2026-03-11 14:12:47,696 [INFO] SMS Reminder Scheduler started.
+2026-03-11 14:12:47,696 [INFO] Monitoring 3 reminder(s):
+2026-03-11 14:12:47,697 [INFO]   [1] 14:05 → Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+2026-03-11 14:12:47,697 [INFO]   [2] 14:10 → Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:12:47,697 [INFO]   [3] 14:15 → Hi Iqbaal, please take 1 tablet of Medicine C at 2:15 PM.
+2026-03-11 14:15:07,723 [INFO] 
+>>> Reminder 3 triggered at 14:15 <<<
+    Message: Hi Iqbaal, please take 1 tablet of Medicine C at 2:15 PM.
+2026-03-11 14:15:07,723 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 14:15:10,880 [INFO] Response: HTTP 200 — {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 1 tablet of Medicine C at 2:15 PM.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12b972e930","updated_at":"2026-03-11T08:45:11.000000Z","created_at":"2026-03-11T08:45:11.000000Z","id":203236}}
+2026-03-11 14:15:10,883 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 1 tablet of Medicine C at 2:15 PM.
+Scheduled Time : 14:15
+Actual Time    : 2026-03-11 14:15:10
+Delivery Status: Success
+API Response   : {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 1 tablet of Medicine C at 2:15 PM.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12b972e930","updated_at":"2026-03-11T08:45:11.000000Z","created_at":"2026-03-11T08:45:11.000000Z","id":203236}}
+======================================================================
+2026-03-11 14:19:27,563 [INFO] SMS Reminder Scheduler started.
+2026-03-11 14:19:27,563 [INFO] Monitoring 5 reminder(s):
+2026-03-11 14:19:27,563 [INFO]   [1] 14:05 → Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+2026-03-11 14:19:27,563 [INFO]   [2] 14:10 → Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:19:27,565 [INFO]   [3] 14:15 → Hi Iqbaal, please take 1 tablet of Medicine C at 2:15 PM.
+2026-03-11 14:19:27,565 [INFO]   [4] 14:30 → Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.
+2026-03-11 14:19:27,565 [INFO]   [5] 15:00 → Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.
+2026-03-11 14:21:22,633 [INFO] SMS Reminder Scheduler started.
+2026-03-11 14:21:22,633 [INFO] Monitoring 6 reminder(s):
+2026-03-11 14:21:22,633 [INFO]   [1] 14:05 → Hi Iqbaal, please take 1 tablet of Medicine A at 2:05 PM before meals.
+2026-03-11 14:21:22,633 [INFO]   [2] 14:10 → Hi Iqbaal, please take 2 tablets of Medicine B at 2:10 PM after meals.
+2026-03-11 14:21:22,633 [INFO]   [3] 14:15 → Hi Iqbaal, please take 1 tablet of Medicine C at 2:15 PM.
+2026-03-11 14:21:22,633 [INFO]   [4] 14:30 → Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.
+2026-03-11 14:21:22,633 [INFO]   [5] 15:00 → Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.
+2026-03-11 14:21:22,633 [INFO]   [6] 05:00 → Hi Iqbaal, please take 1 tablet of Medicine A at 5:00 AM.
+2026-03-11 14:30:02,712 [INFO] 
+>>> Reminder 4 triggered at 14:30 <<<
+    Message: Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.
+2026-03-11 14:30:02,712 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 14:30:06,543 [INFO] Response: HTTP 200 — {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12f16b5a76","updated_at":"2026-03-11T09:00:06.000000Z","created_at":"2026-03-11T09:00:06.000000Z","id":203247}}
+2026-03-11 14:30:06,545 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.
+Scheduled Time : 14:30
+Actual Time    : 2026-03-11 14:30:06
+Delivery Status: Success
+API Response   : {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12f16b5a76","updated_at":"2026-03-11T09:00:06.000000Z","created_at":"2026-03-11T09:00:06.000000Z","id":203247}}
+======================================================================
+2026-03-11 14:30:07,657 [INFO] 
+>>> Reminder 4 triggered at 14:30 <<<
+    Message: Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.
+2026-03-11 14:30:07,658 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 14:30:11,844 [INFO] Response: HTTP 200 — {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12f1c0e7f6","updated_at":"2026-03-11T09:00:12.000000Z","created_at":"2026-03-11T09:00:12.000000Z","id":203251}}
+2026-03-11 14:30:11,845 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.
+Scheduled Time : 14:30
+Actual Time    : 2026-03-11 14:30:11
+Delivery Status: Success
+API Response   : {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine E at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b12f1c0e7f6","updated_at":"2026-03-11T09:00:12.000000Z","created_at":"2026-03-11T09:00:12.000000Z","id":203251}}
+======================================================================
+2026-03-11 15:00:06,755 [INFO] 
+>>> Reminder 5 triggered at 15:00 <<<
+    Message: Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.
+2026-03-11 15:00:06,755 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 15:00:11,160 [INFO] Response: HTTP 200 — {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b1362326581","updated_at":"2026-03-11T09:30:11.000000Z","created_at":"2026-03-11T09:30:11.000000Z","id":203284}}
+2026-03-11 15:00:11,164 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.
+Scheduled Time : 15:00
+Actual Time    : 2026-03-11 15:00:11
+Delivery Status: Success
+API Response   : {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b1362326581","updated_at":"2026-03-11T09:30:11.000000Z","created_at":"2026-03-11T09:30:11.000000Z","id":203284}}
+======================================================================
+2026-03-11 15:00:12,050 [INFO] 
+>>> Reminder 5 triggered at 15:00 <<<
+    Message: Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.
+2026-03-11 15:00:12,051 [INFO] Attempt 1/3 — sending SMS to +94771443155
+2026-03-11 15:00:15,918 [INFO] Response: HTTP 200 — {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b13627ef65c","updated_at":"2026-03-11T09:30:15.000000Z","created_at":"2026-03-11T09:30:15.000000Z","id":203285}}
+2026-03-11 15:00:15,923 [INFO] 
+======================================================================
+Patient Name   : Iqbaal
+Phone Number   : +94771443155
+Message        : Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.
+Scheduled Time : 15:00
+Actual Time    : 2026-03-11 15:00:15
+Delivery Status: Success
+API Response   : {"status":"success","message":"Your message was successfully delivered","data":{"user_id":356,"to":"94771443155","message":"Hi Iqbaal, please take 2 tablets of Medicine Z at after lunch.","sms_type":"plain","status":"Delivered","sms_count":1,"cost":0.9,"sending_server_id":6,"from":"SMSAPI Demo","api_key":"393|E6YjD9e1f0JRDuGp401yDkPTYvwzOtj1u0C06LE6","send_by":"api","uid":"69b13627ef65c","updated_at":"2026-03-11T09:30:15.000000Z","created_at":"2026-03-11T09:30:15.000000Z","id":203285}}
+======================================================================
