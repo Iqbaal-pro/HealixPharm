@@ -32,7 +32,7 @@ export default function RootLayout({
 
         ) : (
 
-          <div style={{ display:"flex", minHeight:"100vh", background:"#060d1a" }}>
+          <div style={{ display:"flex", minHeight:"100vh", background:"#0d1b2e" }}>
 
             {/* Aurora */}
             <div style={{
