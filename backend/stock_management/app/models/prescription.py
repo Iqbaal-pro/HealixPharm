@@ -21,6 +21,18 @@ class Prescription(Base):
 
     # Scheduling details
     dose_per_day = Column(Integer, nullable=False, default=1)
+<<<<<<< HEAD
+=======
+    
+    # --- New Dose Reminder Fields (Migrated from healix_extra) ---
+    dose_quantity = Column(Integer, nullable=True, default=0)
+    interval_hours = Column(Integer, nullable=True, default=0)
+    meal_timing = Column(String(100), nullable=True)
+    start_time = Column(DateTime, nullable=True)
+    # -----------------------------------------------------------
+
+    start_date = Column(DateTime, default=datetime.utcnow)
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
     quantity_given = Column(Integer, nullable=False, default=0)
     start_date = Column(DateTime, default=datetime.utcnow)
     end_date = Column(DateTime, nullable=False)
