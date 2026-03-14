@@ -55,16 +55,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# ─── CORS Middleware ───────────────────────────────────────────────
-# Allow all origins for now (can be restricted to Vercel URL later)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Replace with specific Vercel URL if desired
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # ─── Register all routers ──────────────────────────────────────────
 app.include_router(inventory_router)
 app.include_router(prescription_router)
