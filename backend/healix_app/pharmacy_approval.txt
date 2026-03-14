@@ -1,0 +1,19 @@
+1. Pharmacist Approval: A test order was created as PENDING_VERIFICATION.
+
+Pharmacist triggered the admin route's approval function, simulating the pharmacist selecting Panadol. 
+
+** Result: The total was calculated as Rs. 50.0 and the order dynamically shifted to 
+AWAITING_PAYMENT_SELECTION.
+
+---------------------------------------------------------------------------------------------------------------
+2. WhatsApp Notification Sent: The approval function automatically triggered the notification service. 
+
+** Result: The exact message was caught by our mock: "Your order has been approved! 
+✅\nTotal Amount: Rs. 50.00\nPlease choose your payment method:\n1️⃣ Cash on Delivery\n2️⃣ Online Payment"
+
+---------------------------------------------------------------------------------------------------------------
+3.  Patient Payment Selection: I then simulated the patient receiving the message on WhatsApp and
+ replying with "2" for Online Payment. 
+
+** Result: The bot correctly processed the message, updating the order's payment method to ONLINE and 
+changing the status to AWAITING_PAYMENT. Finally, the payment link was triggered and sent!
