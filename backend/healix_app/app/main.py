@@ -27,6 +27,18 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="HealixPharm - WhatsApp Bot")
 
+<<<<<<< HEAD
+=======
+# ─── CORS Middleware ───────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+>>>>>>> 983b523c62a4992d3f6014f7cdc68c43446d063b
 # Include Routers
 app.include_router(whatsapp_router)
 app.include_router(admin_router)
