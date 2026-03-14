@@ -42,7 +42,7 @@ const features = [
       </svg>
     ),
     title: "E-Channelling",
-    sub: "Patients book doctors through your pharmacy seamlessly.",
+    sub: "Add a new revenue stream, offer doctor bookings from your pharmac",
     tag: "Booking", c: "#818cf8", g: "rgba(129,140,248,0.15)",
   },
   {
@@ -55,7 +55,7 @@ const features = [
       </svg>
     ),
     title: "Medicine Delivery",
-    sub: "WhatsApp-managed delivery connecting pharmacy to patient's door.",
+    sub: "Offer delivery from your pharmacy, orders managed end-to-end",
     tag: "Delivery", c: "#2dd4bf", g: "rgba(45,212,191,0.15)",
   },
   {
@@ -66,7 +66,7 @@ const features = [
       </svg>
     ),
     title: "Refill Reminders",
-    sub: "Auto SMS when a patient's prescription supply runs critically low.",
+    sub: "Keep your customers coming back, auto refill reminders sent on your behalf",
     tag: "SMS", c: "#c084fc", g: "rgba(192,132,252,0.15)",
   },
   {

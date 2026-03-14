@@ -94,7 +94,7 @@ export default function Hero() {
               { icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#38bdf8" strokeWidth="1.5"/></svg>, label: "WhatsApp Integration" },
               { icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="#818cf8" strokeWidth="1.5"/><path d="M16 2v4M8 2v4M3 10h18" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round"/></svg>, label: "Smart Refill / Dosage Reminders" },
               { icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#38bdf8" strokeWidth="1.5" strokeLinejoin="round"/></svg>, label: "FEFO Expiry Control" },
-              { icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#818cf8" strokeWidth="1.5"/><path d="M12 6v6l4 2" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round"/></svg>, label: "24/7 Patient Support" },
+              { icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#818cf8" strokeWidth="1.5"/><path d="M12 6v6l4 2" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round"/></svg>, label: "24/7 Customer Engagement" },
             ].map((p) => (
               <div key={p.label} className="hero-pill">
                 <div className="animate-pulse-soft">{p.icon}</div>

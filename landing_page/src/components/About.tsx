@@ -75,6 +75,8 @@ export default function About() {
               <li>Expired medicines unnoticed</li>
               <li>Patients forgetting refills</li>
               <li>Suppliers contacted too late</li>
+              <li>No way to order medicines remotely</li>
+              <li>Long queues for doctor appointments</li>
             </ul>
 
           </div>
@@ -89,52 +91,47 @@ export default function About() {
 
             <p className="about-solution-desc">
               One connected platform automates inventory, reminders,
-              supplier alerts, and patient engagement — all in real time.
+              supplier alerts, and customer engagement — all in real time.
             </p>
 
             <div className="about-features">
 
-              {[
-                {
-                  label: "Auto stock tracking",
-                  sub: "AI logs inventory in real time",
-                  c: "#38bdf8",
-                },
-                {
-                  label: "WhatsApp refill reminders",
-                  sub: "Patients never miss medication",
-                  c: "#818cf8",
-                },
-                {
-                  label: "Expiry protection",
-                  sub: "FEFO alerts prevent losses",
-                  c: "#c084fc",
-                },
-              ].map((s) => (
-                <div key={s.label} className="about-feature">
+    {[
+  { label: "AI stock tracking",    c: "#38bdf8" },
+  { label: "Expiry protection",    c: "#c084fc" },
+  { label: "SMS refill reminders", c: "#818cf8" },
+  {
+    label: "WhatsApp bot", c: "#2dd4bf",
+    subs: ["Medicine ordering", "Medicine delivery", "Live agent support", "E-channelling"],
+  },
+  { label: "Role-based access",    c: "#38bdf8" },
+].map((item) => (
+  <div key={item.label} style={{ padding: "5px 0" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+      <div style={{
+        width: "26px", height: "26px", borderRadius: "50%",
+        border: `1.5px solid ${item.c}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0, color: item.c, fontSize: "13px", fontWeight: 700,
+      }}>✓</div>
+      <div style={{ fontSize: "17px", fontWeight: 600, color: "#f1f5f9", fontFamily: "Syne, sans-serif" }}>
+        {item.label}
+      </div>
+    </div>
 
-                  <div
-                    className="about-feature-icon"
-                    style={{
-                      background: `${s.c}20`,
-                      borderColor: `${s.c}40`,
-                    }}
-                  />
-
-                  <div>
-                    <div
-                      className="about-feature-title"
-                      style={{ color: s.c }}
-                    >
-                      {s.label}
-                    </div>
-                    <div className="about-feature-sub">
-                      {s.sub}
-                    </div>
-                  </div>
-
-                </div>
-              ))}
+    {/* Sub-features */}
+    {item.subs && (
+      <div style={{ marginLeft: "40px", marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
+        {item.subs.map((sub) => (
+          <div key={sub} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: item.c, flexShrink: 0 }} />
+            <span style={{ fontSize: "13px", color: "#475569" }}>{sub}</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+))}
 
             </div>
           </div>

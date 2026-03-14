@@ -40,7 +40,7 @@ const steps = [
       </svg>
     ),
     points: [
-      "Patients message on WhatsApp",
+      "Your customers message on WhatsApp",
       "Simple menu — order, book, get alerts",
       "Staff receives requests in real time",
     ],
@@ -59,7 +59,7 @@ const steps = [
     points: [
       "Orders verified instantly",
       "Real-time delivery alerts for staff",
-      "Medicines reach patients on time",
+      "Customers receive orders on time, boosting loyalty",
     ],
   },
 ];
