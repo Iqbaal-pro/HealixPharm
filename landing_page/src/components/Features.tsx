@@ -10,7 +10,7 @@ const features = [
       </svg>
     ),
     title: "AI Stock Management",
-    sub: "Predicts stock needs and automates restocking before you run out.",
+    sub: "Predicts when you'll run out and automates restocking — before shelves go empty.",
     tag: "AI", c: "#38bdf8", g: "rgba(56,189,248,0.15)",
   },
   {
@@ -21,7 +21,7 @@ const features = [
       </svg>
     ),
     title: "Expiry Alerts",
-    sub: "Real-time notifications before medicines expire or hit reorder threshold.",
+    sub: "Get notified before medicines expire — protect your stock and stay compliant.",
     tag: "Alerts", c: "#c084fc", g: "rgba(192,132,252,0.15)",
   },
   {
@@ -31,7 +31,7 @@ const features = [
       </svg>
     ),
     title: "WhatsApp Bot",
-    sub: "Order medicine and get health alerts via WhatsApp — powered by Twilio.",
+    sub: "Let your customers order, track, and get support via WhatsApp — your pharmacy, always reachable.",
     tag: "Twilio", c: "#34d399", g: "rgba(52,211,153,0.15)",
   },
   {
@@ -42,7 +42,7 @@ const features = [
       </svg>
     ),
     title: "E-Channelling",
-    sub: "Add a new revenue stream, offer doctor bookings from your pharmac",
+    sub: "Offer doctor bookings through your pharmacy — a new revenue stream with zero extra effort.",
     tag: "Booking", c: "#818cf8", g: "rgba(129,140,248,0.15)",
   },
   {
@@ -55,7 +55,7 @@ const features = [
       </svg>
     ),
     title: "Medicine Delivery",
-    sub: "Offer delivery from your pharmacy, orders managed end-to-end",
+    sub: "Offer delivery from your pharmacy — orders come in via WhatsApp and your staff fulfils them.",
     tag: "Delivery", c: "#2dd4bf", g: "rgba(45,212,191,0.15)",
   },
   {
@@ -66,7 +66,7 @@ const features = [
       </svg>
     ),
     title: "Refill Reminders",
-    sub: "Keep your customers coming back, auto refill reminders sent on your behalf",
+    sub: "Automatically remind your customers when it's time to restock — keep them coming back to you.",
     tag: "SMS", c: "#c084fc", g: "rgba(192,132,252,0.15)",
   },
   {
@@ -78,7 +78,7 @@ const features = [
       </svg>
     ),
     title: "Live Agent Support",
-    sub: "Staff step in instantly when patients need human assistance.",
+    sub: "Your staff can step into any WhatsApp conversation instantly when a customer needs help.",
     tag: "Support", c: "#38bdf8", g: "rgba(56,189,248,0.15)",
   },
   {
@@ -89,7 +89,7 @@ const features = [
       </svg>
     ),
     title: "Role-Based Access",
-    sub: "Admin, Pharmacist, Storekeeper — every action tracked and secured.",
+    sub: "Admin, Pharmacist, Storekeeper — control who sees and does what across your entire team.",
     tag: "Security", c: "#818cf8", g: "rgba(129,140,248,0.15)",
   },
 ];
@@ -125,11 +125,11 @@ export default function Features() {
             <span className="badge-text">Platform Features</span>
           </div>
           <h2 className="features-title">
-            Everything built in.{" "}
+            Everything your pharmacy needs.{" "}
             <span className="grad">Nothing missing.</span>
           </h2>
           <p className="features-sub">
-            From AI stock tracking to WhatsApp ordering — one fully automated platform.
+            From AI stock tracking to WhatsApp ordering — one fully automated platform built for Sri Lankan pharmacies.
           </p>
         </div>
 
@@ -144,7 +144,6 @@ export default function Features() {
                 "--card-glow": f.g,
               } as React.CSSProperties}
             >
-              {/* Glowing pill badge with icon + tag */}
               <div
                 className="feat-pill-badge"
                 style={{
