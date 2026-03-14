@@ -1,4 +1,4 @@
-// app/routes/prescriptionRoutes.ts
+//   app/routes/prescriptionRoutes.ts
 //   STOCK_BASE  = NEXT_PUBLIC_API_URL       (Stock Management – port 8000)
 //   BOT_BASE    = NEXT_PUBLIC_BOT_API_URL   (WhatsApp Bot     – port 8001)
 
@@ -14,8 +14,11 @@ export interface PrescriptionRecord {
   medicine_name: string;
   dose_per_day: number;
   start_date: string;
+  end_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  meals?: string;
+  meal_times?: string;
   created_at: string;
   remaining_days: number;
   is_completed: boolean;
@@ -50,6 +53,8 @@ export interface CreatePrescriptionPayload {
   start_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  meals?: string;
+  meal_times?: string;   // comma-separated HH:MM, one per dose — e.g. "08:00,13:00,19:00"
 }
 
 export interface PrescriptionResponse {
@@ -59,9 +64,13 @@ export interface PrescriptionResponse {
   medicine_name: string;
   dose_per_day: number;
   start_date: string;
+  end_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  meals?: string;
+  meal_times?: string;
   created_at: string;
+  reminders_scheduled: number;
 }
 
 export interface IssuePayload {

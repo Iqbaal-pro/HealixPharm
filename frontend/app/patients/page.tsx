@@ -42,8 +42,8 @@ export default function PatientsPage() {
   };
 
   const filtered = patients.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.phone_number.includes(search)
+    (p.name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (p.phone_number ?? "").includes(search)
   );
 
   return (
@@ -126,7 +126,7 @@ export default function PatientsPage() {
                         <td className="td td-order-id">#{p.id}</td>
                         <td className="td" style={{ color: "#f1f5f9", fontWeight: 500 }}>{p.name}</td>
                         <td className="td td-phone-cell"><div className="td-phone">{p.phone_number}</div></td>
-                        <td className="td"><span className="badge">{p.language.toUpperCase()}</span></td>
+                        <td className="td"><span className="badge">{(p.language ?? "—").toUpperCase()}</span></td>
                         <td className="td">
                           <button
                             onClick={() => handleConsent(p)}
