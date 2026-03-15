@@ -5,10 +5,6 @@ from datetime import datetime  #SupportTicket
 from app.db import Base
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> c776ebcae05d5a25013105268c04818cc6e5d618
 class User(Base):
     __tablename__ = "users"
 
