@@ -421,12 +421,8 @@ class WhatsAppService_wb:
 
         res = self.twilio_wa.send_menu(
                 user_id,
-                "Choose an option:\n\n"
-                "1. Order Medicine\n"
-                "2. Channel Doctor\n"
-                "3. Disease Updates\n"
-                "4. Contact Agent\n\n"
-                "Please reply with 1, 2, 3, or 4."
+                "Please reply with 1, 2, 3, or 4.",
+                buttons
             )
 
         logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id} | Response: {res['status']}")
