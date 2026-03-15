@@ -189,45 +189,37 @@ class WhatsAppService_wb:
         if current_step == "awaiting_payment_selection":
             db = SessionLocal()
             try:
-<<<<<<< HEAD
-                user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == user_id).first()
-                order = db.query(models.Order).filter(
-                    models.Order.user_id == user.id,
-                    models.Order.status == "AWAITING_PAYMENT_SELECTION"
-                ).order_by(models.Order.created_at.desc()).first()
-=======
                 patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
                 if patient:
                     order = db.query(models.Order).filter(
                         models.Order.patient_id == patient.id,
                         models.Order.status == "AWAITING_PAYMENT_SELECTION"
                     ).order_by(models.Order.created_at.desc()).first()
->>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
 
-                if order:
-                    if body == "1":  # COD
-                        order.payment_method = "COD"
-                        order.status = "CONFIRMED"
-                        order.payment_status = "PENDING_ON_DELIVERY"
-                        db.commit()
-                        self.twilio_wa.send_text(user_id, f"Order {order.token} confirmed! ✅\nYou chose Cash on Delivery. We will deliver your medicine shortly.")
-                        UserState_wb.set_user_state(user_id, "main_menu")
-                        return
-                    elif body == "2":  # Online
-                        order.payment_method = "ONLINE"
-                        order.payment_provider = "PAYHERE"
-                        order.status = "AWAITING_PAYMENT"
-                        db.commit()
+                    if order:
+                        if body == "1":  # COD
+                            order.payment_method = "COD"
+                            order.status = "CONFIRMED"
+                            order.payment_status = "PENDING_ON_DELIVERY"
+                            db.commit()
+                            self.twilio_wa.send_text(user_id, f"Order {order.token} confirmed! ✅\nYou chose Cash on Delivery. We will deliver your medicine shortly.")
+                            UserState_wb.set_user_state(user_id, "main_menu")
+                            return
+                        elif body == "2":  # Online
+                            order.payment_method = "ONLINE"
+                            order.payment_provider = "PAYHERE"
+                            order.status = "AWAITING_PAYMENT"
+                            db.commit()
 
-                        pay_url = self.payhere.generate_checkout_url(
-                            order.token,
-                            order.total_amount,
-                            {"phone": user_id, "first_name": patient.name or "Valued"}
-                        )
+                            pay_url = self.payhere.generate_checkout_url(
+                                order.token,
+                                order.total_amount,
+                                {"phone": user_id, "first_name": patient.name or "Valued"}
+                            )
 
-                        self.twilio_wa.send_text(user_id, f"Order {order.token} updated. 💳\n\nPlease use this secure link to complete your payment:\n{pay_url}\n\n⚠️ Payment must be made within 2 hours.")
-                        UserState_wb.set_user_state(user_id, "main_menu")
-                        return
+                            self.twilio_wa.send_text(user_id, f"Order {order.token} updated. 💳\n\nPlease use this secure link to complete your payment:\n{pay_url}\n\n⚠️ Payment must be made within 2 hours.")
+                            UserState_wb.set_user_state(user_id, "main_menu")
+                            return
             finally:
                 db.close()
 
@@ -512,13 +504,8 @@ class WhatsAppService_wb:
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_order_status":
-<<<<<<< HEAD
-                user = db.query(models.WhatsAppUser).filter_by(phone=user_id).first()
-                if user:
-=======
                 patient = db.query(models.Patient).filter_by(phone_number=user_id).first()
                 if patient:
->>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
                     order = db.query(models.Order).filter(
                         models.Order.patient_id == patient.id,
                         models.Order.status != "DELIVERED"
@@ -606,15 +593,9 @@ def check_agent_delay(user_id: str):
     logger.info(f"[TIMER] Checking delay for user {user_id}")
     db = SessionLocal()
     try:
-<<<<<<< HEAD
-        user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == user_id).first()
-        if not user:
-            logger.warning(f"[TIMER] User {user_id} not found in DB")
-=======
         patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
         if not patient:
             logger.warning(f"[TIMER] Patient {user_id} not found in DB")
->>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
             return
 
         ticket = db.query(models.SupportTicket).filter(
