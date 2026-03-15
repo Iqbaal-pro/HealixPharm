@@ -3,13 +3,13 @@ import "./globals.css";
 import CursorGlow from "../components/CursorGlow";
 
 export const metadata: Metadata = {
-  title: "HealixPharm — Smart Pharmacy Management",
+  title: "HealixPharm - Smart Pharmacy Management",
   description:
     "One platform. Zero pharmacy headaches. AI stock management, WhatsApp ordering, and medicine delivery for Sri Lankan pharmacies.",
   keywords: ["pharmacy", "AI", "WhatsApp", "medicine delivery", "Sri Lanka", "HealixPharm"],
   authors: [{ name: "HealixPharm Team" }],
   openGraph: {
-    title: "HealixPharm — Smart Pharmacy Management",
+    title: "HealixPharm - Smart Pharmacy Management",
     description: "One platform. Zero pharmacy headaches.",
     type: "website",
   },

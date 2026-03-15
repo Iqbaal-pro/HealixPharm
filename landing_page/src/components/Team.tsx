@@ -6,7 +6,7 @@ const team = [
   { name: "Maneth Liyanage",  role: "Backend & ML",             img: "/team/maneth.jpg",   initial: "ML" },
   { name: "Rukaiya Riyas",    role: "Frontend, UI/UX & QA",     img: "/team/rukaiya.jpg",  initial: "RR" },
   { name: "Nasrin Nas",       role: "Frontend, UI/UX & QA",     img: "/team/nasrin.jpg",   initial: "NN" },
-  { name: "Oneli Herath",     role: "Backend",                  img: "/team/oneli.jpg",    initial: "OH" },
+  { name: "Oneli Herath",     role: "WhatsApp Bot",              img: "/team/oneli.jpg",    initial: "OH" },
   { name: "Theran De Alwis",  role: "Marketing & ML",           img: "/team/theran.jpg",   initial: "TD" },
 ];
 
@@ -41,9 +41,9 @@ export default function Team() {
           <h2 className="team-title">
             Meet the people <span className="grad">behind HealixPharm.</span>
           </h2>
-          <p className="team-sub">
+          {/*<p className="team-sub">
             Six students from IIT Sri Lanka building technology to modernize pharmacies.
-          </p>
+          </p>*/}
         </div>
 
         <div className="team-grid">

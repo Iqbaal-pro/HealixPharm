@@ -87,7 +87,7 @@ export default function Footer() {
             <div>
               <span className="footer-logo">HealixPharm</span>
               <p className="footer-tagline">
-                The smart pharmacy management platform built for Sri Lankan pharmacies — stock, customers, delivery, and channelling in one place.
+                The smart pharmacy management platform built for Sri Lankan pharmacies, stock, customers, delivery, and channelling in one place.
               </p>
               <div className="footer-contact-items">
                 {contactInfo.map((c) => (
