@@ -5,6 +5,7 @@ Registers all routers and starts the background refill scheduler.
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.db import engine
 from app.database.base import Base
@@ -21,7 +22,9 @@ from app.routes.batch_routes import router as batch_router
 from app.routes.analytics_routes import router as analytics_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.pharmacy_routes import router as pharmacy_router
+from app.routes.alert_routes import router as alert_router
 from app.routes.refill_routes import router as refill_router
+from app.routes.schedule_routes import router as schedule_router
 
 # ─── Import scheduler ──────────────────────────────────────────────
 from app.services.scheduler_service import start_scheduler, stop_scheduler
@@ -53,6 +56,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# ─── CORS Middleware ───────────────────────────────────────────────
+# Allow all origins for now (can be restricted to Vercel URL later)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace with specific Vercel URL if desired
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # ─── Register all routers ──────────────────────────────────────────
 app.include_router(inventory_router)
 app.include_router(prescription_router)
@@ -63,7 +76,9 @@ app.include_router(batch_router)
 app.include_router(analytics_router)
 app.include_router(auth_router)
 app.include_router(pharmacy_router)
+app.include_router(alert_router)
 app.include_router(refill_router)
+app.include_router(schedule_router)
 
 
 # ─── Custom OpenAPI for Swagger BearerAuth ──────────────────────────
@@ -112,6 +127,8 @@ def root():
             "/analytics",
             "/auth",
             "/pharmacy",
-            "/refill"
+            "/alerts",
+            "/refill",
+            "/schedule"
         ]
     }

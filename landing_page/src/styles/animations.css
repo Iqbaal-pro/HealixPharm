@@ -1,0 +1,142 @@
+/* ── Float up/down ── */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+/* ── Live pulse dot ── */
+@keyframes livepulse {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%       { opacity: 0.25; transform: scale(0.55); }
+}
+
+/* ── Aurora blob drifts ── */
+@keyframes drift1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, 40px) scale(1.12); }
+}
+@keyframes drift2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-50px, -60px) scale(1.08); }
+}
+@keyframes drift3 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, -40px) scale(1.1); }
+}
+
+/* ── Fade in up (page load) ── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Scale in (modals) ── */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── Shimmer (badges) ── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* ── EKG heartbeat line ── */
+@keyframes ekgDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ─────────────────────────────
+   UTILITY CLASSES
+───────────────────────────────*/
+
+.animate-float {
+  animation: floatY 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatY 7s ease-in-out infinite;
+}
+
+.animate-livepulse {
+  animation: livepulse 1.8s ease infinite;
+}
+
+.animate-blob1 {
+  animation: drift1 18s ease-in-out infinite alternate;
+}
+.animate-blob2 {
+  animation: drift2 22s ease-in-out infinite alternate;
+}
+.animate-blob3 {
+  animation: drift3 26s ease-in-out infinite alternate;
+}
+
+.animate-fade-in    { animation: fadeInUp 0.6s ease both; }
+.animate-scale-in   { animation: scaleIn  0.4s ease both; }
+
+/* ── Stagger delays ── */
+.d1 { animation-delay: 0.08s; }
+.d2 { animation-delay: 0.16s; }
+.d3 { animation-delay: 0.24s; }
+.d4 { animation-delay: 0.32s; }
+.d5 { animation-delay: 0.40s; }
+.d6 { animation-delay: 0.48s; }
+
+/* ─────────────────────────────
+   SCROLL REVEAL
+───────────────────────────────*/
+
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.93);
+  transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.visible,
+.reveal-left.visible,
+.reveal-right.visible,
+.reveal-scale.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger delays for scroll reveal */
+.rd1 { transition-delay: 0.07s; }
+.rd2 { transition-delay: 0.14s; }
+.rd3 { transition-delay: 0.21s; }
+.rd4 { transition-delay: 0.28s; }
+.rd5 { transition-delay: 0.35s; }
+.rd6 { transition-delay: 0.42s; }

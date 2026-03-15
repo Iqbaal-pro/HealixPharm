@@ -6,10 +6,23 @@ from app import models
 logger = logging.getLogger(__name__)
 
 
+<<<<<<< HEAD
+def get_or_create_user(db: Session, phone: str, name: str = None) -> models.WhatsAppUser:
+=======
 def get_or_create_patient(db: Session, phone: str, name: str = None) -> models.Patient:
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
     """
     Get a patient by phone_number or create if not exists.
     """
+<<<<<<< HEAD
+    user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == phone).first()
+    if user:
+        logger.info(f"[ORDER_SERVICE] Found existing user for phone {phone}")
+        return user
+
+    user = models.WhatsAppUser(phone=phone, name=name)
+    db.add(user)
+=======
     patient = db.query(models.Patient).filter(models.Patient.phone_number == phone).first()
     if patient:
         logger.info(f"[ORDER_SERVICE] Found existing patient for phone {phone}")
@@ -17,13 +30,18 @@ def get_or_create_patient(db: Session, phone: str, name: str = None) -> models.P
 
     patient = models.Patient(phone_number=phone, name=name)
     db.add(patient)
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
     db.commit()
     db.refresh(patient)
     logger.info(f"[ORDER_SERVICE] Created new patient id={patient.id} phone={phone}")
     return patient
 
 
+<<<<<<< HEAD
+def create_order_with_prescription(db: Session, user: models.WhatsAppUser, image_s3_key: str, s3_url: str = None) -> (models.Order, models.Prescription):
+=======
 def create_order_with_prescription(db: Session, patient: models.Patient, image_s3_key: str, s3_url: str = None) -> (models.Order, models.Prescription):
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
     """
     Create an order and associated prescription record for a patient.
     """
@@ -50,7 +68,11 @@ def create_order_with_prescription(db: Session, patient: models.Patient, image_s
     return order, prescription
 
 
+<<<<<<< HEAD
+def create_support_ticket(db: Session, user: models.WhatsAppUser) -> models.SupportTicket:
+=======
 def create_support_ticket(db: Session, patient: models.Patient) -> models.SupportTicket:
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
     """
     Create a new support ticket for a patient.
     """
@@ -62,7 +84,11 @@ def create_support_ticket(db: Session, patient: models.Patient) -> models.Suppor
     return ticket
 
 
+<<<<<<< HEAD
+def close_all_user_tickets(db: Session, user: models.WhatsAppUser):
+=======
 def close_all_user_tickets(db: Session, patient: models.Patient):
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
     """
     Find and close all active or waiting tickets for a patient.
     """

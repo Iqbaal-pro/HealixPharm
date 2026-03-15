@@ -189,12 +189,20 @@ class WhatsAppService_wb:
         if current_step == "awaiting_payment_selection":
             db = SessionLocal()
             try:
+<<<<<<< HEAD
+                user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == user_id).first()
+                order = db.query(models.Order).filter(
+                    models.Order.user_id == user.id,
+                    models.Order.status == "AWAITING_PAYMENT_SELECTION"
+                ).order_by(models.Order.created_at.desc()).first()
+=======
                 patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
                 if patient:
                     order = db.query(models.Order).filter(
                         models.Order.patient_id == patient.id,
                         models.Order.status == "AWAITING_PAYMENT_SELECTION"
                     ).order_by(models.Order.created_at.desc()).first()
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
 
                 if order:
                     if body == "1":  # COD
@@ -348,10 +356,11 @@ class WhatsAppService_wb:
             self.twilio_wa.send_menu(
                 user_id,
                 (
-                    "*eChannelling Not Available*\n\n"
-                    "Sorry, this pharmacy does not currently offer doctor channelling services.\n\n"
-                    "Please contact the pharmacy directly for assistance.\n"
-                    "Type 'menu' to return to the main menu."
+                    "*Doctor Channelling*\n\n"
+                    "This pharmacy doesn't offer online channelling just yet.\n\n"
+                    "To book a doctor appointment, please reach us directly:\n"
+                    "Call or WhatsApp the pharmacy\n\n"
+                    "Type *menu* anytime to go back."
                 ),
                 [{"id": "back_to_main", "title": "Back to Main Menu"}]
             )
@@ -359,13 +368,13 @@ class WhatsAppService_wb:
             return
 
         message = (
-            "*Channel a Doctor*\n\n"
-            "To book an appointment, please visit our secure portal:\n"
+            "*Book a Doctor Appointment*\n\n"
+            "Ready to see a doctor? It's quick and easy!\n\n"
+            "Visit our portal to choose your doctor and pick a time slot:\n"
             f"🔗 {settings.BASE_URL}/channelling\n\n"
-            "Choose your doctor, pick a slot, and complete your booking.\n"
-            "A small service charge is payable online at the time of booking.\n"
-            "Consultation fee is paid at the hospital.\n\n"
-            "Tap Back to Main Menu or type 'menu' anytime."
+            "A small service fee is charged at booking.\n"
+            "Consultation fee is paid directly at the hospital.\n\n"
+            "Need help? Type *agent* to chat with us, or *menu* to go back."
         )
         self.twilio_wa.send_menu(
             user_id,
@@ -503,8 +512,13 @@ class WhatsAppService_wb:
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_order_status":
+<<<<<<< HEAD
+                user = db.query(models.WhatsAppUser).filter_by(phone=user_id).first()
+                if user:
+=======
                 patient = db.query(models.Patient).filter_by(phone_number=user_id).first()
                 if patient:
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
                     order = db.query(models.Order).filter(
                         models.Order.patient_id == patient.id,
                         models.Order.status != "DELIVERED"
@@ -592,9 +606,15 @@ def check_agent_delay(user_id: str):
     logger.info(f"[TIMER] Checking delay for user {user_id}")
     db = SessionLocal()
     try:
+<<<<<<< HEAD
+        user = db.query(models.WhatsAppUser).filter(models.WhatsAppUser.phone == user_id).first()
+        if not user:
+            logger.warning(f"[TIMER] User {user_id} not found in DB")
+=======
         patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
         if not patient:
             logger.warning(f"[TIMER] Patient {user_id} not found in DB")
+>>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
             return
 
         ticket = db.query(models.SupportTicket).filter(

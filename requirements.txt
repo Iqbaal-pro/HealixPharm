@@ -30,6 +30,7 @@ apscheduler
 # Utilities
 python-dotenv
 python-multipart
+cryptography
 
 # Testing
 pytest

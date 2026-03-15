@@ -54,3 +54,16 @@ class SupportMessageBase(BaseModel):
     sender: str
     content: str
 
+class AlertResponseSchema(BaseModel):
+    id: int
+    disease_name: str
+    region: str
+    threat_level: str
+    start_date: datetime
+    end_date: datetime
+    status: str
+    broadcast_sent: bool
+
+    class Config:
+        from_attributes = True
+
