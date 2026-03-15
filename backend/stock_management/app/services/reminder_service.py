@@ -3,21 +3,19 @@ Reminder Service – creates, processes, and sends reminders.
 Handles both one-time (pharmacist checkbox) and recurring reminders.
 """
 import logging
-<<<<<<< HEAD
+
 from datetime import datetime, timedelta, time
-=======
-from datetime import datetime, timedelta
->>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
+
 from sqlalchemy.orm import Session
 
 from app.models.reminder import Reminder
 from app.models.patient import Patient
-<<<<<<< HEAD
+
 from app.models.prescription import Prescription
 from app.models.medicine import Medicine
-=======
+
 from app.models.issued_item import IssuedItem
->>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
+
 from app.repositories.reminder_repo import ReminderRepository
 from app.repositories.prescription_repo import PrescriptionRepository
 from app.services.sms_service import send_sms
