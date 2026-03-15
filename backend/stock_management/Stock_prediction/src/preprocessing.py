@@ -32,7 +32,7 @@ def load_and_clean_data(file_path):
     applies categories, and extracts seasonality features.
     """
     print("-> Loading raw data...")
-    df = pd.read_csv(file_path, skiprows=4, encoding='windows-1252')
+    df = pd.read_csv(file_path, skiprows=4, encoding='latin1')
     df.columns = ['Date', 'VchNo', 'Particulars', 'Item', 'Qty', 'Unit', 'Price', 'Amount']
 
     print("-> Fixing dates and formatting...")
