@@ -121,26 +121,42 @@ class WhatsAppService_wb:
         }
 
         delay_menu_mapping = {
-            "1": "agent_faq", "2": "agent_continue"
+            "1": "agent_faq", "2": "agent_continue", "3": "agent_back"
         }
 
-        if current_step == "faq_mode" and body in faq_menu_mapping:
-            self._handle_faq_selection(user_id, faq_menu_mapping[body])
+        if current_step == "faq_mode":
+            if body in faq_menu_mapping:
+                self._handle_faq_selection(user_id, faq_menu_mapping[body])
+                return
+            
+            # Invalid input at FAQ menu
+            self.twilio_wa.send_text(
+                user_id,
+                "Please reply with a number from 1 to 7, or type menu to return to the Main Menu."
+            )
             return
 
-        if current_step == "agent_menu" and body in agent_menu_mapping:
-            button_id = agent_menu_mapping[body]
-            if button_id == "back_to_main":
-                self.send_main_menu(user_id)
-            else:
+        if current_step == "agent_menu":
+            if body in agent_menu_mapping:
+                button_id = agent_menu_mapping[body]
                 self._handle_button_click(user_id, button_id)
+                return
+            # Invalid input at agent menu
+            self.twilio_wa.send_text(
+                user_id,
+                "Please reply with 1, 2, or 3.\n"
+                "1 - Chat with an Agent\n"
+                "2 - Call Pharmacy\n"
+                "3 - Back to Main Menu\n\n"
+                "Or type 'menu' anytime."
+            )
             return
 
         if current_step == "waiting_for_agent":
             if body in delay_menu_mapping:
                 self._handle_button_click(user_id, delay_menu_mapping[body])
                 return
-            self.twilio_wa.send_text(user_id, "Please wait for an agent or type 'menu' to return.")
+            self.twilio_wa.send_text(user_id, "Please wait for an agent or type 'menu' to go back to main menu.")
             return
 
         if current_step == "live_chat":
@@ -210,14 +226,24 @@ class WhatsAppService_wb:
                 )
                 UserState_wb.set_user_state(user_id, "awaiting_prescription")
                 return
+            
+            # Invalid input at main menu
+            self.twilio_wa.send_text(
+                user_id,
+                "Please reply with 1, 2, 3, or 4."
+            )
+            return
 
         # Handle caption while awaiting prescription
         if current_step == "awaiting_prescription" or state.get("last_action") == "sending_image":
             logger.info(f"[WB_SERVICE] Ignoring potential caption text: '{body}'")
             return
 
-        # Default
-        self.send_main_menu(user_id)
+        # Default fallback for unrecognized input
+        self.twilio_wa.send_text(
+            user_id, 
+            "Please type 1 to go back to the Main Menu, or type menu anytime."
+        )
 
     def _handle_button_click(self, user_id: str, button_id: str):
         """
@@ -262,7 +288,14 @@ class WhatsAppService_wb:
             )
 
         elif button_id == "agent_call":
+            db = SessionLocal()
+            try:
+                patient = get_or_create_patient(db, phone=user_id)
+                close_all_user_tickets(db, patient)
+            finally:
+                db.close()
             self.twilio_wa.send_text(user_id, "You can contact the pharmacy at:\n📞 +94 11 234 5678\n\nType 'menu' to return to main menu.")
+            UserState_wb.set_user_state(user_id, "main_menu")
 
         elif button_id == "agent_faq":
             self.send_faq_menu(user_id)
@@ -270,7 +303,16 @@ class WhatsAppService_wb:
         elif button_id == "agent_continue":
             self.twilio_wa.send_text(user_id, "Thank you for your patience. An agent will be with you shortly.")
 
+        elif button_id == "agent_back":
+            self.send_agent_menu(user_id)
+
         elif button_id == "back_to_main":
+            db = SessionLocal()
+            try:
+                patient = get_or_create_patient(db, phone=user_id)
+                close_all_user_tickets(db, patient)
+            finally:
+                db.close()
             self.send_main_menu(user_id)
 
     def _handle_doctor_button(self, user_id: str):
@@ -364,7 +406,16 @@ class WhatsAppService_wb:
             {"id": "agent",   "title": "Contact Agent"}
         ]
 
-        res = self.twilio_wa.send_menu(user_id, "Choose an option:", buttons)
+        res = self.twilio_wa.send_menu(
+            user_id,
+            "Choose an option:\n\n"
+            "1 - Order Medicine\n"
+            "2 - Channel Doctor\n"
+            "3 - Disease Updates\n"
+            "4 - Contact Agent\n\n"
+            "Please reply with 1, 2, 3, or 4.",
+            buttons
+        )
         logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id} | Response: {res['status']}")
         UserState_wb.set_user_state(user_id, "main_menu")
 
@@ -388,7 +439,8 @@ class WhatsAppService_wb:
         logger.info(f"[WB_SERVICE] DELAY_MENU_SENT | User: {user_id}")
         buttons = [
             {"id": "agent_faq",      "title": "Try help bot"},
-            {"id": "agent_continue", "title": "Continue waiting"}
+            {"id": "agent_continue", "title": "Continue waiting"},
+            {"id": "agent_back",     "title": "Go back"}
         ]
         self.twilio_wa.send_menu(user_id, "We are experiencing a delay. Please choose:", buttons)
 
@@ -407,7 +459,7 @@ class WhatsAppService_wb:
             "5. Delivery charges\n"
             "6. Refund and cancellation policy\n"
             "7. Back to main menu\n\n"
-            "Reply with the number of your choice."
+            "Please reply with a number from 1 to 7."
         )
         self.twilio_wa.send_text(user_id, message)
         UserState_wb.set_user_state(user_id, "faq_mode")
