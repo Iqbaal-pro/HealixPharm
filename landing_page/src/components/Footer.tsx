@@ -2,15 +2,15 @@
 import Link from "next/link";
 
 const platformLinks = [
-  { label: "Features", href: "#features" },
+  { label: "Features",     href: "#features" },
   { label: "How It Works", href: "#how-it-works" },
-  { label: "About", href: "#about" },
-  { label: "Team", href: "#team" },
-  { label: "Sign Up", href: "/register" },
+  { label: "About",        href: "#about" },
+  { label: "Team",         href: "#team" },
+  { label: "Sign Up",      href: "/register" },
 ];
 
 const projectLinks = [
-  { label: "GitHub", href: "#" },
+  { label: "GitHub",        href: "#" },
   { label: "Documentation", href: "#" },
 ];
 
@@ -76,7 +76,6 @@ const socials = [
 export default function Footer() {
   return (
     <>
-
       <footer className="footer">
         <div className="footer-top-glow" />
         <div className="footer-bg-glow" />
@@ -88,7 +87,7 @@ export default function Footer() {
             <div>
               <span className="footer-logo">HealixPharm</span>
               <p className="footer-tagline">
-                Connecting care — Anytime, Anywhere. Smart pharmacy management built for Sri Lankan pharmacies.
+                The smart pharmacy management platform built for Sri Lankan pharmacies — stock, customers, delivery, and channelling in one place.
               </p>
               <div className="footer-contact-items">
                 {contactInfo.map((c) => (
@@ -139,7 +138,7 @@ export default function Footer() {
 
           {/* Bottom bar */}
           <div className="footer-bottom">
-            <span className="footer-bottom-text">© 2025 HealixPharm · All Rights Reserved</span>
+            <span className="footer-bottom-text">© 2026 HealixPharm · All Rights Reserved</span>
             <div className="footer-bottom-badge">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#334155" strokeWidth="2" strokeLinejoin="round" />

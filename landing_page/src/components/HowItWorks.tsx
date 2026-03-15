@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 const steps = [
   {
     n: "01", c: "#38bdf8", g: "rgba(56,189,248,0.12)",
-    title: "Add stock easily",
+    title: "Register your pharmacy",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
@@ -12,42 +12,42 @@ const steps = [
       </svg>
     ),
     points: [
-      "Pharmacist enters new medicines",
-      "System records batch, expiry & quantity",
-      "Stock instantly visible across dashboard",
+      "Sign up and add your pharmacy details",
+      "Enter your medicines, batches, and stock levels",
+      "Your dashboard is live in under an hour",
     ],
   },
   {
     n: "02", c: "#818cf8", g: "rgba(129,140,248,0.12)",
-    title: "Track automatically",
+    title: "Stock tracks itself",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     ),
     points: [
-      "Real-time stock monitoring 24/7",
-      "Instant low-stock & expiry detection",
+      "Every sale auto-reduces your inventory",
+      "Low stock and expiry alerts fire automatically",
       "FEFO batch prioritisation built in",
     ],
   },
   {
     n: "03", c: "#c084fc", g: "rgba(192,132,252,0.12)",
-    title: "Connect via WhatsApp",
+    title: "Customers reach you on WhatsApp",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
       </svg>
     ),
     points: [
-      "Your customers message on WhatsApp",
-      "Simple menu — order, book, get alerts",
-      "Staff receives requests in real time",
+      "Customers order medicines via WhatsApp",
+      "Your staff gets notified instantly",
+      "Live agent can step in anytime",
     ],
   },
   {
     n: "04", c: "#2dd4bf", g: "rgba(45,212,191,0.12)",
-    title: "Deliver & delight",
+    title: "Grow your pharmacy",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         <rect x="1" y="3" width="15" height="13" rx="1" stroke="currentColor" strokeWidth="1.6"/>
@@ -57,9 +57,9 @@ const steps = [
       </svg>
     ),
     points: [
-      "Orders verified instantly",
-      "Real-time delivery alerts for staff",
-      "Customers receive orders on time, boosting loyalty",
+      "Offer delivery and earn more per order",
+      "Add doctor channelling as a revenue stream",
+      "Retain customers with auto refill reminders",
     ],
   },
 ];
@@ -85,7 +85,6 @@ export default function HowItWorks() {
 
   return (
     <>
-
       <section id="how-it-works" className="hiw-section reveal-up" ref={ref}>
         <div className="hiw-top-line" />
         <div className="hiw-glow" />
@@ -106,7 +105,7 @@ export default function HowItWorks() {
               <span className="grad">in under an hour.</span>
             </h2>
             <p className="hiw-subtitle">
-              Four steps to a fully automated pharmacy.
+              Four steps to a fully automated pharmacy — no IT team needed.
             </p>
           </div>
 

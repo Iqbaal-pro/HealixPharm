@@ -3,15 +3,9 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 const perks = [
-  "No credit card required",
+  "No technical knowledge needed",
   "Setup in under 1 hour",
-  "Cancel anytime",
-];
-
-const floatingStats = [
-  { n: "500+", l: "Pharmacies" },
-  { n: "99.9%", l: "Uptime" },
-  { n: "< 1hr", l: "Setup Time" },
+  "Local Sri Lankan support",
 ];
 
 export default function CTA() {
@@ -36,7 +30,6 @@ export default function CTA() {
 
   return (
     <>
-
       <section className="cta-section reveal-up" ref={sectionRef}>
         <div className="cta-top-line" />
         <div className="cta-glow-main" />
@@ -51,24 +44,24 @@ export default function CTA() {
               Get Started Today
             </div>
             <h2 className="cta-title">
-              Give your pharmacy the<br />
-              <span className="grad">upgrade it deserves.</span>
+              Ready to modernize<br />
+              <span className="grad">your pharmacy?</span>
             </h2>
             <p className="cta-sub">
-              Setup takes under an hour. Your first automated refill reminder
-              will be sent before end of day.
+              Join the waitlist today. Setup takes under an hour — and your
+              first automated stock alert will fire before end of day.
             </p>
           </div>
 
           <div className="cta-buttons reveal" style={{ transitionDelay: "0.1s" }}>
             <Link href="/register" className="btn-primary">
-              Sign Up Your Pharmacy
+              Register Your Pharmacy
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
-            <Link href="#features" className="btn-secondary">
-              Learn More
+            <Link href="#contact" className="btn-secondary">
+              Talk to Us First
             </Link>
           </div>
 
@@ -86,11 +79,34 @@ export default function CTA() {
             ))}
           </div>
 
-          <div className="cta-stats reveal" style={{ transitionDelay: "0.26s" }}>
-            {floatingStats.map((s) => (
-              <div key={s.l} className="cta-stat">
-                <div className="stat-n">{s.n}</div>
-                <div className="stat-l">{s.l}</div>
+          {/* Honest trust strip — no fake numbers */}
+          <div className="reveal" style={{
+            transitionDelay: "0.26s",
+            marginTop: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}>
+            {[
+              { label: "SDGP 2025", sub: "IIT Sri Lanka" },
+              { label: "Twilio", sub: "Powered" },
+              { label: "PayHere", sub: "Integrated" },
+              { label: "WhatsApp Business", sub: "Connected" },
+            ].map((b) => (
+              <div key={b.label} style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "12px 20px",
+                background: "rgba(148,163,184,0.03)",
+                border: "1px solid rgba(148,163,184,0.08)",
+                borderRadius: "12px",
+                minWidth: "100px",
+              }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.02em" }}>{b.label}</span>
+                <span style={{ fontSize: "11px", color: "#334155", marginTop: "2px" }}>{b.sub}</span>
               </div>
             ))}
           </div>
