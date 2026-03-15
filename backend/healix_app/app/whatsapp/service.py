@@ -153,10 +153,22 @@ class WhatsAppService_wb:
             return
 
         if current_step == "waiting_for_agent":
+            self.twilio_wa.send_text(user_id, "Please wait for an agent or type 'menu' to go back to main menu.")
+            return
+
+        if current_step == "agent_delay_menu":
             if body in delay_menu_mapping:
                 self._handle_button_click(user_id, delay_menu_mapping[body])
                 return
-            self.twilio_wa.send_text(user_id, "Please wait for an agent or type 'menu' to go back to main menu.")
+            # Invalid input at delay menu
+            self.twilio_wa.send_text(
+                user_id,
+                "Please reply with 1, 2, or 3.\n"
+                "1 - Try help bot\n"
+                "2 - Continue waiting\n"
+                "3 - Go back\n\n"
+                "Or type 'menu' anytime."
+            )
             return
 
         if current_step == "live_chat":
@@ -407,15 +419,15 @@ class WhatsAppService_wb:
         ]
 
         res = self.twilio_wa.send_menu(
-            user_id,
-            "Choose an option:\n\n"
-            "1 - Order Medicine\n"
-            "2 - Channel Doctor\n"
-            "3 - Disease Updates\n"
-            "4 - Contact Agent\n\n"
-            "Please reply with 1, 2, 3, or 4.",
-            buttons
-        )
+                user_id,
+                "Choose an option:\n\n"
+                "1. Order Medicine\n"
+                "2. Channel Doctor\n"
+                "3. Disease Updates\n"
+                "4. Contact Agent\n\n"
+                "Please reply with 1, 2, 3, or 4."
+            )
+
         logger.info(f"[WB_SERVICE] MAIN_MENU_SENT | User: {user_id} | Response: {res['status']}")
         UserState_wb.set_user_state(user_id, "main_menu")
 
@@ -443,6 +455,7 @@ class WhatsAppService_wb:
             {"id": "agent_back",     "title": "Go back"}
         ]
         self.twilio_wa.send_menu(user_id, "We are experiencing a delay. Please choose:", buttons)
+        UserState_wb.set_user_state(user_id, "agent_delay_menu")
 
     def send_faq_menu(self, user_id: str):
         """
