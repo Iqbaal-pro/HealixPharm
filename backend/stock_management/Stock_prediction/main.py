@@ -10,7 +10,7 @@ from src.visualization import plot_budget_distribution, plot_category_trends
 
 def run_prediction_pipeline():
     print("1. Loading and Preprocessing Data...")
-    file_path = 'data/peoples pharmacy.xlsx - Sheet1.csv'
+    file_path = 'data/peoples pharmacy.xlsx'
 
     # Clean the data using your preprocessing.py file
     df = load_and_clean_data(file_path)
