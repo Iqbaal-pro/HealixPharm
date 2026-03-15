@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # Import custom modules from the src folder
 from src.preprocessing import load_and_clean_data, get_latest_prices
@@ -51,6 +52,10 @@ def run_prediction_pipeline():
     low_data_count = 0
     ml_count = 0
 
+    # --- Collect predictions vs actuals for evaluation ---
+    all_y_true = []
+    all_y_pred = []
+
     for item in items:
         item_data = monthly_sales[monthly_sales['Item'] == item].copy()
         if item_data.empty:
@@ -63,10 +68,22 @@ def run_prediction_pipeline():
             predicted_qty = item_data['Qty'].mean()
             low_data_count += 1
         else:
-            # Use month as feature — Random Forest captures seasonality
             X = item_data[['Month']]
             y = item_data['Qty']
+
+            # --- Train/Test Split: hold out last month for evaluation ---
+            X_train, X_test = X.iloc[:-1], X.iloc[-1:]
+            y_train, y_test = y.iloc[:-1], y.iloc[-1:]
+
             model = RandomForestRegressor(n_estimators=100, random_state=42)
+            model.fit(X_train, y_train)
+
+            # Evaluate on held-out last month
+            y_pred_eval = model.predict(X_test)[0]
+            all_y_true.append(y_test.values[0])
+            all_y_pred.append(max(0, y_pred_eval))
+
+            # Retrain on ALL data, then predict target month
             model.fit(X, y)
             predicted_qty = model.predict(pd.DataFrame({'Month': [target_month]}))[0]
             ml_count += 1
@@ -77,11 +94,60 @@ def run_prediction_pipeline():
             f'Predicted_{month_name.replace(" ", "_")}_Qty': max(0, round(predicted_qty))
         })
 
-    pred_col = f'Predicted_{month_name.replace(" ", "_")}_Qty'
     print(f"   [+] ML model used for {ml_count} items, average used for {low_data_count} items")
+
+    # --- Print Evaluation Metrics ---
+    if all_y_true:
+        mae  = mean_absolute_error(all_y_true, all_y_pred)
+        rmse = np.sqrt(mean_squared_error(all_y_true, all_y_pred))
+        r2   = r2_score(all_y_true, all_y_pred)
+
+        # MAPE — skip items where actual is 0 to avoid division by zero
+        mape_vals = [
+            abs((t - p) / t) * 100
+            for t, p in zip(all_y_true, all_y_pred) if t != 0
+        ]
+        mape = np.mean(mape_vals)
+
+        print(f"\n   📊 MODEL EVALUATION (held-out last month per item):")
+        print(f"   ├── MAE   : {mae:.2f} units   (avg prediction error)")
+        print(f"   ├── RMSE  : {rmse:.2f} units  (penalizes large errors)")
+        print(f"   ├── R²    : {r2:.4f}         (1.0 = perfect, >0.75 = good)")
+        print(f"   └── MAPE  : {mape:.2f}%        (% error on average)")
+
+        # --- Interpretation ---
+        print(f"\n   📝 Interpretation:")
+        if r2 >= 0.85:
+            verdict = "Excellent ✅"
+        elif r2 >= 0.70:
+            verdict = "Good ✅"
+        elif r2 >= 0.50:
+            verdict = "Acceptable ⚠️"
+        else:
+            verdict = "Needs Improvement ❌"
+        print(f"   └── R² = {r2:.4f} → {verdict}")
+        print(f"   └── On average, predictions are off by {mae:.1f} units per item")
+
+        # --- Save evaluation metrics to file ---
+        eval_data = {
+            'Metric': ['MAE', 'RMSE', 'R2_Score', 'MAPE (%)'],
+            'Value': [round(mae, 4), round(rmse, 4), round(r2, 4), round(mape, 4)],
+            'Interpretation': [
+                f'Avg error of {mae:.1f} units per item',
+                f'Large-error-penalized score: {rmse:.1f}',
+                verdict,
+                f'Avg {mape:.1f}% off from actual quantity'
+            ]
+        }
+        eval_df = pd.DataFrame(eval_data)
+        reports_dir_eval = os.path.join(BASE_DIR, 'outputs', 'reports')
+        os.makedirs(reports_dir_eval, exist_ok=True)
+        eval_df.to_csv(os.path.join(reports_dir_eval, 'model_evaluation.csv'), index=False, encoding='utf-8-sig')
+        print(f"\n   [+] Evaluation saved to outputs/reports/model_evaluation.csv")
 
     # -------------------------------------------------------
     print("\n4. Applying 20% Safety Stock Buffer...")
+    pred_col = f'Predicted_{month_name.replace(" ", "_")}_Qty'
     predictions_df = pd.DataFrame(results)
     predictions_df['Recommended_Stock'] = (predictions_df[pred_col] * 1.2).apply(np.ceil).astype(int)
 
@@ -117,9 +183,9 @@ def run_prediction_pipeline():
     # -------------------------------------------------------
     print(f"\n{'='*50}")
     print(f"✅ ML Pipeline Complete!")
-    print(f"   Target month  : {month_name}")
+    print(f"   Target month   : {month_name}")
     print(f"   Items predicted: {len(predictions_df)}")
-    print(f"   Total budget  : Rs. {total_budget:,.2f}")
+    print(f"   Total budget   : Rs. {total_budget:,.2f}")
     print(f"{'='*50}")
 
 
