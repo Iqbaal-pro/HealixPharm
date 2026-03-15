@@ -4,7 +4,7 @@ from app import models
 
 logger = logging.getLogger(__name__)
 
-from app.utils.encryption import encrypt_data
+#from app.utils.encryption import encrypt_data
 
 class WhatsAppAuthService:
     """
@@ -14,14 +14,10 @@ class WhatsAppAuthService:
     @staticmethod
     def is_authenticated(db: Session, phone_number: str) -> bool:
         """
-        Check if a phone number corresponds to an active registered patient.
+        Check if a phone number corresponds to a registered patient.
         """
-        # Encrypt the search term to match the database column
-        encrypted_phone = encrypt_data(phone_number)
-        
         patient = db.query(models.Patient).filter(
-            models.Patient._phone_number == encrypted_phone,
-            models.Patient.is_active == True
+            models.Patient.phone_number == phone_number
         ).first()
         
         if patient:
