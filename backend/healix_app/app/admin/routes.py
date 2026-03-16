@@ -7,6 +7,7 @@ from app import models
 from app.admin import schemas
 from app.services.notification_service import NotificationService
 from app.services.stock_integration import StockIntegrationService
+from app.services.s3_service import generate_presigned_url
 from app.services import alert_service
 from app.whatsapp.state import UserState_wb
 import logging
@@ -50,7 +51,8 @@ def get_order_details(order_id: int, db: Session = Depends(get_db)):
     res = schemas.OrderDetailSchema.from_orm(order)
     res.phone = order.patient.phone_number
     if order.prescription:
-        res.prescription_url = order.prescription.s3_url
+        # Generate a fresh 1-hour presigned URL for the frontend
+        res.prescription_url = generate_presigned_url(order.prescription.s3_key)
     return res
 
 
