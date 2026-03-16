@@ -127,12 +127,8 @@ def root():
             "/analytics",
             "/auth",
             "/pharmacy",
-<<<<<<< HEAD
+            "/alerts",
             "/refill",
             "/schedule"
-=======
-            "/alerts",
-            "/refill"
->>>>>>> 4dbb78e3c9a06363b9242c2c3f5d630ffabe2351
         ]
     }

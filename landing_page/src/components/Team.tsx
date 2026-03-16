@@ -1,361 +1,166 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 const team = [
-  {
-    name: "Rukaiya Riyas",
-    role: "Team Lead & Full Stack",
-    desc: "Leads the team and oversees full stack development and system architecture.",
-    skills: ["React", "Node.js", "Python"],
-    img: "/team/rukaiya.jpg"
-  },
-  {
-    name: "Nasrin Nas",
-    role: "Backend & Database",
-    desc: "Designs backend APIs and manages the database architecture powering HealixPharm.",
-    skills: ["Python", "Flask", "MySQL"],
-    img: "/team/nasrin.jpg"
-  },
-  {
-    name: "Oneli Herath",
-    role: "Frontend & UI/UX",
-    desc: "Creates the user interface from Figma designs to responsive React components.",
-    skills: ["Figma", "React", "CSS"],
-    img: "/team/oneli.jpg"
-  },
-  {
-    name: "Iqbaal Meedin",
-    role: "WhatsApp & Twilio",
-    desc: "Builds WhatsApp bot integrations using Twilio for patient communication.",
-    skills: ["Twilio", "WhatsApp API", "JS"],
-    img: "/team/iqbaal.jpg"
-  },
-  {
-    name: "Theran De Alwis",
-    role: "ML & Notifications",
-    desc: "Develops ML models for medicine stock prediction and automated alerts.",
-    skills: ["Python", "ML", "SMS APIs"],
-    img: "/team/theran.jpg"
-  },
-  {
-    name: "Maneth Liyanage",
-    role: "QA & DevOps",
-    desc: "Ensures quality testing and manages CI/CD deployment pipelines.",
-    skills: ["Testing", "Docker", "CI/CD"],
-    img: "/team/maneth.jpg"
-  }
+  { name: "Iqbaal Meedin",    role: "Team Lead & Backend",      img: "/team/iqbaal.jpg",   initial: "IM" },
+  { name: "Maneth Liyanage",  role: "Backend & ML",             img: "/team/maneth.jpg",   initial: "ML" },
+  { name: "Rukaiya Riyas",    role: "Frontend, UI/UX & QA",     img: "/team/rukaiya.jpg",  initial: "RR" },
+  { name: "Nasrin Nas",       role: "Frontend, UI/UX & QA",     img: "/team/nasrin.jpg",   initial: "NN" },
+  { name: "Oneli Herath",     role: "WhatsApp Bot",              img: "/team/oneli.jpg",    initial: "OH" },
+  { name: "Theran De Alwis",  role: "Marketing & ML",           img: "/team/theran.jpg",   initial: "TD" },
 ];
 
 export default function Team() {
-
   const ref = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const startTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setActive(a => (a + 1) % team.length)
-    }, 3500);
-  };
 
   useEffect(() => {
-
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          startTimer();
-        } else {
-          if (timerRef.current) clearInterval(timerRef.current);
-        }
-      })
-    }, { threshold: 0.1 });
-
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting)
+            e.target.querySelectorAll(".team-reveal").forEach((el, i) =>
+              setTimeout(() => el.classList.add("visible"), i * 80)
+            );
+        });
+      },
+      { threshold: 0.05 }
+    );
     if (ref.current) obs.observe(ref.current);
-
-    return () => {
-      obs.disconnect();
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-
+    return () => obs.disconnect();
   }, []);
 
-  const prev = () => {
-    setActive(a => a === 0 ? team.length - 1 : a - 1);
-    startTimer();
-  };
-
-  const next = () => {
-    setActive(a => (a + 1) % team.length);
-    startTimer();
-  };
-
-  const visible = [
-    team[active % team.length],
-    team[(active + 1) % team.length],
-    team[(active + 2) % team.length]
-  ];
-
   return (
-
     <section id="team" ref={ref} className="team-section reveal-up">
-
       <div className="team-inner">
 
-        <div className="team-header">
-
-          <h2 className="team-title">
-            Our <span className="grad">Team</span>
-          </h2>
-
-          <p className="team-sub">
-            Six students building technology to modernize Sri Lankan pharmacies.
-          </p>
-
-        </div>
-
-
-        <div className="team-cards">
-
-          {visible.map((m, i) => {
-
-            const isCenter = i === 1;
-
-            return (
-
-              <div
-                key={m.name}
-                className={`team-card ${isCenter ? "center" : ""}`}
-              >
-
-                <div className="team-avatar">
-
-                  <img src={m.img} alt={m.name} />
-
-                </div>
-
-
-                <div className="team-body">
-
-                  <h3>{m.name}</h3>
-
-                  <p className="role">{m.role}</p>
-
-                  <p className="desc">{m.desc}</p>
-
-                  <div className="skills">
-
-                    {m.skills.map(s => (
-                      <span key={s}>{s}</span>
-                    ))}
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            )
-
-          })}
-
-        </div>
-
-
-        <div className="controls">
-
-          <button onClick={prev}>‹</button>
-
-          <div className="dots">
-
-            {team.map((_, i) => (
-              <button
-                key={i}
-                className={i === active ? "dot active" : "dot"}
-                onClick={() => setActive(i)}
-              />
-            ))}
-
+        <div className="team-header team-reveal">
+          <div className="section-badge">
+            <span className="badge-dot" />
+            The Team
           </div>
+          <h2 className="team-title">
+            Meet the people <span className="grad">behind HealixPharm.</span>
+          </h2>
+          {/*<p className="team-sub">
+            Six students from IIT Sri Lanka building technology to modernize pharmacies.
+          </p>*/}
+        </div>
 
-          <button onClick={next}>›</button>
-
+        <div className="team-grid">
+          {team.map((m, i) => (
+            <div
+              key={m.name}
+              className="team-card team-reveal"
+              style={{ transitionDelay: `${i * 0.07}s` }}
+            >
+              <div className="team-avatar">
+                <img
+                  src={m.img}
+                  alt={m.name}
+                  onError={(e) => {
+                    const t = e.currentTarget as HTMLImageElement;
+                    t.style.display = "none";
+                    t.parentElement!.innerHTML = `<span class="team-initial">${m.initial}</span>`;
+                  }}
+                />
+              </div>
+              <h3 className="team-name">{m.name}</h3>
+              <p className="team-role">{m.role}</p>
+            </div>
+          ))}
         </div>
 
       </div>
 
-
       <style jsx>{`
-
-.team-section{
-padding:140px 0;
-position:relative;
-}
-
-.team-inner{
-max-width:1100px;
-margin:auto;
-padding:0 24px;
-}
-
-.team-header{
-text-align:center;
-margin-bottom:70px;
-}
-
-.team-title{
-font-size:48px;
-font-weight:800;
-margin-bottom:16px;
-}
-
-.team-sub{
-font-size:18px;
-color:#64748b;
-max-width:500px;
-margin:auto;
-}
-
-.team-cards{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:24px;
-margin-bottom:40px;
-}
-
-.team-card{
-background:rgba(255,255,255,0.05);
-border:1px solid rgba(255,255,255,0.08);
-border-radius:20px;
-overflow:hidden;
-backdrop-filter:blur(10px);
-transition:all .4s ease;
-opacity:.6;
-transform:scale(.94);
-}
-
-.team-card.center{
-opacity:1;
-transform:scale(1.05);
-box-shadow:0 30px 70px rgba(0,0,0,.25);
-}
-
-.team-card:hover{
-transform:translateY(-8px) scale(1.05);
-}
-
-.team-avatar{
-height:200px;
-display:flex;
-align-items:center;
-justify-content:center;
-background:linear-gradient(135deg,#38bdf820,#818cf810);
-}
-
-.team-avatar img{
-width:120px;
-height:120px;
-border-radius:50%;
-object-fit:cover;
-border:3px solid rgba(255,255,255,0.3);
-}
-
-.team-body{
-padding:24px;
-}
-
-.team-body h3{
-font-size:20px;
-margin-bottom:6px;
-}
-
-.role{
-font-size:14px;
-color:#38bdf8;
-margin-bottom:12px;
-}
-
-.desc{
-font-size:15px;
-color:#64748b;
-margin-bottom:16px;
-line-height:1.7;
-}
-
-.skills{
-display:flex;
-flex-wrap:wrap;
-gap:6px;
-}
-
-.skills span{
-font-size:12px;
-padding:5px 10px;
-background:#38bdf810;
-border:1px solid #38bdf830;
-border-radius:999px;
-}
-
-.controls{
-display:flex;
-align-items:center;
-justify-content:center;
-gap:20px;
-}
-
-.controls button{
-width:40px;
-height:40px;
-border-radius:50%;
-border:1px solid rgba(255,255,255,0.15);
-background:transparent;
-color:#94a3b8;
-cursor:pointer;
-font-size:20px;
-}
-
-.controls button:hover{
-color:#38bdf8;
-border-color:#38bdf8;
-}
-
-.dots{
-display:flex;
-gap:6px;
-}
-
-.dot{
-width:8px;
-height:8px;
-border-radius:50%;
-background:#475569;
-border:none;
-cursor:pointer;
-}
-
-.dot.active{
-width:24px;
-border-radius:20px;
-background:#38bdf8;
-}
-
-@media(max-width:900px){
-
-.team-cards{
-grid-template-columns:1fr;
-}
-
-.team-card{
-opacity:1;
-transform:none;
-}
-
-}
-
-`}</style>
-
+        .team-section {
+          padding: 130px 0;
+          position: relative;
+        }
+        .team-inner {
+          max-width: 1100px;
+          margin: auto;
+          padding: 0 28px;
+        }
+        .team-header {
+          text-align: center;
+          margin-bottom: 64px;
+        }
+        .team-title {
+          font-size: clamp(30px, 4vw, 46px);
+          font-weight: 800;
+          margin-bottom: 16px;
+          letter-spacing: -0.03em;
+        }
+        .team-sub {
+          font-size: 17px;
+          color: #64748b;
+          max-width: 440px;
+          margin: auto;
+          line-height: 1.7;
+        }
+        .team-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+        }
+        .team-card {
+          background: rgba(8, 18, 36, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 20px;
+          padding: 32px 24px 28px;
+          text-align: center;
+          transition: all 0.25s ease;
+          cursor: default;
+        }
+        .team-card:hover {
+          border-color: rgba(148, 163, 184, 0.15);
+          transform: translateY(-4px);
+          background: rgba(8, 18, 36, 0.8);
+        }
+        .team-avatar {
+          width: 88px;
+          height: 88px;
+          border-radius: 50%;
+          margin: 0 auto 20px;
+          overflow: hidden;
+          background: rgba(56, 189, 248, 0.08);
+          border: 2px solid rgba(148, 163, 184, 0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .team-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .team-initial {
+          font-family: 'Inter', sans-serif;
+          font-size: 22px;
+          font-weight: 800;
+          color: #38bdf8;
+        }
+        .team-name {
+          font-size: 17px;
+          font-weight: 700;
+          color: #f1f5f9;
+          margin-bottom: 6px;
+          letter-spacing: -0.01em;
+        }
+        .team-role {
+          font-size: 13px;
+          color: #64748b;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+        @media (max-width: 900px) {
+          .team-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 560px) {
+          .team-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+      `}</style>
     </section>
-
   );
-
 }
