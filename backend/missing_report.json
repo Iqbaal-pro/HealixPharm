@@ -1,0 +1,35 @@
+{
+  "prescriptions": {
+    "MISSING_TABLE": false,
+    "cols": [
+      "start_time",
+      "notes",
+      "interval_hours",
+      "order_id",
+      "medicine_name",
+      "s3_url",
+      "s3_key",
+      "meal_timing",
+      "prescription_id",
+      "dose_quantity"
+    ]
+  },
+  "users": {
+    "MISSING_TABLE": false,
+    "cols": [
+      "name",
+      "phone"
+    ]
+  },
+  "alert_broadcast_log": {
+    "MISSING_TABLE": true,
+    "cols": [
+      "phone_number",
+      "send_status",
+      "id",
+      "api_response",
+      "alert_id",
+      "created_at"
+    ]
+  }
+}

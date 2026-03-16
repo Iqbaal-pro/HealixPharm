@@ -12,6 +12,7 @@ from app.repositories.stock_log_repo import StockLogRepository
 from app.utils.data_exporter import DataExporter
 from app.models.prescription import Prescription
 from app.services.refill_service import calculate_remaining_days
+from app.services import s3_service
 
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
 
@@ -62,6 +63,8 @@ def list_prescriptions(
             "created_at": p.created_at,
             "remaining_days": remaining_days,
             "is_completed": remaining_days <= 0,
+            "s3_url": p.s3_url,
+            "notes": p.notes,
         }
 
         if not completed_only or item["is_completed"]:
@@ -69,6 +72,30 @@ def list_prescriptions(
 
     return output
 
+
+@router.get("/{prescription_id}/image-url")
+def get_prescription_image_url(
+    prescription_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get a presigned S3 URL to view the uploaded prescription image.
+    """
+    repo = PrescriptionRepository(db)
+    prescription = repo.get_by_id(prescription_id)
+    
+    if not prescription:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+        
+    if not prescription.s3_key:
+        raise HTTPException(status_code=400, detail="No image uploaded for this prescription")
+        
+    try:
+        url = s3_service.generate_presigned_url(prescription.s3_key)
+        return {"url": url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
 
 @router.post("/")
 def create_prescription(
