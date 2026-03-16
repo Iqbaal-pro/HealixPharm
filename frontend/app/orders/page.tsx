@@ -67,7 +67,7 @@ export default function OrdersPage() {
     const valid=approvalItems.filter(i=>i.medicine_id>0&&i.quantity>0);
     if(!valid.length){setActionMsg("Add at least one medicine.");return;}
     setActionLoading(true); setActionMsg("");
-    try { await approveOrder(selected.id,valid); setActionMsg("✓ Order approved."); setShowApprove(false); await openDetail(selected.id); fetchOrders(); }
+    try { await approveOrder(selected.id,valid); setActionMsg(" Order approved."); setShowApprove(false); await openDetail(selected.id); fetchOrders(); }
     catch(e:unknown){setActionMsg(e instanceof Error?e.message:"Approval failed");}
     finally{setActionLoading(false);}
   };
@@ -75,7 +75,7 @@ export default function OrdersPage() {
   const handleAction = async (fn:(id:number)=>Promise<unknown>, msg:string) => {
     if(!selected) return;
     setActionLoading(true); setActionMsg("");
-    try { await fn(selected.id); setActionMsg(`✓ ${msg}`); await openDetail(selected.id); fetchOrders(); }
+    try { await fn(selected.id); setActionMsg(` ${msg}`); await openDetail(selected.id); fetchOrders(); }
     catch(e:unknown){setActionMsg(e instanceof Error?e.message:"Action failed");}
     finally{setActionLoading(false);}
   };
@@ -83,7 +83,7 @@ export default function OrdersPage() {
   const handleStatus = async (status:"APPROVED"|"REJECTED") => {
     if(!selected) return;
     setActionLoading(true); setActionMsg("");
-    try { await updateOrderStatus(selected.id,status); setActionMsg(`✓ Order ${status.toLowerCase()}.`); await openDetail(selected.id); fetchOrders(); }
+    try { await updateOrderStatus(selected.id,status); setActionMsg(` Order ${status.toLowerCase()}.`); await openDetail(selected.id); fetchOrders(); }
     catch(e:unknown){setActionMsg(e instanceof Error?e.message:"Failed");}
     finally{setActionLoading(false);}
   };
@@ -111,7 +111,27 @@ export default function OrdersPage() {
 
       <div className="fade-1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div className="page-icon" style={{ background: "rgba(129,140,248,0.1)", border: "1px solid rgba(129,140,248,0.22)", fontSize: 22, boxShadow: "0 0 18px rgba(129,140,248,0.1)" }}>📦</div>
+          <div
+            className="page-icon"
+            style={{
+              background: "rgba(129,140,248,0.1)",
+              border: "1px solid rgba(129,140,248,0.22)",
+              boxShadow: "0 0 18px rgba(129,140,248,0.1)"
+            }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.8"
+            >
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
           <div>
             <h1 className="page-title gradient-text">Orders</h1>
             <p className="page-sub">WhatsApp bot orders — approve, fulfill and manage</p>
@@ -244,7 +264,7 @@ export default function OrdersPage() {
                 )}
 
                 {/* Action message */}
-                {actionMsg && <div className={`msg-box mb-14 ${actionMsg.startsWith("✓")?"msg-box-success":"msg-box-error"}`}>{actionMsg}</div>}
+                {actionMsg && <div className={`msg-box mb-14 ${actionMsg.startsWith("")?"msg-box-success":"msg-box-error"}`}>{actionMsg}</div>}
 
                 {/* Approve flow */}
                 {showApprove && (
@@ -285,15 +305,15 @@ export default function OrdersPage() {
                 <div className="action-btns">
                   {(selected.status==="PENDING_VERIFICATION"||selected.status==="PENDING")&&!showApprove&&(
                     <>
-                      <button onClick={()=>{setShowApprove(true);setApprovalItems([{medicine_id:0,quantity:1}]);setMedSearch([""]);setMedResults([[]]); }} className="btn-action btn-action-green">✓ Approve Order</button>
-                      <button onClick={()=>handleStatus("REJECTED")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"✕ Reject Order"}</button>
+                      <button onClick={()=>{setShowApprove(true);setApprovalItems([{medicine_id:0,quantity:1}]);setMedSearch([""]);setMedResults([[]]); }} className="btn-action btn-action-green"> Approve Order</button>
+                      <button onClick={()=>handleStatus("REJECTED")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"× Reject Order"}</button>
                     </>
                   )}
                   {selected.status==="APPROVED"&&(
                     <>
-                      <button onClick={()=>handleAction(confirmPayment,"Payment confirmed.")} disabled={actionLoading} className="btn-action btn-action-blue">{actionLoading?<><span className="spinner"/>Processing…</>:"💳 Confirm Payment"}</button>
-                      <button onClick={()=>handleAction(fulfillOrder,"Order fulfilled.")} disabled={actionLoading} className="btn-action btn-action-green">{actionLoading?<><span className="spinner"/>Processing…</>:"📦 Mark Fulfilled"}</button>
-                      <button onClick={()=>handleAction(cancelOrder,"Order cancelled.")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"✕ Cancel"}</button>
+                      <button onClick={()=>handleAction(confirmPayment,"Payment confirmed.")} disabled={actionLoading} className="btn-action btn-action-blue">{actionLoading?<><span className="spinner"/>Processing…</>:" Confirm Payment"}</button>
+                      <button onClick={()=>handleAction(fulfillOrder,"Order fulfilled.")} disabled={actionLoading} className="btn-action btn-action-green">{actionLoading?<><span className="spinner"/>Processing…</>:" Mark Fulfilled"}</button>
+                      <button onClick={()=>handleAction(cancelOrder,"Order cancelled.")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"× Cancel"}</button>
                     </>
                   )}
                   {selected.status==="AWAITING_PAYMENT_SELECTION"&&(
@@ -306,14 +326,14 @@ export default function OrdersPage() {
                       <div className="order-closed" style={{ color:"#818cf8", background:"rgba(129,140,248,0.06)", border:"1px solid rgba(129,140,248,0.15)", borderRadius:10, padding:"10px 14px", fontSize:13 }}>
                         ⏳ Waiting for online payment (PayHere link sent to patient).
                       </div>
-                      <button onClick={()=>handleAction(confirmPayment,"Payment confirmed.")} disabled={actionLoading} className="btn-action btn-action-blue">{actionLoading?<><span className="spinner"/>Processing…</>:"💳 Mark as Paid Manually"}</button>
-                      <button onClick={()=>handleAction(cancelOrder,"Order cancelled.")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"✕ Cancel"}</button>
+                      <button onClick={()=>handleAction(confirmPayment,"Payment confirmed.")} disabled={actionLoading} className="btn-action btn-action-blue">{actionLoading?<><span className="spinner"/>Processing…</>:" Mark as Paid Manually"}</button>
+                      <button onClick={()=>handleAction(cancelOrder,"Order cancelled.")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"× Cancel"}</button>
                     </>
                   )}
                   {(selected.status==="CONFIRMED"||selected.status==="PAID"||selected.status==="PENDING_ON_DELIVERY")&&(
                     <>
-                      <button onClick={()=>handleAction(fulfillOrder,"Order fulfilled.")} disabled={actionLoading} className="btn-action btn-action-green">{actionLoading?<><span className="spinner"/>Processing…</>:"📦 Mark Fulfilled"}</button>
-                      <button onClick={()=>handleAction(cancelOrder,"Order cancelled.")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"✕ Cancel"}</button>
+                      <button onClick={()=>handleAction(fulfillOrder,"Order fulfilled.")} disabled={actionLoading} className="btn-action btn-action-green">{actionLoading?<><span className="spinner"/>Processing…</>:" Mark Fulfilled"}</button>
+                      <button onClick={()=>handleAction(cancelOrder,"Order cancelled.")} disabled={actionLoading} className="btn-action btn-action-red">{actionLoading?<><span className="spinner"/>Processing…</>:"× Cancel"}</button>
                     </>
                   )}
                   {(selected.status==="FULFILLED"||selected.status==="CANCELLED"||selected.status==="REJECTED")&&(
