@@ -311,7 +311,14 @@ export default function Navbar() {
         <div className="nav-pill-divider" />
         <span className="nav-status" />
         <div className="nav-actions">
-          <Link href="/login" className="nav-btn-primary">Sign In</Link>
+          <a
+              href="https://healixpharm-frontend.onrender.com/"
+              className="nav-btn-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Sign In
+            </a>
         </div>
       </nav>
 
