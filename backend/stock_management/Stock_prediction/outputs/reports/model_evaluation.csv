@@ -1,5 +1,5 @@
 ﻿Metric,Value,Interpretation
-MAE,69.1559,Avg error of 69.2 units per item
-RMSE,199.2772,Large-error-penalized score: 199.3
-R2_Score,-1.0968,Needs Improvement ❌
-MAPE (%),206.0029,Avg 206.0% off from actual quantity
+MAE,37.2258,Avg error of 37.2 units per item
+RMSE,196.8207,Large-error-penalized: 196.8
+R2_Score,0.6369,Acceptable ⚠️
+MAPE (%),120.8029,Avg 120.8% off from actual
