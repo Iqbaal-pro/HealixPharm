@@ -39,7 +39,7 @@ class WhatsAppService_wb:
         try:
             if not WhatsAppAuthService.is_authenticated(db, user_id):
                 logger.warning(f"[WB_SERVICE] Access denied for unregistered user: {user_id}")
-                auth_msg = ("Sorry, this service is only available for registered patients of Healix Pharm.""Please register using this link to gain access:\nhttps://docs.google.com/forms/d/e/1FAIpQLScL-64bBAzsst8KC6qFvyAKomsEW07W5NF3Tx8FWEN0CefRFQ/viewform?usp=sharing&ouid=101673084709681318504")
+                auth_msg = ("This service is currently available for registered HealixPharm patients.""Please register using this link to access our WhatsApp services:\nhttps://docs.google.com/forms/d/e/1FAIpQLScL-64bBAzsst8KC6qFvyAKomsEW07W5NF3Tx8FWEN0CefRFQ/viewform?usp=sharing&ouid=101673084709681318504")
                 self.twilio_wa.send_text(user_id, auth_msg)
                 return
         finally:
