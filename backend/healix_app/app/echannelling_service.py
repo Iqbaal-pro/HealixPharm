@@ -165,6 +165,7 @@ def _doctor_to_dict(d: Doctor):
         "qualifications": d.qualifications or "",
         "experience":     d.experience or "",
         "fee":            d.fee,
+        "serviceFee":     0,
         "initials":       d.initials or d.name[:2].upper(),
         "available":      d.available,
         "otherHospitals": [
