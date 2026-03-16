@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -48,7 +49,7 @@ export default function CTA() {
               <span className="grad">your pharmacy?</span>
             </h2>
             <p className="cta-sub">
-              Join the waitlist today. Setup takes under an hour — and your
+              Join the waitlist today. Setup takes under an hour, and your
               first automated stock alert will fire before end of day.
             </p>
           </div>
@@ -56,9 +57,7 @@ export default function CTA() {
           <div className="cta-buttons reveal" style={{ transitionDelay: "0.1s" }}>
             <Link href="/register" className="btn-primary">
               Register Your Pharmacy
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
+
             </Link>
             <Link href="#contact" className="btn-secondary">
               Talk to Us First
@@ -67,19 +66,19 @@ export default function CTA() {
 
           <div className="cta-perks reveal" style={{ transitionDelay: "0.18s" }}>
             {perks.map((p, i) => (
-              <>
-                <span key={p} className="perk-item">
+              <React.Fragment key={p}>
+                <span className="perk-item">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                     <path d="M5 12l5 5L19 7" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   {p}
                 </span>
                 {i < perks.length - 1 && <span className="perk-dot" />}
-              </>
+              </React.Fragment>
             ))}
           </div>
 
-          {/* Honest trust strip — no fake numbers */}
+          {/* Honest trust strip */}
           <div className="reveal" style={{
             transitionDelay: "0.26s",
             marginTop: "40px",
@@ -90,10 +89,10 @@ export default function CTA() {
             flexWrap: "wrap",
           }}>
             {[
-              { label: "SDGP 2025", sub: "IIT Sri Lanka" },
-              { label: "Twilio", sub: "Powered" },
-              { label: "PayHere", sub: "Integrated" },
-              { label: "WhatsApp Business", sub: "Connected" },
+              { label: "SDGP 2025",          sub: "IIT Sri Lanka" },
+              { label: "Twilio",             sub: "Powered" },
+              { label: "PayHere",            sub: "Integrated" },
+              { label: "WhatsApp Business",  sub: "Connected" },
             ].map((b) => (
               <div key={b.label} style={{
                 display: "flex",
@@ -106,7 +105,7 @@ export default function CTA() {
                 minWidth: "100px",
               }}>
                 <span style={{ fontSize: "13px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.02em" }}>{b.label}</span>
-                <span style={{ fontSize: "11px", color: "#334155", marginTop: "2px" }}>{b.sub}</span>
+                <span style={{ fontSize: "11px", color: "#475569", marginTop: "2px" }}>{b.sub}</span>
               </div>
             ))}
           </div>

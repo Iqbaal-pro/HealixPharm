@@ -24,6 +24,14 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const handleNavClick = (href: string) => {
+    setOpen(false);
+    if (href.startsWith("#")) {
+      const el = document.querySelector(href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const links = [
     { label: "Features",     href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
@@ -49,7 +57,7 @@ export default function Navbar() {
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(148, 163, 184, 0.1);
           border-radius: 99px;
-          padding: 6px 8px;
+          padding: 8px 10px;
           box-shadow: 0 4px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
           transition: all 0.3s ease;
         }
@@ -59,17 +67,30 @@ export default function Navbar() {
           box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
         }
         .nav-logo {
-          font-family: 'Inter', sans-serif;
-          font-weight: 600;
-          font-size: 15px;
-          letter-spacing: 0.01em;
-          color: #e2e8f0;
-          padding: 6px 14px;
-          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          padding: 4px 10px;
           text-decoration: none;
+          flex-shrink: 0;
+        }
+        .nav-logo img {
+          height: 32px;
+          width: auto;
+          display: block;
+        }
+        .nav-logo-text {
+          font-family: 'Inter', sans-serif;
+          font-weight: 700;
+          font-size: 16px;
+          letter-spacing: -0.02em;
+          background: linear-gradient(90deg, #38bdf8, #818cf8);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          white-space: nowrap;
         }
         .nav-pill-divider {
-          width: 1px; height: 20px;
+          width: 1px; height: 22px;
           background: rgba(148, 163, 184, 0.1);
           flex-shrink: 0;
         }
@@ -84,17 +105,20 @@ export default function Navbar() {
           font-weight: 500;
           color: #64748b;
           text-decoration: none;
-          padding: 7px 14px;
+          padding: 8px 16px;
           border-radius: 99px;
           transition: all 0.2s ease;
           white-space: nowrap;
+          cursor: pointer;
+          background: none;
+          border: none;
         }
         .nav-link:hover {
           color: #f1f5f9;
           background: rgba(148, 163, 184, 0.08);
         }
         .nav-status {
-          width: 6px; height: 6px;
+          width: 7px; height: 7px;
           border-radius: 50%;
           background: #4ade80;
           box-shadow: 0 0 8px rgba(74,222,128,0.7);
@@ -108,33 +132,14 @@ export default function Navbar() {
           gap: 6px;
           margin-left: 4px;
         }
-        .nav-btn-ghost {
-          font-family: 'Inter', sans-serif;
-          font-size: 13px;
-          font-weight: 600;
-          color: #64748b;
-          background: transparent;
-          border: 1px solid rgba(148,163,184,0.1);
-          padding: 7px 16px;
-          border-radius: 99px;
-          cursor: pointer;
-          text-decoration: none;
-          transition: all 0.18s ease;
-          white-space: nowrap;
-        }
-        .nav-btn-ghost:hover {
-          color: #f1f5f9;
-          border-color: rgba(148,163,184,0.22);
-          background: rgba(148,163,184,0.06);
-        }
         .nav-btn-primary {
           font-family: 'Inter', sans-serif;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
           color: #bae6fd;
           background: linear-gradient(90deg, #0369a1, #0e7ab5);
           border: none;
-          padding: 7px 18px;
+          padding: 8px 20px;
           border-radius: 99px;
           cursor: pointer;
           text-decoration: none;
@@ -163,7 +168,7 @@ export default function Navbar() {
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(148,163,184,0.12);
           border-radius: 99px;
-          padding: 8px 16px 8px 14px;
+          padding: 9px 18px 9px 14px;
           cursor: pointer;
           box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
           transition: all 0.2s ease;
@@ -176,7 +181,6 @@ export default function Navbar() {
           background: rgba(7,24,40,0.99);
           box-shadow: 0 0 0 1px rgba(56,189,248,0.15), 0 8px 32px rgba(0,0,0,0.5);
         }
-
         .mobile-pill-status {
           width: 6px; height: 6px;
           border-radius: 50%;
@@ -185,7 +189,6 @@ export default function Navbar() {
           animation: pulse-dot 2s infinite;
           flex-shrink: 0;
         }
-
         .mobile-logo {
           font-family: 'Inter', sans-serif;
           font-weight: 700;
@@ -196,13 +199,11 @@ export default function Navbar() {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-
         .mobile-pill-divider {
           width: 1px; height: 14px;
           background: rgba(148,163,184,0.12);
           flex-shrink: 0;
         }
-
         .mobile-burger {
           display: flex;
           flex-direction: column;
@@ -226,7 +227,7 @@ export default function Navbar() {
         .mobile-dropdown {
           display: none;
           position: fixed;
-          top: 68px;
+          top: 72px;
           left: 50%;
           transform: translateX(-50%) translateY(-6px) scale(0.97);
           z-index: 199;
@@ -248,7 +249,6 @@ export default function Navbar() {
           opacity: 1;
           pointer-events: all;
         }
-
         .mobile-nav-link {
           display: flex;
           align-items: center;
@@ -261,15 +261,17 @@ export default function Navbar() {
           border-radius: 12px;
           transition: all 0.15s ease;
           border: 1px solid transparent;
+          cursor: pointer;
+          background: none;
+          width: 100%;
+          text-align: left;
         }
         .mobile-nav-link:hover {
           color: #f1f5f9;
           background: rgba(148,163,184,0.07);
           border-color: rgba(148,163,184,0.06);
         }
-
         .mobile-divider { height: 1px; background: rgba(148,163,184,0.07); margin: 6px 4px; }
-
         .mobile-actions { display: flex; gap: 8px; padding: 4px; }
         .mobile-actions a {
           flex: 1;
@@ -290,13 +292,20 @@ export default function Navbar() {
 
       {/* ── DESKTOP NAV ── */}
       <nav className={`nav-wrapper ${scrolled ? "scrolled" : ""}`}>
-        <Link href="/" className="nav-logo">HealixPharm</Link>
+        <Link href="/" className="nav-logo">
+          <img src="/logohealix.png" alt="HealixPharm" style={{ borderRadius: "8px"}} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; (e.currentTarget.nextElementSibling as HTMLElement).style.display = "block"; }} />
+          <span className="nav-logo-text" style={{ display: "none" }}>HealixPharm</span>
+        </Link>
         <div className="nav-pill-divider" />
         <div className="nav-links">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} scroll={false} className="nav-link">
+            <button
+              key={l.href}
+              className="nav-link"
+              onClick={() => handleNavClick(l.href)}
+            >
               {l.label}
-            </Link>
+            </button>
           ))}
         </div>
         <div className="nav-pill-divider" />
@@ -311,9 +320,16 @@ export default function Navbar() {
         className={`mobile-pill ${open ? "open" : ""}`}
         onClick={() => setOpen(!open)}
       >
-        <span className="mobile-pill-status" />
-        <span className="mobile-logo">HealixPharm</span>
-        <div className="mobile-pill-divider" />
+        <img
+          src="/logohealix.png"
+          alt="HealixPharm"
+          style={{ height: "45px", width: "auto", borderRadius: "16px" }}
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+            (e.currentTarget.nextElementSibling as HTMLElement).style.display = "block";
+          }}
+        />
+        <span className="mobile-logo" style={{ display: "none" }}>HealixPharm</span>
         <div className={`mobile-burger ${open ? "open" : ""}`}>
           <span /><span /><span />
         </div>
@@ -322,15 +338,13 @@ export default function Navbar() {
       {/* ── MOBILE DROPDOWN ── */}
       <div className={`mobile-dropdown ${open ? "open" : ""}`}>
         {links.map((l) => (
-          <Link
+          <button
             key={l.href}
-            href={l.href}
-            scroll={false}
             className="mobile-nav-link"
-            onClick={() => setOpen(false)}
+            onClick={() => handleNavClick(l.href)}
           >
             {l.label}
-          </Link>
+          </button>
         ))}
         <div className="mobile-divider" />
         <div className="mobile-actions">

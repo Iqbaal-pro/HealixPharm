@@ -54,7 +54,7 @@ export default function About() {
           <p className="about-subtitle">
             Most Sri Lankan pharmacies still rely on handwritten stock books,
             phone calls for refills, and spreadsheets that go out of date
-            instantly. HealixPharm replaces all of that — so you spend less
+            instantly. HealixPharm replaces all of that, so you spend less
             time managing and more time serving customers.
           </p>
         </div>
@@ -91,7 +91,7 @@ export default function About() {
 
             <p className="about-solution-desc">
               One connected platform automates your inventory, customer
-              engagement, supplier alerts, and delivery — so your team
+              engagement, supplier alerts, and delivery, so your team
               focuses on what matters.
             </p>
 
@@ -120,7 +120,7 @@ export default function About() {
                     </div>
                   </div>
 
-                  {/* Sub-features — fixed color */}
+                  {/* Sub-features - fixed color */}
                   {item.subs && (
                     <div style={{ marginLeft: "40px", marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
                       {item.subs.map((sub) => (

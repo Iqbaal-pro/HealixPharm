@@ -10,6 +10,7 @@ import Team from "../components/Team";
 import CTA from "../components/CTA";
 import Contact from "../components/Contact";
 import Footer from "../components/Footer";
+import AISection from "../components/AISection";
 
 export default function Home() {
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function Home() {
       <About />
       <Features />
       <HowItWorks />
+      <AISection />
       <Team />
       <CTA />
       <Contact />

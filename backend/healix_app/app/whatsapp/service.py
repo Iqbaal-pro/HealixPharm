@@ -340,7 +340,9 @@ class WhatsAppService_wb:
         db = SessionLocal()
         try:
             setting    = db.query(models.PharmacySetting).filter_by(key="echannelling_enabled").first()
-            is_enabled = setting and setting.value.strip().lower() == "true"
+            #is_enabled = setting and setting.value.strip().lower() == "true"
+            is_enabled = True
+            
         finally:
             db.close()
 

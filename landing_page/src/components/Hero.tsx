@@ -72,7 +72,7 @@ export default function Hero() {
           <p className="hero-sub">
             HealixPharm gives your pharmacy <strong>AI-powered stock management</strong>,{" "}
             <strong>WhatsApp customer engagement</strong>, automated expiry alerts,
-            and medicine delivery — all in one system built for Sri Lanka.
+            and medicine delivery, all in one system built for Sri Lanka.
           </p>
 
           {/* Buttons */}
