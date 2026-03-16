@@ -1,30 +1,33 @@
-// src/routes/authRoutes.ts
-// Maps to: /auth/* endpoints in auth_routes.py
+// app/routes/authRoutes.ts
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+async function handleResponse<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Request failed" }));
+    throw new Error(err.detail ?? "Request failed");
+  }
+  return res.json() as Promise<T>;
+}
 
 export interface SignupPayload {
-  // Required
   username: string;
   email: string;
   password: string;
   pharmacy_name: string;
-  // Optional
   contact_number?: string | null;
   whatsapp_number?: string | null;
   address?: string | null;
   opening_hours?: string | null;
   estimated_delivery_time?: string | null;
   service_areas?: string | null;
-  service_charge?: string | null;   // e.g. "5%" or "LKR 150 flat"
+  service_charge?: number | null;  // fixed: was string, backend expects float
   prescription_policy?: string | null;
   refund_policy?: string | null;
 }
 
 export interface LoginPayload {
-  username_or_email: string; // accepts username OR email
+  username_or_email: string;
   password: string;
 }
 
@@ -45,7 +48,7 @@ export interface PharmacyResponse {
   opening_hours: string | null;
   estimated_delivery_time: string | null;
   service_areas: string | null;
-  service_charge: string | null;
+  service_charge: number | null;  // fixed: was string, backend returns float
   prescription_policy: string | null;
   refund_policy: string | null;
   created_at: string;
@@ -75,21 +78,6 @@ export interface MeResponse {
   };
 }
 
-// ── Helper ────────────────────────────────────────────────────────────────────
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(err.detail ?? "Request failed");
-  }
-  return res.json() as Promise<T>;
-}
-
-// ── POST /auth/signup ─────────────────────────────────────────────────────────
-// Creates a new user + pharmacy profile in one call.
-// Backend: auth_routes.py → signup()
-// Only required fields: username, email, password, pharmacy_name.
-// All other fields are optional and can be set later via PUT /pharmacy/me.
 export async function signup(payload: SignupPayload): Promise<SignupResponse> {
   const res = await fetch(`${BASE}/auth/signup`, {
     method: "POST",
@@ -99,11 +87,6 @@ export async function signup(payload: SignupPayload): Promise<SignupResponse> {
   return handleResponse<SignupResponse>(res);
 }
 
-// ── POST /auth/login ──────────────────────────────────────────────────────────
-// Authenticates a user. Returns a JWT access_token (custom HMAC, not JWT lib).
-// Token must be saved and sent as: Authorization: Bearer <token>
-// Token expires in 24 hours (86400s) — see auth_token_service.py.
-// Backend: auth_routes.py → login()
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
   const res = await fetch(`${BASE}/auth/login`, {
     method: "POST",
@@ -113,10 +96,6 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   return handleResponse<LoginResponse>(res);
 }
 
-// ── GET /auth/me ──────────────────────────────────────────────────────────────
-// Returns the currently authenticated user + pharmacy profile.
-// Requires a valid Bearer token in the Authorization header.
-// Backend: auth_routes.py → auth_me()
 export async function getMe(token: string): Promise<MeResponse> {
   const res = await fetch(`${BASE}/auth/me`, {
     method: "GET",
@@ -127,9 +106,6 @@ export async function getMe(token: string): Promise<MeResponse> {
   });
   return handleResponse<MeResponse>(res);
 }
-
-// ── Token helpers (localStorage) ──────────────────────────────────────────────
-// Convenience functions to save/read/clear auth state in the browser.
 
 export function saveAuthToStorage(data: LoginResponse): void {
   localStorage.setItem("healix_token",    data.access_token);

@@ -7,8 +7,9 @@ class IssuedItem(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     
-    # Reference to prescription
+    # Reference to prescription and patient
     prescription_id = Column(Integer, ForeignKey("prescriptions.id"), nullable=False)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
     
     # Medicine and batch that was issued
     medicine_id = Column(Integer, ForeignKey("medicines.id"), nullable=False)

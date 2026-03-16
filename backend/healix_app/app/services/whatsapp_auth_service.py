@@ -4,6 +4,8 @@ from app import models
 
 logger = logging.getLogger(__name__)
 
+#from app.utils.encryption import encrypt_data
+
 class WhatsAppAuthService:
     """
     Service for validating WhatsApp users against the registered patients database.
@@ -12,11 +14,10 @@ class WhatsAppAuthService:
     @staticmethod
     def is_authenticated(db: Session, phone_number: str) -> bool:
         """
-        Check if a phone number corresponds to an active registered patient.
+        Check if a phone number corresponds to a registered patient.
         """
         patient = db.query(models.Patient).filter(
-            models.Patient.phone_number == phone_number,
-            models.Patient.is_active == True
+            models.Patient.phone_number == phone_number
         ).first()
         
         if patient:

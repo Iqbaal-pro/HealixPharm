@@ -44,7 +44,7 @@ def create_order_with_prescription(db: Session, patient: models.Patient, image_s
     )
     db.add(prescription)
     db.commit()
-    db.refresh(prescription)
+    # db.refresh(prescription) # Optional as we return the object
 
     logger.info(f"[ORDER_SERVICE] Created order id={order.id} token={order.token} for patient={patient.id}")
     return order, prescription

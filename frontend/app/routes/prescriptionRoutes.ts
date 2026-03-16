@@ -1,11 +1,9 @@
-// app/routes/prescriptionRoutes.ts
+//   app/routes/prescriptionRoutes.ts
 //   STOCK_BASE  = NEXT_PUBLIC_API_URL       (Stock Management – port 8000)
 //   BOT_BASE    = NEXT_PUBLIC_BOT_API_URL   (WhatsApp Bot     – port 8001)
 
 const STOCK_BASE = process.env.NEXT_PUBLIC_API_URL     ?? "http://localhost:8000";
 const BOT_BASE   = process.env.NEXT_PUBLIC_BOT_API_URL ?? "http://localhost:8001";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface PrescriptionRecord {
   id: number;
@@ -14,19 +12,22 @@ export interface PrescriptionRecord {
   medicine_name: string;
   dose_per_day: number;
   start_date: string;
+  end_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  meals?: string;
+  meal_times?: string;
   created_at: string;
   remaining_days: number;
   is_completed: boolean;
 }
 
-// Returned by GET /admin/prescriptions/queue  (BOT_BASE)
 export interface PendingPrescription {
   order_id: number;
   token: string;
   phone: string;
-  prescription_url: string | null;  // fresh presigned S3 URL
+  patient_id: number | null;
+  prescription_url: string | null;
   created_at: string;
 }
 
@@ -50,6 +51,8 @@ export interface CreatePrescriptionPayload {
   start_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  meals?: string;
+  meal_times?: string;
 }
 
 export interface PrescriptionResponse {
@@ -59,9 +62,13 @@ export interface PrescriptionResponse {
   medicine_name: string;
   dose_per_day: number;
   start_date: string;
+  end_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  meals?: string;
+  meal_times?: string;
   created_at: string;
+  reminders_scheduled: number;
 }
 
 export interface IssuePayload {
@@ -82,7 +89,19 @@ export interface IssueResponse {
   };
 }
 
-// ── Helper ────────────────────────────────────────────────────────────────────
+export interface BillItem {
+  medicine_name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+}
+
+export interface NotifyBillPayload {
+  patient_phone: string;
+  items: BillItem[];
+  total_amount: number;
+  reminders_scheduled: number;
+}
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -92,27 +111,30 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// ── BOT_BASE endpoints ────────────────────────────────────────────────────────
-
-// GET /admin/prescriptions/queue  — pending WhatsApp orders with S3 presigned URLs
 export async function getPendingPrescriptions(): Promise<PendingPrescription[]> {
-  const res = await fetch(`${BOT_BASE}/admin/prescriptions/queue`);
-  return handleResponse<PendingPrescription[]>(res);
+  const res = await fetch(`${BOT_BASE}/admin/orders?status=PENDING_VERIFICATION`);
+  const orders = await handleResponse<any[]>(res);
+  // Map OrderSimpleSchema → PendingPrescription shape
+  return orders.map(o => ({
+    order_id:         o.id,
+    token:            o.token,
+    phone:            o.phone ?? "",
+    patient_id:       o.patient_id ?? null,
+    prescription_url: o.prescription_url ?? null,
+    created_at:       o.created_at,
+  }));
 }
 
-// GET /admin/orders/{id}
 export async function getOrderDetail(orderId: number) {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}`);
   return handleResponse<unknown>(res);
 }
 
-// GET /admin/medicines/search?q=
 export async function searchMedicines(q: string): Promise<MedicineSearchResult[]> {
   const res = await fetch(`${BOT_BASE}/admin/medicines/search?q=${encodeURIComponent(q)}`);
   return handleResponse<MedicineSearchResult[]>(res);
 }
 
-// POST /admin/orders/{id}/approve
 export async function approveOrder(orderId: number, items: ApprovalItem[]) {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}/approve`, {
     method: "POST",
@@ -122,7 +144,6 @@ export async function approveOrder(orderId: number, items: ApprovalItem[]) {
   return handleResponse<unknown>(res);
 }
 
-// POST /admin/orders/{id}/status
 export async function updateOrderStatus(orderId: number, status: "APPROVED" | "REJECTED") {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}/status`, {
     method: "POST",
@@ -132,7 +153,6 @@ export async function updateOrderStatus(orderId: number, status: "APPROVED" | "R
   return handleResponse<unknown>(res);
 }
 
-// POST /admin/orders/{id}/confirm-payment
 export async function confirmPayment(orderId: number) {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}/confirm-payment`, {
     method: "POST",
@@ -140,16 +160,27 @@ export async function confirmPayment(orderId: number) {
   return handleResponse<unknown>(res);
 }
 
-// ── STOCK_BASE endpoints ──────────────────────────────────────────────────────
+// POST /admin/notify/prescription-issued — send WhatsApp bill + reminder confirmation
+export async function notifyPrescriptionIssued(payload: NotifyBillPayload): Promise<{ success: boolean; message: string }> {
+  try {
+    const res = await fetch(`${BOT_BASE}/admin/notify/prescription-issued`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return { success: false, message: "WhatsApp notification failed" };
+    return handleResponse<{ success: boolean; message: string }>(res);
+  } catch {
+    return { success: false, message: "Could not reach notification service" };
+  }
+}
 
-// GET /prescriptions/?completed_only=
 export async function getAllPrescriptions(completedOnly?: boolean): Promise<PrescriptionRecord[]> {
   const qs = completedOnly !== undefined ? `?completed_only=${completedOnly}` : "";
   const res = await fetch(`${STOCK_BASE}/prescriptions/${qs}`);
   return handleResponse<PrescriptionRecord[]>(res);
 }
 
-// POST /prescriptions/
 export async function createPrescription(
   payload: CreatePrescriptionPayload
 ): Promise<PrescriptionResponse> {
@@ -161,7 +192,6 @@ export async function createPrescription(
   return handleResponse<PrescriptionResponse>(res);
 }
 
-// POST /prescriptions/issue
 export async function issueMedicine(payload: IssuePayload): Promise<IssueResponse> {
   const qs = new URLSearchParams({
     prescription_id: String(payload.prescription_id),
