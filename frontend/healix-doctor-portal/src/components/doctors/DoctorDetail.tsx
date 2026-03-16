@@ -83,11 +83,7 @@ export default function DoctorDetail({
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
               <Badge variant="blue">{doctor.specialization}</Badge>
-              <Badge variant="slate">{doctor.qualifications}</Badge>
             </div>
-            <p style={{ color: "#475569", fontSize: 12 }}>
-              {doctor.experience} experience
-            </p>
           </div>
 
           {/* Fee */}

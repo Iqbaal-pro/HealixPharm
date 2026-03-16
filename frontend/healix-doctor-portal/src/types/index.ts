@@ -7,10 +7,7 @@ export interface Doctor {
   fee: number;
   serviceFee: number;
   available: boolean;
-  experience: string;
-  languages: string[];
   initials: string;
-  qualifications: string;
 }
 
 export interface OtherHospital {
