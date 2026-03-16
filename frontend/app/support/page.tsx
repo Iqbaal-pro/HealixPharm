@@ -66,7 +66,25 @@ export default function SupportPage() {
 
       <div className="fade-1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div className="page-icon" style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 22, boxShadow: "0 0 18px rgba(245,158,11,0.1)" }}>💬</div>
+          <div
+            className="page-icon"
+            style={{
+              background: "rgba(56,189,248,0.1)",
+              border: "1px solid rgba(56,189,248,0.22)",
+              boxShadow: "0 0 18px rgba(56,189,248,0.1)"
+            }}
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.8"
+            >
+              <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+            </svg>
+          </div>
           <div>
             <h1 className="page-title gradient-text">Live Support</h1>
             <p className="page-sub">WhatsApp patient support queue</p>

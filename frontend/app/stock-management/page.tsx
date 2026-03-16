@@ -55,7 +55,28 @@ export default function StockManagementPage() {
 
       <div className="fade-1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div className="page-icon" style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.22)", fontSize: 22, boxShadow: "0 0 18px rgba(56,189,248,0.1)" }}>🏥</div>
+          <div
+            className="page-icon"
+            style={{
+              background: "rgba(56,189,248,0.1)",
+              border: "1px solid rgba(56,189,248,0.22)",
+              boxShadow: "0 0 18px rgba(56,189,248,0.1)"
+            }}
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.8"
+            >
+              <path d="M3 21V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14"/>
+              <path d="M9 21V12h6v9"/>
+              <line x1="12" y1="7" x2="12" y2="3"/>
+              <line x1="10" y1="5" x2="14" y2="5"/>
+            </svg>
+          </div>
           <div>
             <h1 className="page-title gradient-text">Stock Management</h1>
             <p className="page-sub">Inventory · Batches · Alerts · Analytics · Adjustments</p>
@@ -81,7 +102,7 @@ export default function StockManagementPage() {
 
       <div className="fade-2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 14, marginBottom: 28 }}>
         {[
-          { label: "Total SKUs",     value: loading ? "—" : stats.totalSKUs,     color: "#38bdf8" },
+          { label: "Total stock",     value: loading ? "—" : stats.totalSKUs,     color: "#38bdf8" },
           { label: "Low Stock",      value: loading ? "—" : stats.lowStock,      color: "#f59e0b" },
           { label: "Critical",       value: loading ? "—" : stats.critical,      color: "#ef4444" },
           { label: "Expiring <30d",  value: loading ? "—" : stats.expiringSoon,  color: "#f97316" },
