@@ -37,6 +37,12 @@ def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
     for o in orders:
         res = schemas.OrderSimpleSchema.from_orm(o)
         res.phone = o.patient.phone_number
+        res.patient_id = o.patient_id
+        if o.prescription and o.prescription.s3_key:
+            try:
+                res.prescription_url = generate_presigned_url(o.prescription.s3_key)
+            except Exception as e:
+                logger.warning(f"Failed to generate presigned URL for order {o.id}: {e}")
         result.append(res)
     return result
 

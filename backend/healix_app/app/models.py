@@ -128,9 +128,16 @@ class Prescription(Base):
     __tablename__ = "prescriptions"
 
     id = Column(Integer, primary_key=True, index=True)
-    prescription_id = Column(String(128), unique=True, index=True, nullable=False)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    s3_key = Column(String(512), nullable=False)
+    prescription_id = Column(String(128), unique=True, index=True, nullable=True) # Now nullable to match MySQL
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=True) # Now nullable to match MySQL
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    medicine_id = Column(Integer, nullable=False) # Refers to MySQL Stock ID
+    staff_id = Column(Integer, nullable=False) # Refers to internal staff ID
+    uploaded_by_staff_id = Column(Integer, nullable=False)
+    medicine_name = Column(String(100), nullable=True)
+    dose_per_day = Column(Integer, default=1)
+    quantity_given = Column(Integer, default=0)
+    s3_key = Column(String(512), nullable=True)
     s3_url = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
