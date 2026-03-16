@@ -60,7 +60,6 @@ export default function PrescriptionPage() {
 
   const [pending,     setPending]     = useState<PendingPrescription[]>([]);
   const [loadingList, setLoadingList] = useState(false);
-  const [listError,   setListError]   = useState("");
   const [selected,    setSelected]    = useState<PendingPrescription | null>(null);
 
   // Save form
@@ -134,7 +133,7 @@ export default function PrescriptionPage() {
     setReminderActionId(prescriptionId); setReminderMsg("");
     try {
       const res = await sendOneTimeReminder(prescriptionId);
-      setReminderMsg(`✓ Reminder sent to ${res.patient ?? "patient"} for ${res.medicine ?? "medicine"}.`);
+      setReminderMsg(` Reminder sent to ${res.patient ?? "patient"} for ${res.medicine ?? "medicine"}.`);
       fetchReminders();
     } catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed to send reminder"); }
     finally { setReminderActionId(null); }
@@ -143,23 +142,23 @@ export default function PrescriptionPage() {
     setReminderActionId(prescriptionId); setReminderMsg("");
     try {
       await markContinuous(prescriptionId, !current);
-      setReminderMsg(`✓ Prescription #${prescriptionId} marked as ${!current ? "continuous" : "not continuous"}.`);
+      setReminderMsg(` Prescription #${prescriptionId} marked as ${!current ? "continuous" : "not continuous"}.`);
       fetchHistory(historyFilter);
     } catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed to update"); }
     finally { setReminderActionId(null); }
   };
   const handleProcessAll = async () => {
     setProcessingAll(true); setReminderMsg("");
-    try { const res = await processReminders(); setReminderMsg(`✓ ${res.message}`); fetchReminders(); }
+    try { const res = await processReminders(); setReminderMsg(` ${res.message}`); fetchReminders(); }
     catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed"); }
     finally { setProcessingAll(false); }
   };
 
   // ── Data fetches ───────────────────────────────────────────────────────────
   const fetchPending = async () => {
-    setLoadingList(true); setListError("");
+    setLoadingList(true);
     try { setPending(await getPendingPrescriptions()); }
-    catch { setPending([]); setListError("⚠ GET /prescriptions/pending not yet implemented — use manual entry."); }
+    catch { setPending([]); }
     finally { setLoadingList(false); }
   };
   const fetchHistory = async (f: HistoryFilter) => {
@@ -346,7 +345,7 @@ export default function PrescriptionPage() {
 
       <div className="fade-1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div className="page-icon" style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.22)", fontSize: 22, boxShadow: "0 0 18px rgba(56,189,248,0.1)" }}>📋</div>
+          <div className="page-icon" style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.22)", boxShadow: "0 0 18px rgba(56,189,248,0.1)" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="1.8"><path d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg></div>
           <div>
             <h1 className="page-title gradient-text">Prescriptions</h1>
             <p className="page-sub">Issue prescriptions from WhatsApp or manually, then view history.</p>
@@ -357,10 +356,10 @@ export default function PrescriptionPage() {
       {/* Tab switcher */}
       <div className="tab-switcher mb-24 fade-2">
         {([
-          { key: "queue",     label: "📋 Queue"     },
-          { key: "history",   label: "🗂 History"   },
-          { key: "reminders", label: "🔔 Reminders" },
-          { key: "forecast",  label: "📦 Refill Forecast" },
+          { key: "queue",     label: " Queue"     },
+          { key: "history",   label: " History"   },
+          { key: "reminders", label: " Reminders" },
+          { key: "forecast",  label: " Refill Forecast" },
         ] as { key: MainTab; label: string }[]).map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`tab-switch-btn${tab === t.key ? " active" : ""}`}>{t.label}</button>
@@ -394,12 +393,11 @@ export default function PrescriptionPage() {
                     </button>
                   </div>
                 </div>
-                {listError && <div className="warn-box"><p className="hint hint-err">⚠ {listError}</p></div>}
                 {loadingList ? (
                   <div className="loading-cell row g-12"><span className="spinner" /><span>Loading from AWS…</span></div>
                 ) : pending.length === 0 ? (
                   <div className="center p-empty">
-                    <div className="empty-icon-lg">📥</div>
+                    <div className="empty-icon-lg"></div>
                     <p className="empty-text mb-6">No pending WhatsApp prescriptions</p>
                     <p className="empty-sub mb-20">Patients send images via WhatsApp → saved to AWS → appear here.</p>
                     <button className="btn-primary" onClick={() => { setSelected(null); setStep("save"); }}>+ Enter Manually</button>
@@ -409,7 +407,7 @@ export default function PrescriptionPage() {
                     {pending.map(p => (
                       <div key={p.order_id} className="queue-item" onClick={() => { setSelected(p); setStep("save"); }}>
                         <div className="queue-thumb">
-                          {p.prescription_url ? <img src={p.prescription_url} alt="" /> : <span className="queue-thumb-empty">🖼</span>}
+                          {p.prescription_url ? <img src={p.prescription_url} alt="" /> : <span className="queue-thumb-empty"></span>}
                         </div>
                         <div className="queue-info">
                           <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>
@@ -456,16 +454,16 @@ export default function PrescriptionPage() {
                     flexWrap: "wrap",
                   }}>
                     <span style={{ fontSize: 12, color: "#475569" }}>
-                      📋 Order <span style={{ color: "#38bdf8", fontWeight: 700 }}>#{selected.order_id}</span>
+                       Order <span style={{ color: "#38bdf8", fontWeight: 700 }}>#{selected.order_id}</span>
                     </span>
                     {selected.patient_id && (
                       <span style={{ fontSize: 12, color: "#475569" }}>
-                        👤 Patient ID <span style={{ color: "#4ade80", fontWeight: 700 }}>#{selected.patient_id}</span>
+                         Patient ID <span style={{ color: "#4ade80", fontWeight: 700 }}>#{selected.patient_id}</span>
                       </span>
                     )}
                     {selected.phone && (
                       <span style={{ fontSize: 12, color: "#475569" }}>
-                        📱 <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{selected.phone}</span>
+                         <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{selected.phone}</span>
                       </span>
                     )}
                   </div>
@@ -529,7 +527,7 @@ export default function PrescriptionPage() {
                               style={{ borderColor: med.medicine_id ? "rgba(74,222,128,0.3)" : undefined }}
                             />
                             {med.medicine_id && (
-                              <span style={{ position: "absolute", right: 12, top: 34, fontSize: 11, color: "#4ade80" }}>✓ ID {med.medicine_id}</span>
+                              <span style={{ position: "absolute", right: 12, top: 34, fontSize: 11, color: "#4ade80" }}> ID {med.medicine_id}</span>
                             )}
                             {medFocused === idx && medResults[idx]?.length > 0 && (
                               <div className="med-dropdown">
@@ -609,9 +607,9 @@ export default function PrescriptionPage() {
                           </label>
                           <div className="row g-10" style={{ flexWrap: "wrap" }}>
                             {([
-                              { label: "Breakfast", time: "07:30", icon: "🌅" },
-                              { label: "Lunch",     time: "13:30", icon: "☀️" },
-                              { label: "Dinner",    time: "19:30", icon: "🌙" },
+                              { label: "Breakfast", time: "07:30", icon: "" },
+                              { label: "Lunch",     time: "13:30", icon: "" },
+                              { label: "Dinner",    time: "19:30", icon: "" },
                             ] as { label: string; time: string; icon: string }[]).map(meal => {
                               const checked = med.meal_times.includes(meal.time);
                               return (
@@ -643,7 +641,7 @@ export default function PrescriptionPage() {
                           </div>
                           {med.meal_times.length === 0 && (
                             <span style={{ fontSize: 11, color: "#f87171", marginTop: 6, display: "block" }}>
-                              ⚠ Select at least one meal time
+                               Select at least one meal time
                             </span>
                           )}
                         </div>
@@ -678,7 +676,7 @@ export default function PrescriptionPage() {
                   </div>
                 )}
 
-                {saveError && <div className="err-box mb-14"><p className="hint hint-err">⚠ {saveError}</p></div>}
+                {saveError && <div className="err-box mb-14"><p className="hint hint-err"> {saveError}</p></div>}
 
                 <button className="btn-primary w-full" onClick={handleSave}
                   disabled={!saveValid || saving} style={{ opacity: !saveValid || saving ? 0.45 : 1 }}>
@@ -733,7 +731,7 @@ export default function PrescriptionPage() {
                       </div>
                     </div>
                     {!patientPhone && sendWhatsApp && (
-                      <span style={{ fontSize: 11, color: "#fbbf24" }}>⚠ No phone number entered</span>
+                      <span style={{ fontSize: 11, color: "#fbbf24" }}> No phone number entered</span>
                     )}
                   </div>
                 </div>
@@ -760,12 +758,12 @@ export default function PrescriptionPage() {
                             </span>
                             {rx.reminders_scheduled > 0 && (
                               <span style={{ fontSize: 11, color: "#818cf8" }}>
-                                🔔 {rx.reminders_scheduled} dose reminder{rx.reminders_scheduled > 1 ? "s" : ""} scheduled via SMS
+                                 {rx.reminders_scheduled} dose reminder{rx.reminders_scheduled > 1 ? "s" : ""} scheduled via SMS
                               </span>
                             )}
                           </div>
                           {done
-                            ? <span style={{ color: "#4ade80", fontSize: 13, fontWeight: 600 }}>✓ {done.remaining_stock} left in stock</span>
+                            ? <span style={{ color: "#4ade80", fontSize: 13, fontWeight: 600 }}> {done.remaining_stock} left in stock</span>
                             : <span className="badge" style={{ background: "rgba(56,189,248,0.08)", color: "#38bdf8" }}>Ready</span>
                           }
                         </div>
@@ -774,7 +772,7 @@ export default function PrescriptionPage() {
                   })}
                 </div>
 
-                {issueError && <div className="warn-box mb-14"><p className="hint hint-err">⚠ {issueError}</p></div>}
+                {issueError && <div className="warn-box mb-14"><p className="hint hint-err"> {issueError}</p></div>}
 
                 {/* NEW: WhatsApp notification status */}
                 {notifyStatus !== "idle" && (
@@ -786,8 +784,8 @@ export default function PrescriptionPage() {
                     fontSize: 13,
                   }}>
                     {notifyStatus === "sending" && <><span className="spinner" style={{ marginRight: 8 }} />Sending WhatsApp bill…</>}
-                    {notifyStatus === "sent"    && `✓ WhatsApp bill sent to ${patientPhone}`}
-                    {notifyStatus === "failed"  && `⚠ WhatsApp failed: ${notifyMsg}`}
+                    {notifyStatus === "sent"    && ` WhatsApp bill sent to ${patientPhone}`}
+                    {notifyStatus === "failed"  && ` WhatsApp failed: ${notifyMsg}`}
                   </div>
                 )}
 
@@ -817,7 +815,7 @@ export default function PrescriptionPage() {
             </div>
             {session.length === 0 ? (
               <div className="center p-empty-sm">
-                <div className="empty-icon-sm">📋</div>
+                <div className="empty-icon-sm"></div>
                 <p className="empty-note">Nothing issued yet.</p>
               </div>
             ) : (
@@ -882,7 +880,7 @@ export default function PrescriptionPage() {
           </div>
 
           <div className="glass-card panel-p24">
-            {historyError && <div className="err-box mb-14"><p className="hint hint-err">⚠ {historyError}</p></div>}
+            {historyError && <div className="err-box mb-14"><p className="hint hint-err"> {historyError}</p></div>}
             <div className="hist-table-head">
               {["Rx ID", "Patient", "Medicine", "Qty", "Dose/Day", "Remaining", "Status", ""].map(h =>
                 <div key={h} className="th th-no-pad">{h}</div>
@@ -891,7 +889,7 @@ export default function PrescriptionPage() {
             {historyLoading ? (
               <div className="loading-cell row g-12"><span className="spinner" /><span>Loading…</span></div>
             ) : filteredHistory.length === 0 ? (
-              <div className="center p-empty"><div className="empty-icon-md">📋</div><p className="empty-text">No prescriptions found.</p></div>
+              <div className="center p-empty"><div className="empty-icon-md"></div><p className="empty-text">No prescriptions found.</p></div>
             ) : (
               <div className="col g-3">
                 {filteredHistory.map(r => {
@@ -949,7 +947,7 @@ export default function PrescriptionPage() {
       {tab === "reminders" && (
         <div className="fade-3">
           {reminderMsg && (
-            <div className={`msg-box mb-20 ${reminderMsg.startsWith("✓") ? "msg-box-success" : "msg-box-error"}`}>
+            <div className={`msg-box mb-20 ${reminderMsg.startsWith("") ? "msg-box-success" : "msg-box-error"}`}>
               {reminderMsg}
             </div>
           )}
@@ -969,7 +967,7 @@ export default function PrescriptionPage() {
             {remindersLoading ? (
               <div className="loading-cell row g-12"><span className="spinner" /><span>Loading…</span></div>
             ) : reminders.length === 0 ? (
-              <div className="center p-empty"><div className="empty-icon-md">🔔</div><p className="empty-text">No pending reminders.</p></div>
+              <div className="center p-empty"><div className="empty-icon-md"></div><p className="empty-text">No pending reminders.</p></div>
             ) : (
               <div className="table-wrap">
                 <table className="full-table">
@@ -1042,7 +1040,7 @@ export default function PrescriptionPage() {
                 String(r.patient_id).includes(rxSearch) || String(r.id).includes(rxSearch)
               ).length === 0 ? (
               <div className="center p-empty">
-                <div className="empty-icon-md">📋</div>
+                <div className="empty-icon-md"></div>
                 <p className="empty-text">No prescriptions. Switch to Queue tab to create one first.</p>
               </div>
             ) : (
@@ -1089,14 +1087,14 @@ export default function PrescriptionPage() {
                                 disabled={reminderActionId === r.id}
                                 className={r.is_continuous ? "btn-sm btn-sm-green" : "btn-sm"}
                                 style={{ opacity: reminderActionId === r.id ? 0.5 : 1 }}>
-                                {reminderActionId === r.id ? "…" : r.is_continuous ? "✓ On" : "Off"}
+                                {reminderActionId === r.id ? "…" : r.is_continuous ? " On" : "Off"}
                               </button>
                             </td>
                             <td className="td">
                               <button className="btn-sm" style={{ fontSize: 11 }}
                                 onClick={() => handleSendOneTime(r.id)}
                                 disabled={reminderActionId === r.id}>
-                                {reminderActionId === r.id ? "…" : "📱 Send SMS"}
+                                {reminderActionId === r.id ? "…" : " Send SMS"}
                               </button>
                             </td>
                           </tr>
@@ -1114,7 +1112,7 @@ export default function PrescriptionPage() {
       {tab === "forecast" && (
         <div className="fade-3">
           <div style={{ marginBottom: 20 }}>
-            <h2 className="panel-title" style={{ marginBottom: 4 }}>📦 Refill Forecast</h2>
+            <h2 className="panel-title" style={{ marginBottom: 4 }}> Refill Forecast</h2>
             <p style={{ fontSize: 13, color: "#475569" }}>
               Patients whose medicine supply is running out soon — stock these medicines before their refill reminder fires.
             </p>
@@ -1125,7 +1123,7 @@ export default function PrescriptionPage() {
           ) : forecastRecords.length === 0 ? (
             <div className="glass-card panel-p24">
               <div className="center p-empty">
-                <div className="empty-icon-lg">✅</div>
+                <div className="empty-icon-lg"></div>
                 <p className="empty-text mb-4">No patients running low</p>
                 <p className="empty-sub">All active prescriptions have more than 5 days of supply remaining.</p>
               </div>
@@ -1173,14 +1171,14 @@ export default function PrescriptionPage() {
                           </td>
                           <td className="td">
                             <span style={{ color: r.is_continuous ? "#4ade80" : "#475569", fontSize: 12, fontWeight: 600 }}>
-                              {r.is_continuous ? "♻ Yes" : "No"}
+                              {r.is_continuous ? " Yes" : "No"}
                             </span>
                           </td>
                           <td className="td">
                             <button className="btn-sm btn-sm-green" style={{ fontSize: 11 }}
                               onClick={() => handleSendOneTime(r.id)}
                               disabled={reminderActionId === r.id}>
-                              {reminderActionId === r.id ? "…" : "📱 Send Reminder"}
+                              {reminderActionId === r.id ? "…" : " Send Reminder"}
                             </button>
                           </td>
                         </tr>
@@ -1196,7 +1194,7 @@ export default function PrescriptionPage() {
           )}
 
           {reminderMsg && (
-            <div className={`msg-box mt-16 ${reminderMsg.startsWith("✓") ? "msg-box-success" : "msg-box-error"}`}>
+            <div className={`msg-box mt-16 ${reminderMsg.startsWith("") ? "msg-box-success" : "msg-box-error"}`}>
               {reminderMsg}
             </div>
           )}
