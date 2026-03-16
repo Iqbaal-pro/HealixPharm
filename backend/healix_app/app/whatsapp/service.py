@@ -523,8 +523,10 @@ class WhatsAppService_wb:
             elif selection == "back_to_main":
                 self.send_main_menu(user_id)
                 return
-
-            self.send_faq_menu(user_id)
+            
+            else:
+                 # Fallback if selection doesn't match
+                 self.send_faq_menu(user_id)
 
         finally:
             db.close()
