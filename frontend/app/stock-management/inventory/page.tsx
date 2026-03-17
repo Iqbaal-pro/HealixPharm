@@ -105,12 +105,12 @@ export default function InventoryPage() {
           </div>
           <div>
             <h1 className="gradient-text" style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:26, margin:0, letterSpacing:"-0.02em" }}>Inventory</h1>
-            <p style={{ color:"#475569", fontSize:13.5, margin:"3px 0 0" }}>Live medicine stock levels, batch tracking & FEFO dispatch</p>
+            <p style={{ color:"#475569", fontSize:14.5, margin:"3px 0 0" }}>Live medicine stock levels, batch tracking & FEFO dispatch</p>
           </div>
         </div>
         <div style={{ display:"flex", gap:10 }}>
-          <button className="btn-ghost" style={{ padding:"9px 16px", fontSize:13 }} onClick={fetchInventory}>↻ Refresh</button>
-          <button className="btn-primary" style={{ padding:"9px 20px", fontSize:13, width:"auto" }} onClick={() => setShowModal(true)}>+ Add Stock</button>
+          <button className="btn-ghost" style={{ padding:"9px 16px", fontSize:14 }} onClick={fetchInventory}>↻ Refresh</button>
+          <button className="btn-primary" style={{ padding:"9px 20px", fontSize:14, width:"auto" }} onClick={() => setShowModal(true)}>+ Add Stock</button>
         </div>
       </div>
 

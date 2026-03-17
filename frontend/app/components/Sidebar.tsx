@@ -142,7 +142,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           return (
             <Link key={item.href} href={item.href} className={`nav-link${isActive ? " active" : ""}`} title={collapsed ? item.label : undefined}>
               {item.icon}
-              {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{item.label}</span>}
+              {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", fontSize:15 }}>{item.label}</span>}
             </Link>
           );
         })}

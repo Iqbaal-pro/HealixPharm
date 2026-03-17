@@ -131,10 +131,10 @@ export default function MOHAlertsPage() {
         <div className="glass-panel mt-20" style={{ padding: 20 }}>
           <h2 className="panel-title" style={{ marginBottom: 10 }}>How it works</h2>
           <div style={{ color: "#64748b", fontSize: 13, lineHeight: 1.8 }}>
-            <div>1. Only <strong style={{ color: "#94a3b8" }}>High</strong> threat level alerts are auto-broadcast to patients.</div>
-            <div>2. The alert scheduler runs daily and broadcasts to all <strong style={{ color: "#94a3b8" }}>active patients</strong>.</div>
-            <div>3. Each alert is broadcast <strong style={{ color: "#94a3b8" }}>once</strong> — duplicate broadcasts are prevented.</div>
-            <div>4. Expired alerts (past end date) are automatically marked as Expired.</div>
+            <div className="moh-text">1. Only <strong style={{ color: "#94a3b8" }}>High</strong> threat level alerts are auto-broadcast to patients.</div>
+            <div className="moh-text">2. The alert scheduler runs daily and broadcasts to all <strong style={{ color: "#94a3b8" }}>active patients</strong>.</div>
+            <div className="moh-text">3. Each alert is broadcast <strong style={{ color: "#94a3b8" }}>once</strong> — duplicate broadcasts are prevented.</div>
+            <div className="moh-text">4. Expired alerts (past end date) are automatically marked as Expired.</div>
           </div>
         </div>
       </div>

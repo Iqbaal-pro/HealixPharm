@@ -130,8 +130,8 @@ export default function StockManagementPage() {
                   </span>
                 )}
               </div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, color: "#f1f5f9", marginBottom: 6 }}>{m.label}</div>
-              <div style={{ fontSize: 12.5, color: "#475569" }}>{m.desc}</div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 600, fontSize: 16, color: "#f1f5f9", marginBottom: 6 }}>{m.label}</div>
+              <div style={{ fontSize: 14.5, color: "#475569" }}>{m.desc}</div>
               <div style={{ marginTop: 14, fontSize: 12, color: "#38bdf8", fontWeight: 600 }}>Open</div>
             </div>
           </Link>
