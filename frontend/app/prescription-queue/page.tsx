@@ -415,7 +415,7 @@ export default function PrescriptionPage() {
                           {p.phone && <div className="queue-info-phone">{p.phone}</div>}
                           <div className="queue-info-date">{new Date(p.created_at).toLocaleString()}</div>
                         </div>
-                        <span className="queue-arrow">Review →</span>
+                        <span className="queue-arrow">Review </span>
                       </div>
                     ))}
                   </div>

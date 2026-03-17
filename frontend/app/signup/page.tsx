@@ -144,7 +144,7 @@ export default function SignupPage() {
           ))}
           <div style={{ marginTop: 44, paddingTop: 24, borderTop: "1px solid rgba(148,163,184,0.06)" }}>
             <span style={{ color: "#334155", fontSize: 13.5 }}>Already have an account? </span>
-            <Link href="/login" style={{ color: "#38bdf8", fontSize: 13.5, fontWeight: 600, textDecoration: "none" }}>Sign in →</Link>
+            <Link href="/login" style={{ color: "#38bdf8", fontSize: 13.5, fontWeight: 600, textDecoration: "none" }}>Sign in</Link>
           </div>
         </div>
 
