@@ -363,7 +363,7 @@ const btnPrimary: CSSProperties = { width: "100%", background: "linear-gradient(
 const btnGhost: CSSProperties  = { background: "transparent", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(148,163,184,.12)", color: "#94a3b8", borderRadius: 12, padding: "13px 18px", fontSize: 13.5, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", whiteSpace: "nowrap" as const };
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
   .orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
   .orb1{width:500px;height:500px;background:rgba(14,165,233,0.05);top:-180px;left:-160px;animation:d1 22s ease-in-out infinite alternate}
   .orb2{width:380px;height:380px;background:rgba(129,140,248,0.04);bottom:-120px;right:-100px;animation:d2 26s ease-in-out infinite alternate}
