@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import {
   getPendingPrescriptions, createPrescription, issueMedicine,
-  getAllPrescriptions, notifyPrescriptionIssued,
+  getAllPrescriptions, notifyPrescriptionIssued, getOrderDetail,
+  getPresignedUrl, uploadPrescriptionImage, checkImageClarity,
   type PendingPrescription, type PrescriptionResponse,
   type PrescriptionRecord, type IssueResponse,
 } from "../routes/prescriptionRoutes";
@@ -61,6 +62,15 @@ export default function PrescriptionPage() {
   const [pending,     setPending]     = useState<PendingPrescription[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [selected,    setSelected]    = useState<PendingPrescription | null>(null);
+  const [freshUrl,    setFreshUrl]    = useState<string | null>(null);
+  const [urlLoading,  setUrlLoading]  = useState(false);
+
+  // Manual image upload state
+  const [uploadFile,     setUploadFile]     = useState<File | null>(null);
+  const [uploadPreview,  setUploadPreview]  = useState<string | null>(null);
+  const [uploadStatus,   setUploadStatus]   = useState<"idle"|"checking"|"uploading"|"done"|"error">("idle");
+  const [uploadMsg,      setUploadMsg]      = useState("");
+  const [uploadedKey,    setUploadedKey]    = useState<string | null>(null);
 
   // Save form
   const [patientId,    setPatientId]    = useState("");
@@ -155,6 +165,56 @@ export default function PrescriptionPage() {
   };
 
   // ── Data fetches ───────────────────────────────────────────────────────────
+  // Fetch a fresh presigned URL when pharmacist clicks a queue item
+  // The URL from the list may be expired (presigned URLs last 1hr)
+  const selectQueueItem = async (p: PendingPrescription) => {
+    setSelected(p);
+    setFreshUrl(null);
+    setUploadFile(null); setUploadPreview(null); setUploadStatus("idle"); setUploadMsg(""); setUploadedKey(null);
+    setStep("save");
+    if (p.order_id) {
+      setUrlLoading(true);
+      try {
+        // If we have an s3_key directly, use getPresignedUrl for a cleaner fresh URL
+        // Otherwise fall back to getOrderDetail
+        const detail = await getOrderDetail(p.order_id) as { prescription_url?: string; prescription?: { s3_key?: string } };
+        const s3Key = detail?.prescription?.s3_key;
+        if (s3Key) {
+          const url = await getPresignedUrl(s3Key);
+          setFreshUrl(url);
+        } else {
+          setFreshUrl(detail?.prescription_url ?? p.prescription_url ?? null);
+        }
+      } catch {
+        setFreshUrl(p.prescription_url ?? null);
+      } finally {
+        setUrlLoading(false);
+      }
+    }
+  };
+
+  const handleImageSelect = async (file: File) => {
+    setUploadFile(file);
+    setUploadPreview(URL.createObjectURL(file));
+    setUploadStatus("checking"); setUploadMsg("Checking image clarity…");
+    try {
+      const clarity = await checkImageClarity(file);
+      if (!clarity.is_clear) {
+        setUploadStatus("error");
+        setUploadMsg(`⚠ ${clarity.message} — please use a clearer photo.`);
+        return;
+      }
+      setUploadStatus("uploading"); setUploadMsg("Uploading to S3…");
+      const prxId = `manual_${Date.now()}`;
+      const result = await uploadPrescriptionImage(file, prxId);
+      setUploadedKey(result.key);
+      setUploadStatus("done"); setUploadMsg("✓ Image uploaded successfully.");
+    } catch (e: unknown) {
+      setUploadStatus("error");
+      setUploadMsg(e instanceof Error ? e.message : "Upload failed");
+    }
+  };
+
   const fetchPending = async () => {
     setLoadingList(true);
     try { setPending(await getPendingPrescriptions()); }
@@ -289,7 +349,8 @@ export default function PrescriptionPage() {
   };
 
   const resetQueue = () => {
-    setStep("list"); setSelected(null); setSavedRxs([]); setIssueResults([]);
+    setStep("list"); setSelected(null); setFreshUrl(null); setSavedRxs([]); setIssueResults([]);
+    setUploadFile(null); setUploadPreview(null); setUploadStatus("idle"); setUploadMsg(""); setUploadedKey(null);
     setPatientId(""); setPatientPhone(""); setStaffId(""); setStartDate(TODAY);
     setMedicines([{ ...EMPTY_MED }]);
     setMedSearch([""]); setMedResults([[]]);
@@ -405,9 +466,12 @@ export default function PrescriptionPage() {
                 ) : (
                   <div className="col g-8">
                     {pending.map(p => (
-                      <div key={p.order_id} className="queue-item" onClick={() => { setSelected(p); setStep("save"); }}>
+                      <div key={p.order_id} className="queue-item" onClick={() => selectQueueItem(p)}>
                         <div className="queue-thumb">
-                          {p.prescription_url ? <img src={p.prescription_url} alt="" /> : <span className="queue-thumb-empty"></span>}
+                          {p.prescription_url
+                            ? <img src={p.prescription_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display="none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }} />
+                            : null}
+                          <span className="queue-thumb-empty" style={{ display: p.prescription_url ? "none" : undefined }}>🖼</span>
                         </div>
                         <div className="queue-info">
                           <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>
@@ -434,9 +498,17 @@ export default function PrescriptionPage() {
                   </div>
                 </div>
 
-                {selected?.prescription_url && (
+                {selected && (freshUrl || urlLoading) && (
                   <div className="rx-preview mb-18">
-                    <img src={selected.prescription_url} alt="prescription" />
+                    {urlLoading ? (
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:120, gap:10, color:"#475569", fontSize:13 }}>
+                        <span className="spinner" /> Loading prescription image…
+                      </div>
+                    ) : freshUrl ? (
+                      <a href={freshUrl} target="_blank" rel="noreferrer">
+                        <img src={freshUrl} alt="prescription" />
+                      </a>
+                    ) : null}
                   </div>
                 )}
 
@@ -466,6 +538,43 @@ export default function PrescriptionPage() {
                          <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{selected.phone}</span>
                       </span>
                     )}
+                  </div>
+                )}
+
+                {/* Shared fields */}
+                {/* Manual prescription image upload — only shown when entering manually (no WhatsApp queue item) */}
+                {!selected && (
+                  <div className="mb-18">
+                    <label className="form-label">Prescription Image (optional)</label>
+                    <div style={{ marginTop: 6 }}>
+                      {!uploadFile ? (
+                        <label style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:8, padding:"24px 16px", borderRadius:12, border:"2px dashed rgba(148,163,184,0.2)", cursor:"pointer", background:"rgba(255,255,255,0.02)", transition:"border-color 0.2s" }}
+                          onDragOver={e => e.preventDefault()}
+                          onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleImageSelect(f); }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          <span style={{ fontSize:13, color:"#475569" }}>Click to upload or drag & drop</span>
+                          <span style={{ fontSize:11, color:"#334155" }}>JPG, PNG — max 10MB</span>
+                          <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleImageSelect(f); }} />
+                        </label>
+                      ) : (
+                        <div style={{ position:"relative", borderRadius:12, overflow:"hidden", border:"1px solid rgba(148,163,184,0.1)" }}>
+                          {uploadPreview && <img src={uploadPreview} alt="preview" style={{ width:"100%", maxHeight:200, objectFit:"cover", display:"block" }} />}
+                          <button onClick={() => { setUploadFile(null); setUploadPreview(null); setUploadStatus("idle"); setUploadMsg(""); setUploadedKey(null); }}
+                            style={{ position:"absolute", top:8, right:8, background:"rgba(0,0,0,0.6)", border:"none", borderRadius:"50%", width:28, height:28, cursor:"pointer", color:"#fff", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
+                        </div>
+                      )}
+                      {uploadMsg && (
+                        <div style={{ marginTop:8, padding:"8px 12px", borderRadius:8, fontSize:12, fontWeight:500,
+                          background: uploadStatus==="done" ? "rgba(74,222,128,0.08)" : uploadStatus==="error" ? "rgba(248,113,113,0.08)" : "rgba(56,189,248,0.08)",
+                          color:      uploadStatus==="done" ? "#4ade80"               : uploadStatus==="error" ? "#f87171"               : "#38bdf8",
+                          border:     `1px solid ${uploadStatus==="done" ? "rgba(74,222,128,0.2)" : uploadStatus==="error" ? "rgba(248,113,113,0.2)" : "rgba(56,189,248,0.2)"}`,
+                          display:"flex", alignItems:"center", gap:8
+                        }}>
+                          {(uploadStatus==="checking"||uploadStatus==="uploading") && <span className="spinner" />}
+                          {uploadMsg}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 

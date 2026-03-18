@@ -138,16 +138,16 @@ export default function AddDoctorPage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
-              <label style={lbl}>Experience</label>
+              <label style={lbl}>Experience <span style={{ color: "#334155", fontWeight: 400, textTransform: "none", fontSize: 10 }}>(optional)</span></label>
               <input style={inp} placeholder="10+ years" value={form.experience} onChange={e => set("experience", e.target.value)} />
             </div>
             <div>
-              <label style={lbl}>Initials</label>
+              <label style={lbl}>Initials <span style={{ color: "#334155", fontWeight: 400, textTransform: "none", fontSize: 10 }}>(optional)</span></label>
               <input style={inp} placeholder="AP" maxLength={3} value={form.initials} onChange={e => set("initials", e.target.value.toUpperCase())} />
             </div>
           </div>
           <div>
-            <label style={lbl}>Qualifications</label>
+            <label style={lbl}>Qualifications <span style={{ color: "#334155", fontWeight: 400, textTransform: "none", fontSize: 10 }}>(optional)</span></label>
             <input style={inp} placeholder="MBBS, MD (Cardiology)" value={form.qualifications} onChange={e => set("qualifications", e.target.value)} />
           </div>
         </Section>

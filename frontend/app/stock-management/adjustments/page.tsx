@@ -109,6 +109,7 @@ export default function AdjustmentsPage() {
           </div>
         </div>
         <div style={{ display:"flex", gap:10 }}>
+          <Link href="/stock-management" className="btn-ghost" style={{ padding:"9px 16px", fontSize:14, textDecoration:"none", display:"inline-flex", alignItems:"center", gap:6 }}>← Back</Link>
           <button className="btn-ghost" style={{ padding:"9px 16px", fontSize:14 }} onClick={fetchHistory}>↻ Refresh</button>
           <button className="btn-primary" style={{ padding:"9px 20px", fontSize:14, width:"auto" }} onClick={() => setShowModal(true)}>+ New Adjustment</button>
         </div>

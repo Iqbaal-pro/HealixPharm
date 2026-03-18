@@ -125,3 +125,17 @@ export async function deleteSlot(slotId: number): Promise<void> {
   const res = await fetch(`${BASE}/api/admin/slots/${slotId}`, { method: "DELETE" });
   return handleResponse<void>(res);
 }
+// ── Channelling Settings ──────────────────────────────────────────
+export async function getChannellingSettings(): Promise<{ channelling_service_charge: number }> {
+  const res = await fetch(`${BASE}/api/admin/channelling-settings`);
+  return handleResponse<{ channelling_service_charge: number }>(res);
+}
+
+export async function updateChannellingSettings(charge: number): Promise<{ channelling_service_charge: number }> {
+  const res = await fetch(`${BASE}/api/admin/channelling-settings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ channelling_service_charge: charge }),
+  });
+  return handleResponse<{ channelling_service_charge: number }>(res);
+}

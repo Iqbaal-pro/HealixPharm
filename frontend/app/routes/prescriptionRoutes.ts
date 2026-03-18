@@ -201,3 +201,43 @@ export async function issueMedicine(payload: IssuePayload): Promise<IssueRespons
   const res = await fetch(`${STOCK_BASE}/prescriptions/issue?${qs}`, { method: "POST" });
   return handleResponse<IssueResponse>(res);
 }
+
+// ── Storage / Image routes (BOT_BASE /api/...) ────────────────────────────────
+
+// GET /api/storage/presigned-url?key=...&expires_in=3600
+// Returns a fresh S3 presigned URL for any prescription image key
+export async function getPresignedUrl(key: string): Promise<string> {
+  const qs = new URLSearchParams({ key, expires_in: "3600" });
+  const res = await fetch(`${BOT_BASE}/api/storage/presigned-url?${qs}`);
+  const data = await handleResponse<{ url: string }>(res);
+  return data.url;
+}
+
+// POST /api/storage/upload-prescription?prescription_id=...
+// Uploads a prescription image file to S3, returns the s3_key
+export async function uploadPrescriptionImage(
+  file: File,
+  prescriptionId: string
+): Promise<{ key: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(
+    `${BOT_BASE}/api/storage/upload-prescription?prescription_id=${encodeURIComponent(prescriptionId)}`,
+    { method: "POST", body: formData }
+  );
+  return handleResponse<{ key: string }>(res);
+}
+
+// POST /api/image/check-clarity
+// Checks if an image is clear enough before uploading
+export async function checkImageClarity(
+  file: File
+): Promise<{ is_clear: boolean; message: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BOT_BASE}/api/image/check-clarity`, {
+    method: "POST",
+    body: formData,
+  });
+  return handleResponse<{ is_clear: boolean; message: string }>(res);
+}

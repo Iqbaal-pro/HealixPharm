@@ -40,3 +40,9 @@ export async function createMOHAlert(payload: CreateAlertPayload): Promise<MOHAl
   });
   return handleResponse<MOHAlert>(res);
 }
+
+// GET /admin/alerts/active
+export async function getActiveAlerts(): Promise<MOHAlert[]> {
+  const res = await fetch(`${BASE}/admin/alerts/active`);
+  return handleResponse<MOHAlert[]>(res);
+}

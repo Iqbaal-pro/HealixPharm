@@ -140,14 +140,15 @@ export default function BookingForm({ doctor, slot, slotId, date, hospital, onBa
         </div>
         <div className="glass" style={{ padding: "22px 24px", maxWidth: 420, margin: "0 auto 20px" }}>
           <p style={{ fontSize: 11, fontWeight: 600, color: "#475569", letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>Payment Summary</p>
-          {([
-            ["Doctor", doctor.name], ["Hospital", hospital],
-            ["Date", new Date(date + "T00:00:00").toLocaleDateString("en-LK", { weekday: "long", year: "numeric", month: "long", day: "numeric" })],
-            ["Time Slot", slot],
-            ["Consultation Fee", formatCurrency(payhereData.total_fee - payhereData.service_fee)],
-            ["Service Charge", formatCurrency(payhereData.service_fee)],
-            ["Total", formatCurrency(payhereData.total_fee)],
-          ] as [string, string][]).map(([label, value], i, arr) => (
+            {([
+              ["Doctor",            doctor.name],
+              ["Hospital",          hospital],
+              ["Date",              new Date(date + "T00:00:00").toLocaleDateString("en-LK", { weekday: "long", year: "numeric", month: "long", day: "numeric" })],
+              ["Time Slot",         slot],
+              ["Consultation Fee",  `${formatCurrency(payhereData.total_fee - payhereData.service_fee)} (paid to doctor in person)`],
+              ["Service Charge",    formatCurrency(payhereData.service_fee)],
+              ["Pay Now",           formatCurrency(payhereData.service_fee)],
+            ] as [string, string][]).map(([label, value], i, arr) => (
             <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderBottom: i < arr.length - 1 ? "1px solid rgba(148,163,184,0.07)" : "none" }}>
               <span style={{ color: "#64748b", fontSize: 13 }}>{label}</span>
               <span style={{ fontSize: 13, fontWeight: label === "Total" ? 700 : 600, color: label === "Total" ? "#f1f5f9" : "#cbd5e1", textAlign: "right", maxWidth: "60%" }}>{value}</span>
@@ -156,7 +157,7 @@ export default function BookingForm({ doctor, slot, slotId, date, hospital, onBa
         </div>
         <div style={{ maxWidth: 420, margin: "0 auto", textAlign: "center" }}>
           <button onClick={handlePayNow} style={{ width: "100%", padding: "14px 0", borderRadius: 12, background: "linear-gradient(90deg, #0369a1, #4f46e5)", color: "#fff", fontSize: 16, fontWeight: 700, border: "none", cursor: "pointer", marginBottom: 12 }}>
-            Pay {formatCurrency(payhereData.total_fee)} via PayHere
+            Pay {formatCurrency(payhereData.service_fee)} via PayHere
           </button>
           <p style={{ color: "#334155", fontSize: 12 }}>You will be redirected to PayHere's secure payment page.</p>
           <p style={{ color: "#1e293b", fontSize: 11, marginTop: 6 }}>Your slot is held for 15 minutes. If payment is not completed, it will be released.</p>
@@ -222,9 +223,17 @@ export default function BookingForm({ doctor, slot, slotId, date, hospital, onBa
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 14 }}><span style={{ color: "#475569" }}>Consultation Fee</span><span style={{ color: "#94a3b8" }}>{formatCurrency(doctor.fee)}</span></div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 14 }}><span style={{ color: "#475569" }}>Service Charge</span><span style={{ color: "#94a3b8" }}>Calculated at checkout</span></div>
             <div style={{ height: 1, background: "rgba(148,163,184,0.07)", marginBottom: 10 }} />
+            <div style={{ height: 1, background: "rgba(148,163,184,0.07)", marginBottom: 10 }} />
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ color: "#64748b", fontSize: 13 }}>Consultation Fee</span>
+              <span style={{ color: "#475569", fontSize: 13 }}>
+                {formatCurrency(doctor.fee)}
+                <span style={{ fontSize: 11, color: "#334155", marginLeft: 6 }}>(paid to doctor in person)</span>
+              </span>
+            </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontWeight: 600, color: "#cbd5e1", fontSize: 15 }}>Approx. Total</span>
-              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 17, color: "#e2e8f0" }}>{formatCurrency(doctor.fee)} +</span>
+              <span style={{ fontWeight: 600, color: "#cbd5e1", fontSize: 15 }}>You Pay Now</span>
+              <span style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 17, color: "#38bdf8" }}>Service charge only</span>
             </div>
           </div>
           {apiError && <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "#f87171", fontSize: 13 }}>{apiError}</div>}
