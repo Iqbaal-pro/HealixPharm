@@ -11,6 +11,24 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def normalize_sri_lankan_number(number: str) -> str:
+    """
+    Convert local Sri Lankan numbers to international format.
+    Examples:
+        0771234567  →  +94771234567
+        +94771234567 → +94771234567  (already correct)
+        94771234567  → +94771234567
+    """
+    number = number.strip()
+    if number.startswith("0"):
+        return "+94" + number[1:]
+    if number.startswith("94") and not number.startswith("+"):
+        return "+" + number
+    if not number.startswith("+"):
+        return "+94" + number
+    return number
+
+
 def send_sms(to_number: str, message: str) -> dict:
     """
     Send an SMS to the given phone number via SmsApi.lk.
@@ -23,6 +41,9 @@ def send_sms(to_number: str, message: str) -> dict:
             sid (str|None)  – message UID on success
             error (str|None) – error description on failure
     """
+    # ── Normalize phone number for Sri Lanka ─────────────────
+    to_number = normalize_sri_lankan_number(to_number)
+
     # ── Check if simulation mode is forced ───────────────────
     simulate = os.getenv("SMS_SIMULATE", "false").lower() == "true"
 
