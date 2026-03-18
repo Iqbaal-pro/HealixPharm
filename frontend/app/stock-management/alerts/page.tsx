@@ -104,7 +104,7 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="fade-1" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, flexWrap:"wrap", gap:12 }}>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-          <div style={{ width:46, height:46, borderRadius:13, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.22)", display:"flex", alignItems:"center", justifyContent:"center", color:"#ef4444", flexShrink:0 }}>
+          <div style={{ width:46, height:46, borderRadius:13, background:"rgba(68, 154, 239, 0.1)", border:"1px solid rgba(119, 157, 200, 0.22)", display:"flex", alignItems:"center", justifyContent:"center", color:"#1f59ceff", flexShrink:0 }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
               <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
