@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import {
   getPendingPrescriptions, createPrescription, issueMedicine,
-  getAllPrescriptions, notifyPrescriptionIssued,
+  getAllPrescriptions, notifyPrescriptionIssued, getOrderDetail,
   type PendingPrescription, type PrescriptionResponse,
   type PrescriptionRecord, type IssueResponse,
 } from "../routes/prescriptionRoutes";
@@ -61,6 +61,8 @@ export default function PrescriptionPage() {
   const [pending,     setPending]     = useState<PendingPrescription[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [selected,    setSelected]    = useState<PendingPrescription | null>(null);
+  const [freshUrl,    setFreshUrl]    = useState<string | null>(null);
+  const [urlLoading,  setUrlLoading]  = useState(false);
 
   // Save form
   const [patientId,    setPatientId]    = useState("");
@@ -155,6 +157,25 @@ export default function PrescriptionPage() {
   };
 
   // ── Data fetches ───────────────────────────────────────────────────────────
+  // Fetch a fresh presigned URL when pharmacist clicks a queue item
+  // The URL from the list may be expired (presigned URLs last 1hr)
+  const selectQueueItem = async (p: PendingPrescription) => {
+    setSelected(p);
+    setFreshUrl(null);
+    setStep("save");
+    if (p.order_id) {
+      setUrlLoading(true);
+      try {
+        const detail = await getOrderDetail(p.order_id) as { prescription_url?: string };
+        setFreshUrl(detail?.prescription_url ?? p.prescription_url ?? null);
+      } catch {
+        setFreshUrl(p.prescription_url ?? null);
+      } finally {
+        setUrlLoading(false);
+      }
+    }
+  };
+
   const fetchPending = async () => {
     setLoadingList(true);
     try { setPending(await getPendingPrescriptions()); }
@@ -289,7 +310,7 @@ export default function PrescriptionPage() {
   };
 
   const resetQueue = () => {
-    setStep("list"); setSelected(null); setSavedRxs([]); setIssueResults([]);
+    setStep("list"); setSelected(null); setFreshUrl(null); setSavedRxs([]); setIssueResults([]);
     setPatientId(""); setPatientPhone(""); setStaffId(""); setStartDate(TODAY);
     setMedicines([{ ...EMPTY_MED }]);
     setMedSearch([""]); setMedResults([[]]);
@@ -405,9 +426,12 @@ export default function PrescriptionPage() {
                 ) : (
                   <div className="col g-8">
                     {pending.map(p => (
-                      <div key={p.order_id} className="queue-item" onClick={() => { setSelected(p); setStep("save"); }}>
+                      <div key={p.order_id} className="queue-item" onClick={() => selectQueueItem(p)}>
                         <div className="queue-thumb">
-                          {p.prescription_url ? <img src={p.prescription_url} alt="" /> : <span className="queue-thumb-empty"></span>}
+                          {p.prescription_url
+                            ? <img src={p.prescription_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display="none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }} />
+                            : null}
+                          <span className="queue-thumb-empty" style={{ display: p.prescription_url ? "none" : undefined }}>🖼</span>
                         </div>
                         <div className="queue-info">
                           <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>
@@ -434,9 +458,17 @@ export default function PrescriptionPage() {
                   </div>
                 </div>
 
-                {selected?.prescription_url && (
+                {selected && (freshUrl || urlLoading) && (
                   <div className="rx-preview mb-18">
-                    <img src={selected.prescription_url} alt="prescription" />
+                    {urlLoading ? (
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:120, gap:10, color:"#475569", fontSize:13 }}>
+                        <span className="spinner" /> Loading prescription image…
+                      </div>
+                    ) : freshUrl ? (
+                      <a href={freshUrl} target="_blank" rel="noreferrer">
+                        <img src={freshUrl} alt="prescription" />
+                      </a>
+                    ) : null}
                   </div>
                 )}
 
