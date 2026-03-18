@@ -222,7 +222,7 @@ export default function SignupPage() {
                 </div>
                 <button onClick={() => step1Ok && setStep(2)} disabled={!step1Ok}
                   style={{ ...btnPrimary, marginTop: 22, opacity: step1Ok ? 1 : 0.45 }}>
-                  Continue →
+                  Continue
                 </button>
               </div>
             )}
@@ -262,7 +262,7 @@ export default function SignupPage() {
                 <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
                   <button onClick={() => setStep(1)} style={btnGhost}>← Back</button>
                   <button onClick={() => step2Ok && setStep(3)} disabled={!step2Ok}
-                    style={{ ...btnPrimary, flex: 1, opacity: step2Ok ? 1 : 0.45 }}>Continue →</button>
+                    style={{ ...btnPrimary, flex: 1, opacity: step2Ok ? 1 : 0.45 }}>Continue </button>
                 </div>
               </div>
             )}
