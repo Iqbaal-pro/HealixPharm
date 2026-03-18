@@ -281,7 +281,7 @@ export default function MOHAlertsPage() {
 
             <button className="btn-primary w-full mt-18" onClick={handleCreate} disabled={saving || !form.disease_name.trim() || !form.region.trim()}
               style={{ opacity: saving || !form.disease_name.trim() || !form.region.trim() ? 0.45 : 1 }}>
-              {saving ? <><span className="spinner" />Creating…</> : "🚨 Create & Broadcast Alert"}
+              {saving ? <><span className="spinner" />Creating…</> : "Create & Broadcast Alert"}
             </button>
           </div>
         </div>
