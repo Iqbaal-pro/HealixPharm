@@ -18,7 +18,7 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
         @keyframes drift1 { 0%,100%{transform:translate(0,0)}33%{transform:translate(40px,-30px)}66%{transform:translate(-20px,20px)} }
         @keyframes drift2 { 0%,100%{transform:translate(0,0)}33%{transform:translate(-50px,40px)}66%{transform:translate(30px,-20px)} }
         @keyframes drift3 { 0%,100%{transform:translate(0,0)}50%{transform:translate(25px,35px)} }
