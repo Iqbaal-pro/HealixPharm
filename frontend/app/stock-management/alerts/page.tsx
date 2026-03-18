@@ -119,6 +119,7 @@ export default function AlertsPage() {
         </div>
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
           {lastUpdated && <span style={{ fontSize:12, color:"#334155" }}>Updated {lastUpdated}</span>}
+          <Link href="/stock-management" className="btn-ghost" style={{ padding:"9px 16px", fontSize:14, textDecoration:"none", display:"inline-flex", alignItems:"center", gap:6 }}>← Back</Link>
           <button onClick={fetchAlerts} className="btn-ghost" style={{ padding:"9px 16px", fontSize:14 }}>↻ Refresh</button>
         </div>
       </div>
