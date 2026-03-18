@@ -39,6 +39,11 @@ def create_order_with_prescription(db: Session, patient: models.Patient, image_s
     prescription = models.Prescription(
         prescription_id=prescription_id,
         order_id=order.id,
+        patient_id=patient.id,
+        medicine_id=1,  # Placeholder medicine for initial upload
+        staff_id=1,     # Placeholder staff (Admin)
+        uploaded_by_staff_id=1,
+        medicine_name="WhatsApp Uploaded",
         s3_key=image_s3_key,
         s3_url=s3_url
     )

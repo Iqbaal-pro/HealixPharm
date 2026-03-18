@@ -76,6 +76,17 @@ const navItems = [
       </svg>
     ),
   },
+    {
+  label: "E-Channelling",
+  href: "/channeling",
+  icon: (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <path d="M16 2v4M8 2v4M3 10h18"/>
+      <path d="M8 15l3 3 5-5"/>
+    </svg>
+  ),
+},
   {
     label: "Settings",
     href: "/settings",
@@ -131,7 +142,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           return (
             <Link key={item.href} href={item.href} className={`nav-link${isActive ? " active" : ""}`} title={collapsed ? item.label : undefined}>
               {item.icon}
-              {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{item.label}</span>}
+              {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", fontSize:15 }}>{item.label}</span>}
             </Link>
           );
         })}

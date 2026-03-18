@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
             <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 24, color: "#f1f5f9", letterSpacing: "-0.02em", margin: 0 }}>
               Analytics
             </h1>
-            <p style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
+            <p style={{ color: "#475569", fontSize: 14.5, marginTop: 4 }}>
               Demand trends, reorder recommendations and stockout risk
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
             <>
               <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid rgba(148,163,184,0.06)" }}>
                 <h2 style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, color: "#f1f5f9", margin: 0 }}>Reorder Recommendations</h2>
-                <p style={{ fontSize: 12, color: "#475569", marginTop: 3 }}>Medicines with less than 7 days of stock remaining at current consumption rate</p>
+                <p style={{ fontSize: 13.5, color: "#475569", marginTop: 3 }}>Medicines with less than 7 days of stock remaining at current consumption rate</p>
               </div>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -155,7 +155,7 @@ export default function AnalyticsPage() {
                   </tr></thead>
                   <tbody>
                     {loading ? <tr><td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#334155" }}>Loading…</td></tr>
-                    : reorder.length === 0 ? <tr><td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#334155" }}>✅ All medicines have sufficient stock</td></tr>
+                    : reorder.length === 0 ? <tr><td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "#334155" }}> All medicines have sufficient stock</td></tr>
                     : reorder.map(r => (
                       <tr key={r.medicine_id} className="tr">
                         <td style={{ color: "#475569" }}>#{r.medicine_id}</td>

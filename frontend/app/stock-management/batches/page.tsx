@@ -126,15 +126,15 @@ export default function BatchesPage() {
           </div>
           <div>
             <h1 className="gradient-text" style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:26, margin:0, letterSpacing:"-0.02em" }}>Batches</h1>
-            <p style={{ color:"#475569", fontSize:13.5, margin:"3px 0 0" }}>Manage stock batches, expiry dates & FEFO ordering</p>
+            <p style={{ color:"#475569", fontSize:14.5, margin:"3px 0 0" }}>Manage stock batches, expiry dates & FEFO ordering</p>
           </div>
         </div>
         <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
-          <button onClick={() => setShowExpired(p => !p)} style={{ padding:"9px 16px", borderRadius:10, fontSize:13, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight:500, background: showExpired ? "rgba(100,116,139,0.15)" : "rgba(148,163,184,0.06)", color: showExpired ? "#94a3b8" : "#475569" }}>
+          <button onClick={() => setShowExpired(p => !p)} style={{ padding:"9px 16px", borderRadius:10, fontSize:14, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight:500, background: showExpired ? "rgba(100,116,139,0.15)" : "rgba(148,163,184,0.06)", color: showExpired ? "#94a3b8" : "#475569" }}>
             {showExpired ? "Hide Expired" : "Show Expired"}
           </button>
-          <button className="btn-ghost" style={{ padding:"9px 16px", fontSize:13 }} onClick={fetchBatches}>↻ Refresh</button>
-          <button className="btn-primary" style={{ padding:"9px 20px", fontSize:13, width:"auto" }} onClick={() => setShowModal(true)}>+ New Batch</button>
+          <button className="btn-ghost" style={{ padding:"9px 16px", fontSize:14 }} onClick={fetchBatches}>↻ Refresh</button>
+          <button className="btn-primary" style={{ padding:"9px 20px", fontSize:14, width:"auto" }} onClick={() => setShowModal(true)}>+ New Batch</button>
         </div>
       </div>
 

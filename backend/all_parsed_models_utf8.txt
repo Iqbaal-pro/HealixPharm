@@ -1,0 +1,35 @@
+﻿---- STOCK MODELS ----
+[medicine_batches] id, medicine_id, batch_number, supplier_id, manufacture_date, expiry_date, cost_price, received_date, created_at, is_active, is_expired
+[inventory] id, medicine_id, batch_id, quantity_available, quantity_reserved, quantity_damaged, quantity_expired, reorder_level, reorder_quantity, turnover_rate, last_stock_update, last_dispensed_at
+[issued_items] id, prescription_id, medicine_id, batch_id, quantity_issued, issued_at, issued_by
+[medicines] id, name, sku, dosage_form, strength, unit_of_measurement, category, manufacturer, registration_number, cost_price, selling_price, minimum_stock_threshold, maximum_stock_level, created_at, is_active
+[patients] id, name, phone_number, language, consent, created_at
+[pharmacies] id, user_id, pharmacy_name, contact_number, whatsapp_number, address, opening_hours, estimated_delivery_time, service_areas, service_charge, prescription_policy, refund_policy, created_at
+[prescriptions] id, patient_id, uploaded_by_staff_id, medicine_name, dose_per_day, dose_quantity, interval_hours, meal_timing, start_time, start_date, quantity_given, is_continuous, created_at
+[reminders] id, prescription_id, reminder_time, channel, status, one_time, created_at
+[reminder_logs] id, reminder_id, attempt_time, channel, result, error_message
+[stock_adjustments] id, medicine_id, batch_id, adjustment_quantity, adjustment_type, reason, cost_impact, staff_id, approved_by, approved_at, created_at
+[stock_alerts] id, medicine_id, batch_id, alert_type, current_quantity, threshold_value, is_active, is_acknowledged, acknowledged_by, acknowledged_at, created_at, resolved_at
+[stock_logs] id, medicine_id, batch_id, quantity_used, reason, issued_to, reference_type, logged_at, staff_id
+[stock_updates] id, medicine_id, batch_id, batch_number, manufacture_date, expiry_date, quantity_added, cost_price, total_cost, supplier_name, supplier_id, staff_id, date_received, updated_at
+[users] id, username, email, password, created_at
+
+---- HEALIX MODELS ----
+[doctors] id, name, specialization, hospital, qualifications, experience, fee, initials, available, created_at
+[other_hospitals] id, doctor_id, name, days, hours
+[time_slots] id, doctor_id, other_hospital_id, hospital_name, time, date, booked
+[channelling_patients] id, full_name, id_type, id_number, email, phone, address, created_at
+[channelling_appointments] id, booking_ref, payhere_order_id, doctor_id, patient_id, hospital, slot_time, date, consultation_fee, service_fee, total_fee, notes, status, whatsapp_sent, sms_sent, email_sent, created_at
+[users] id, phone, name, created_at
+[support_tickets] id, user_id, agent_id, status, created_at, accepted_at
+[support_messages] id, ticket_id, sender_type, body, created_at
+[patients] id, name, phone_number, language, date_of_birth, consent, created_at
+[moh_disease_alerts] id, disease_name, region, threat_level, start_date, end_date, status, broadcast_sent, retry_count, last_attempt_at, created_at, updated_at
+[alert_broadcast_log] id, alert_id, phone_number, send_status, api_response, created_at
+[orders] id, token, status, user_id, total_amount, payment_method, payment_provider, payment_status, payment_reference, paid_amount, paid_at, approved_at, cancelled_at, reminder_count, created_at
+[order_items] id, order_id, medicine_id, medicine_name, quantity, unit_price, subtotal
+[prescriptions] id, prescription_id, order_id, s3_key, s3_url, notes, created_at
+[pharmacy_settings] id, key, value
+[delivery_settings] id, area, charge, estimated_time
+[policy_settings] id, policy_type, content
+[payments] id, order_id, provider, status, reference, amount, ipn_payload, created_at

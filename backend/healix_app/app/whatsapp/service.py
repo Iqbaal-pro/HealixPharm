@@ -7,7 +7,7 @@ from app.services.s3_service import upload_prescription, generate_presigned_url
 from app.services.order_service import get_or_create_patient, create_order_with_prescription, create_support_ticket, close_all_user_tickets, add_support_message
 from app.services.notification_service import NotificationService
 from app.services.payhere_service import PayHereService
-# from app.services.whatsapp_auth_service import WhatsAppAuthService
+from app.services.whatsapp_auth_service import WhatsAppAuthService
 from app.db import SessionLocal
 from app import models
 from app.core.scheduler import scheduler
@@ -35,14 +35,15 @@ class WhatsAppService_wb:
         logger.info(f"[WB_SERVICE] Handling message from user {user_id} | Type: {message_type}")
 
         # 1. Patient Verification Check
-        # db = SessionLocal()
-        # try:
-        #     if not WhatsAppAuthService.is_authenticated(db, user_id):
-        #         logger.warning(f"[WB_SERVICE] Access denied for unregistered user: {user_id}")
-        #         self.twilio_wa.send_text(user_id, "Sorry, this service is only available for registered patients of Healix Pharm. Please contact the pharmacy to register.")
-        #         return
-        # finally:
-        #     db.close()
+        db = SessionLocal()
+        try:
+            if not WhatsAppAuthService.is_authenticated(db, user_id):
+                logger.warning(f"[WB_SERVICE] Access denied for unregistered user: {user_id}")
+                auth_msg = ("This service is currently available for registered HealixPharm patients.""Please register using this link to access our WhatsApp services:\nhttps://docs.google.com/forms/d/e/1FAIpQLScL-64bBAzsst8KC6qFvyAKomsEW07W5NF3Tx8FWEN0CefRFQ/viewform?usp=sharing&ouid=101673084709681318504")
+                self.twilio_wa.send_text(user_id, auth_msg)
+                return
+        finally:
+            db.close()
 
         state = UserState_wb.get_user_state(user_id)
         is_first = state.get("is_first_message", False)
@@ -392,12 +393,7 @@ class WhatsAppService_wb:
             else:
                 msg = "🔔 *Active MOH Disease Alerts:*\n\n"
                 for alert in alerts:
-                    msg += (
-                        f"⚠️ *{alert.disease_name}*\n"
-                        f"📍 Region: {alert.region}\n"
-                        f"📊 Level: {alert.threat_level}\n"
-                        f"📅 Until: {alert.end_date.strftime('%Y-%m-%d')}\n\n"
-                    )
+                    msg += self.notifications.build_alert_message(alert) + "\n\n"
                 msg += "Please follow MOH guidelines and take necessary precautions."
 
             self.twilio_wa.send_menu(
@@ -482,23 +478,23 @@ class WhatsAppService_wb:
         """
         db = SessionLocal()
         try:
+            # Fetch the main pharmacy record (there's only one pharmacy profile per instance)
+            pharmacy = db.query(models.Pharmacy).first()
+
             if selection == "faq_hours":
-                hours = db.query(models.PharmacySetting).filter_by(key="opening_hours").first()
-                loc   = db.query(models.PharmacySetting).filter_by(key="location").first()
-                msg   = f"📍 *Location & Hours*\n\n*Hours:* {hours.value if hours else 'Not set'}\n*Address:* {loc.value if loc else 'Not set'}"
+                msg = f"📍 *Location & Hours*\n\n*Hours:* {pharmacy.opening_hours if pharmacy and pharmacy.opening_hours else 'Not set'}\n*Address:* {pharmacy.address if pharmacy and pharmacy.address else 'Not set'}"
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_delivery_areas":
-                areas = db.query(models.DeliverySetting).all()
-                if areas:
-                    msg = "🚚 *Delivery Service Areas*\n\n" + "\n".join([f"• {a.area}: {a.estimated_time}" for a in areas])
-                else:
-                    msg = "Delivery info currently unavailable."
+                msg = (
+                    f"🚚 *Delivery Service Areas*\n\n"
+                    f"• Serving: {pharmacy.service_areas if pharmacy and pharmacy.service_areas else 'Most local areas'}\n"
+                    f"• Est. Time: {pharmacy.estimated_delivery_time if pharmacy and pharmacy.estimated_delivery_time else '2-4 hours'}"
+                )
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_prescription":
-                pol = db.query(models.PolicySetting).filter_by(policy_type="prescription").first()
-                msg = f"💊 *Prescription Requirements*\n\n{pol.content if pol else 'Contact pharmacy for details.'}"
+                msg = f"💊 *Prescription Requirements*\n\n{pharmacy.prescription_policy if pharmacy and pharmacy.prescription_policy else 'A valid prescription is required for most medicines. Please upload a clear photo of your prescription.'}"
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_order_status":
@@ -518,24 +514,20 @@ class WhatsAppService_wb:
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_delivery_charges":
-                areas = db.query(models.DeliverySetting).all()
-                if areas:
-                    msg = "💰 *Delivery Charges*\n\n" + "\n".join([f"• {a.area}: Rs. {a.charge}" for a in areas])
-                else:
-                    msg = "Delivery pricing info currently unavailable."
+                msg = f"💰 *Delivery Charges*\n\nOur standard delivery charge is Rs. {pharmacy.service_charge if pharmacy and pharmacy.service_charge is not None else '150.00'}."
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_refunds":
-                ref = db.query(models.PolicySetting).filter_by(policy_type="refund").first()
-                can = db.query(models.PolicySetting).filter_by(policy_type="cancellation").first()
-                msg = f"📝 *Refund & Cancellation*\n\n*Refund:* {ref.content if ref else 'N/A'}\n\n*Cancellation:* {can.content if can else 'N/A'}"
+                msg = f"📝 *Refund & Cancellation*\n\n{pharmacy.refund_policy if pharmacy and pharmacy.refund_policy else 'Please contact us for details regarding refunds and cancellations.'}"
                 self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "back_to_main":
                 self.send_main_menu(user_id)
                 return
-
-            self.send_faq_menu(user_id)
+            
+            else:
+                 # Fallback if selection doesn't match
+                 self.send_faq_menu(user_id)
 
         finally:
             db.close()

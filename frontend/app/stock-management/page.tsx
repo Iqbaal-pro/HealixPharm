@@ -38,11 +38,11 @@ export default function StockManagementPage() {
   };
 
   const modules = [
-    { href: "/stock-management/inventory",   label: "Inventory",   icon: "🗃", desc: "View & manage stock levels",         badge: stats.lowStock,      badgeColor: "#f59e0b", badgeLabel: "low stock"  },
-    { href: "/stock-management/batches",     label: "Batches",     icon: "📦", desc: "Track batches & expiry dates",       badge: stats.expiringSoon,  badgeColor: "#f97316", badgeLabel: "expiring"   },
-    { href: "/stock-management/alerts",      label: "Alerts",      icon: "🔔", desc: "Stock & expiry warnings",            badge: stats.critical,      badgeColor: "#ef4444", badgeLabel: "critical"   },
-    { href: "/stock-management/analytics",   label: "Analytics",   icon: "📊", desc: "Demand trends & recommendations",    badge: stats.reorderNeeded, badgeColor: "#818cf8", badgeLabel: "reorder"    },
-    { href: "/stock-management/adjustments", label: "Adjustments", icon: "⚖", desc: "Log damaged, expired & corrections", badge: stats.damagedUnits,  badgeColor: "#64748b", badgeLabel: "damaged"    },
+    { href: "/stock-management/inventory",   label: "Inventory", desc: "View & manage stock levels",         badge: stats.lowStock,      badgeColor: "#f59e0b", badgeLabel: "low stock"  },
+    { href: "/stock-management/batches",     label: "Batches", desc: "Track batches & expiry dates",       badge: stats.expiringSoon,  badgeColor: "#f97316", badgeLabel: "expiring"   },
+    { href: "/stock-management/alerts",      label: "Alerts", desc: "Stock & expiry warnings",            badge: stats.critical,      badgeColor: "#ef4444", badgeLabel: "critical"   },
+    { href: "/stock-management/analytics",   label: "Analytics", desc: "Demand trends & recommendations",    badge: stats.reorderNeeded, badgeColor: "#818cf8", badgeLabel: "reorder"    },
+    { href: "/stock-management/adjustments", label: "Adjustments",desc: "Log damaged, expired & corrections", badge: stats.damagedUnits,  badgeColor: "#64748b", badgeLabel: "damaged"    },
   ];
 
   return (
@@ -55,7 +55,28 @@ export default function StockManagementPage() {
 
       <div className="fade-1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div className="page-icon" style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.22)", fontSize: 22, boxShadow: "0 0 18px rgba(56,189,248,0.1)" }}>🏥</div>
+          <div
+            className="page-icon"
+            style={{
+              background: "rgba(56,189,248,0.1)",
+              border: "1px solid rgba(56,189,248,0.22)",
+              boxShadow: "0 0 18px rgba(56,189,248,0.1)"
+            }}
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="1.8"
+            >
+              <path d="M3 21V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14"/>
+              <path d="M9 21V12h6v9"/>
+              <line x1="12" y1="7" x2="12" y2="3"/>
+              <line x1="10" y1="5" x2="14" y2="5"/>
+            </svg>
+          </div>
           <div>
             <h1 className="page-title gradient-text">Stock Management</h1>
             <p className="page-sub">Inventory · Batches · Alerts · Analytics · Adjustments</p>
@@ -81,10 +102,10 @@ export default function StockManagementPage() {
 
       <div className="fade-2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 14, marginBottom: 28 }}>
         {[
-          { label: "Total SKUs",     value: loading ? "—" : stats.totalSKUs,     color: "#38bdf8" },
+          { label: "Total stock",     value: loading ? "—" : stats.totalSKUs,     color: "#38bdf8" },
           { label: "Low Stock",      value: loading ? "—" : stats.lowStock,      color: "#f59e0b" },
           { label: "Critical",       value: loading ? "—" : stats.critical,      color: "#ef4444" },
-          { label: "Expiring <30d",  value: loading ? "—" : stats.expiringSoon,  color: "#f97316" },
+          { label: "Expiring < 30d",  value: loading ? "—" : stats.expiringSoon,  color: "#f97316" },
           { label: "Damaged Units",  value: loading ? "—" : stats.damagedUnits,  color: "#64748b" },
           { label: "Reorder Needed", value: loading ? "—" : stats.reorderNeeded, color: "#818cf8" },
         ].map(s => (
@@ -102,16 +123,16 @@ export default function StockManagementPage() {
               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                <div style={{ fontSize: 28 }}>{m.icon}</div>
+                <div style={{ fontSize: 28 }}></div>
                 {m.badge > 0 && (
                   <span className="badge" style={{ background: `${m.badgeColor}18`, color: m.badgeColor }}>
                     {m.badge} {m.badgeLabel}
                   </span>
                 )}
               </div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, color: "#f1f5f9", marginBottom: 6 }}>{m.label}</div>
-              <div style={{ fontSize: 12.5, color: "#475569" }}>{m.desc}</div>
-              <div style={{ marginTop: 14, fontSize: 12, color: "#38bdf8", fontWeight: 600 }}>Open →</div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 600, fontSize: 16, color: "#f1f5f9", marginBottom: 6 }}>{m.label}</div>
+              <div style={{ fontSize: 14.5, color: "#475569" }}>{m.desc}</div>
+              <div style={{ marginTop: 14, fontSize: 12, color: "#38bdf8", fontWeight: 600 }}>Open</div>
             </div>
           </Link>
         ))}

@@ -177,7 +177,7 @@ export default function LoginPage() {
                     </svg>
                     Signing in...
                   </>
-                ) : "Sign in →"}
+                ) : "Sign in"}
               </button>
             </div>
 

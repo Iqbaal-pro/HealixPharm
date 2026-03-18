@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
 from app import models
+from app import channelling_models
 from app.admin.routes import router as admin_router
 
 # Payments router

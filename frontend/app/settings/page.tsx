@@ -88,7 +88,49 @@ export default function SettingsPage() {
 
         <div className="fade-1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div className="page-icon" style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.22)", fontSize: 22, boxShadow: "0 0 18px rgba(56,189,248,0.1)" }}>⚙️</div>
+            <div
+              className="page-icon"
+              style={{
+                background: "rgba(56,189,248,0.1)",
+                border: "1px solid rgba(56,189,248,0.22)",
+                boxShadow: "0 0 18px rgba(56,189,248,0.1)"
+              }}
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="1.8"
+              >
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 
+                2 0 1 1-2.83 2.83l-.06-.06A1.65 
+                1.65 0 0 0 15 19.4a1.65 
+                1.65 0 0 0-1 .6 1.65 
+                1.65 0 0 0-.33 1V21a2 
+                2 0 1 1-4 0v-.09a1.65 
+                1.65 0 0 0-.33-1 1.65 
+                1.65 0 0 0-1-.6 1.65 
+                1.65 0 0 0-1.82.33l-.06.06a2 
+                2 0 1 1-2.83-2.83l.06-.06A1.65 
+                1.65 0 0 0 4.6 15a1.65 
+                1.65 0 0 0-.6-1 1.65 
+                1.65 0 0 0-1-.33H3a2 
+                2 0 1 1 0-4h.09a1.65 
+                1.65 0 0 0 1-.33 1.65 
+                1.65 0 0 0 .6-1 1.65 
+                1.65 0 0 0-.33-1.82l-.06-.06a2 
+                2 0 1 1 2.83-2.83l.06.06A1.65 
+                1.65 0 0 0 9 4.6c.3 0 .59-.11.82-.33.23-.23.33-.52.33-.82V3a2 
+                2 0 1 1 4 0v.09c0 .3.11.59.33.82.23.23.52.33.82.33.3 
+                0 .59-.11.82-.33l.06-.06a2 
+                2 0 1 1 2.83 2.83l-.06.06c-.22.23-.33.52-.33.82 
+                0 .3.11.59.33.82.23.23.52.33.82.33H21a2 
+                2 0 1 1 0 4h-.09c-.3 0-.59.11-.82.33-.23.23-.33.52-.33.82z"/>
+              </svg>
+            </div>
             <div>
               <h1 className="page-title gradient-text">Settings</h1>
               <p className="page-sub">Manage your pharmacy profile and account details.</p>
@@ -98,7 +140,7 @@ export default function SettingsPage() {
 
         {/* Tab switcher */}
         <div className="tab-switcher mb-28 fade">
-          {([{key:"pharmacy",icon:"🏥",label:"Pharmacy Profile"},{key:"account",icon:"👤",label:"Account"}] as {key:SettingsTab;icon:string;label:string}[]).map(t => (
+          {([{key:"pharmacy",label:"Pharmacy Profile"},{key:"account",icon:"👤",label:"Account"}] as {key:SettingsTab;icon:string;label:string}[]).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} className={`tab-switch-btn${tab === t.key ? " active" : ""}`}>
               {t.icon} {t.label}
             </button>

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from datetime import datetime
 from app.database.base import Base
 
@@ -44,5 +44,8 @@ class Prescription(Base):
 
     # Pharmacist checkbox: long-term / continuous medication
     is_continuous = Column(Boolean, default=False)
+
+    # S3 image reference (prescription scan/photo)
+    s3_key = Column(String(500), nullable=True)   # e.g. "prescriptions/2024/rx_42.jpg"
 
     created_at = Column(DateTime, default=datetime.utcnow)

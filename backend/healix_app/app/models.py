@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
+from datetime import datetime  #SupportTicket
 from app.db import Base
 
 
@@ -128,14 +128,39 @@ class Prescription(Base):
     __tablename__ = "prescriptions"
 
     id = Column(Integer, primary_key=True, index=True)
-    prescription_id = Column(String(128), unique=True, index=True, nullable=False)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    s3_key = Column(String(512), nullable=False)
+    prescription_id = Column(String(128), unique=True, index=True, nullable=True) # Now nullable to match MySQL
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=True) # Now nullable to match MySQL
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    medicine_id = Column(Integer, nullable=False) # Refers to MySQL Stock ID
+    staff_id = Column(Integer, nullable=False) # Refers to internal staff ID
+    uploaded_by_staff_id = Column(Integer, nullable=False)
+    medicine_name = Column(String(100), nullable=True)
+    dose_per_day = Column(Integer, default=1)
+    quantity_given = Column(Integer, default=0)
+    s3_key = Column(String(512), nullable=True)
     s3_url = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     order = relationship("Order", back_populates="prescription")
+
+
+class Pharmacy(Base):
+    __tablename__ = "pharmacies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    pharmacy_name = Column(String(100), nullable=False)
+    contact_number = Column(String(20), nullable=True)
+    whatsapp_number = Column(String(20), nullable=True)
+    address = Column(Text, nullable=True)
+    opening_hours = Column(Text, nullable=True)
+    estimated_delivery_time = Column(String(50), nullable=True)
+    service_areas = Column(String(100), nullable=True)
+    service_charge = Column(Float, nullable=True)
+    prescription_policy = Column(Text, nullable=True)
+    refund_policy = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
 
 
 class PharmacySetting(Base):

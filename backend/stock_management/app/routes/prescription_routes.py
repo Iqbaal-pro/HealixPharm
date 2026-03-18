@@ -11,7 +11,9 @@ from app.repositories.inventory_repo import InventoryRepository
 from app.repositories.stock_log_repo import StockLogRepository
 from app.utils.data_exporter import DataExporter
 from app.models.prescription import Prescription
+from app.models.medicine import Medicine
 from app.services.refill_service import calculate_remaining_days
+from app.services import s3_service
 
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
 
@@ -49,25 +51,71 @@ def list_prescriptions(
 
     output = []
     for p in prescriptions:
+        # look up medicine name via FK
+        medicine = db.query(Medicine).filter(Medicine.id == p.medicine_id).first()
+        med_name = medicine.name if medicine else "Unknown"
+
         remaining_days = calculate_remaining_days(p)
         item = {
             "id": p.id,
             "patient_id": p.patient_id,
+            "medicine_id": p.medicine_id,
+            "medicine_name": med_name,
             "uploaded_by_staff_id": p.uploaded_by_staff_id,
-            "medicine_name": p.medicine_name,
             "dose_per_day": p.dose_per_day,
             "start_date": p.start_date,
+            "end_date": p.end_date,
             "quantity_given": p.quantity_given,
+            "reminder_type": p.reminder_type,
             "is_continuous": p.is_continuous,
             "created_at": p.created_at,
             "remaining_days": remaining_days,
             "is_completed": remaining_days <= 0,
+            "has_image": bool(p.s3_key),
         }
 
         if not completed_only or item["is_completed"]:
             output.append(item)
 
     return output
+
+
+@router.get("/{prescription_id}/image-url")
+def get_prescription_image_url(
+    prescription_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get a presigned S3 URL to view the uploaded prescription image.
+    The URL is valid for 1 hour.
+    """
+    repo = PrescriptionRepository(db)
+    prescription = repo.get_by_id(prescription_id)
+
+    if not prescription:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+
+    if not prescription.s3_key:
+        raise HTTPException(status_code=400, detail="No image uploaded for this prescription")
+
+    try:
+        url = s3_service.generate_presigned_url(prescription.s3_key)
+        return {"url": url, "expires_in": 3600}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class PrescriptionCreate(BaseModel):
+    patient_id: int
+    medicine_id: int
+    uploaded_by_staff_id: int
+    staff_id: int
+    dose_per_day: int = 1
+    quantity_given: int = 0
+    is_continuous: bool = False
+    reminder_type: str = "TIME_BASED"
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    first_dose_time: Optional[datetime] = None
 
 
 @router.post("/")
@@ -78,23 +126,31 @@ def create_prescription(
     """
     Create a new prescription record.
     """
-    repo = PrescriptionRepository(db)
-    
-    prescription = Prescription(
-        patient_id=payload.patient_id,
-        uploaded_by_staff_id=payload.uploaded_by_staff_id,
-        medicine_name=payload.medicine_name,
-        dose_per_day=payload.dose_per_day,
-        quantity_given=payload.quantity_given,
-        is_continuous=payload.is_continuous,
-        start_date=payload.start_date or datetime.utcnow()
-    )
-    
-    created = repo.create(prescription)
-    return {
-        "message": "Prescription created successfully",
-        "prescription_id": created.id
-    }
+    from app.services.scheduling_service import SchedulingService
+    from datetime import timedelta
+
+    start = payload.start_date or datetime.utcnow()
+    end = payload.end_date or (start + timedelta(days=payload.quantity_given // max(payload.dose_per_day, 1)))
+
+    svc = SchedulingService(db)
+    try:
+        rx = svc.schedule_medicine(
+            patient_id=payload.patient_id,
+            medicine_id=payload.medicine_id,
+            staff_id=payload.staff_id or payload.uploaded_by_staff_id,
+            quantity_issued=payload.quantity_given,
+            dose_per_day=payload.dose_per_day,
+            start_date=start,
+            end_date=end,
+            reminder_type=payload.reminder_type,
+            first_dose_time=payload.first_dose_time or start,
+        )
+        return {
+            "message": "Prescription created and reminders scheduled",
+            "prescription_id": rx.id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/issue")

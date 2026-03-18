@@ -114,12 +114,12 @@ export default function AlertsPage() {
             <h1 className="gradient-text" style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:26, margin:0, letterSpacing:"-0.02em" }}>
               Stock Alerts
             </h1>
-            <p style={{ color:"#475569", fontSize:13.5, margin:"3px 0 0" }}>Live warnings for low stock, expiry and critical levels</p>
+            <p style={{ color:"#475569", fontSize:14.5, margin:"3px 0 0" }}>Live warnings for low stock, expiry and critical levels</p>
           </div>
         </div>
         <div style={{ display:"flex", gap:10, alignItems:"center" }}>
           {lastUpdated && <span style={{ fontSize:12, color:"#334155" }}>Updated {lastUpdated}</span>}
-          <button onClick={fetchAlerts} className="btn-ghost" style={{ padding:"9px 16px", fontSize:13 }}>↻ Refresh</button>
+          <button onClick={fetchAlerts} className="btn-ghost" style={{ padding:"9px 16px", fontSize:14 }}>↻ Refresh</button>
         </div>
       </div>
 

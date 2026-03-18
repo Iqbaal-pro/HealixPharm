@@ -29,7 +29,7 @@ export default function MOHAlertsPage() {
     try {
       const created = await createMOHAlert(form);
       setLastAlert({ id: created.id, disease_name: created.disease_name, region: created.region });
-      setMsg(`✓ Alert created — it will be broadcast to all active patients via WhatsApp.`);
+      setMsg(` Alert created — it will be broadcast to all active patients via WhatsApp.`);
       setForm({ disease_name: "", region: "", threat_level: "High", start_date: TODAY, end_date: TODAY });
     } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Failed to create alert"); }
     finally { setSaving(false); }
@@ -40,7 +40,27 @@ export default function MOHAlertsPage() {
       <div className="page-spacer" />
 
       <div className="fade-1" style={{ display: "flex", alignItems: "center", marginBottom: 28, gap: 14 }}>
-        <div className="page-icon" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.22)", fontSize: 22, boxShadow: "0 0 18px rgba(239,68,68,0.1)" }}>🚨</div>
+        <div
+          className="page-icon"
+          style={{
+            background: "rgba(56,189,248,0.1)",
+            border: "1px solid rgba(56,189,248,0.22)",
+            boxShadow: "0 0 18px rgba(56,189,248,0.1)"
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#38bdf8"
+            strokeWidth="1.8"
+          >
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
         <div>
           <h1 className="page-title gradient-text">MOH Disease Alerts</h1>
           <p className="page-sub">Broadcast health alerts to all patients via WhatsApp</p>
@@ -101,20 +121,20 @@ export default function MOHAlertsPage() {
             </div>
           )}
 
-          {msg && <div className={`msg-box mb-20 ${msg.startsWith("✓") ? "msg-box-success" : "msg-box-error"}`}>{msg}</div>}
+          {msg && <div className={`msg-box mb-20 ${msg.startsWith("") ? "msg-box-success" : "msg-box-error"}`}>{msg}</div>}
 
           <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
-            {saving ? <><span className="spinner" />Creating Alert…</> : "🚨 Create & Broadcast Alert"}
+            {saving ? <><span className="spinner" />Creating Alert…</> : " Create & Broadcast Alert"}
           </button>
         </div>
 
         <div className="glass-panel mt-20" style={{ padding: 20 }}>
           <h2 className="panel-title" style={{ marginBottom: 10 }}>How it works</h2>
           <div style={{ color: "#64748b", fontSize: 13, lineHeight: 1.8 }}>
-            <div>1. Only <strong style={{ color: "#94a3b8" }}>High</strong> threat level alerts are auto-broadcast to patients.</div>
-            <div>2. The alert scheduler runs daily and broadcasts to all <strong style={{ color: "#94a3b8" }}>active patients</strong>.</div>
-            <div>3. Each alert is broadcast <strong style={{ color: "#94a3b8" }}>once</strong> — duplicate broadcasts are prevented.</div>
-            <div>4. Expired alerts (past end date) are automatically marked as Expired.</div>
+            <div className="moh-text">1. Only <strong style={{ color: "#94a3b8" }}>High</strong> threat level alerts are auto-broadcast to patients.</div>
+            <div className="moh-text">2. The alert scheduler runs daily and broadcasts to all <strong style={{ color: "#94a3b8" }}>active patients</strong>.</div>
+            <div className="moh-text">3. Each alert is broadcast <strong style={{ color: "#94a3b8" }}>once</strong> — duplicate broadcasts are prevented.</div>
+            <div className="moh-text">4. Expired alerts (past end date) are automatically marked as Expired.</div>
           </div>
         </div>
       </div>
