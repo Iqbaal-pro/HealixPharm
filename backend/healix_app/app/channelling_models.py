@@ -14,7 +14,6 @@ class Doctor(Base):
     qualifications  = Column(String(500), nullable=True)
     experience      = Column(String(100), nullable=True)
     fee             = Column(Float, nullable=False, default=0)
-    service_fee     = Column(Float, nullable=False, default=0)
     initials        = Column(String(10), nullable=True)
     available       = Column(Boolean, default=True)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
