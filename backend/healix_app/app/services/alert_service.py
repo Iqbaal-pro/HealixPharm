@@ -27,6 +27,7 @@ def get_all_active_alerts(db: Session):
     """
     RETURN all currently active alerts for manual user check.
     """
+    expire_old_alerts(db, datetime.now())
     return db.query(models.MOHDiseaseAlert).filter(
         models.MOHDiseaseAlert.status == "Active"
     ).order_by(models.MOHDiseaseAlert.created_at.desc()).all()
