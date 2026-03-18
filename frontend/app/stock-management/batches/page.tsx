@@ -130,6 +130,7 @@ export default function BatchesPage() {
           </div>
         </div>
         <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+          <Link href="/stock-management" className="btn-ghost" style={{ padding:"9px 16px", fontSize:14, textDecoration:"none", display:"inline-flex", alignItems:"center", gap:6 }}>← Back</Link>
           <button onClick={() => setShowExpired(p => !p)} style={{ padding:"9px 16px", borderRadius:10, fontSize:14, border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight:500, background: showExpired ? "rgba(100,116,139,0.15)" : "rgba(148,163,184,0.06)", color: showExpired ? "#94a3b8" : "#475569" }}>
             {showExpired ? "Hide Expired" : "Show Expired"}
           </button>
