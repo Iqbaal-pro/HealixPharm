@@ -74,7 +74,7 @@ export default function SignupPage() {
         ...(form.opening_hours           && { opening_hours: form.opening_hours }),
         ...(form.estimated_delivery_time && { estimated_delivery_time: form.estimated_delivery_time }),
         ...(form.service_areas           && { service_areas: form.service_areas }),
-        ...(form.service_charge          && { service_charge: form.service_charge }),
+        ...(form.service_charge          && { service_charge: parseFloat(form.service_charge) }),
         ...(form.prescription_policy     && { prescription_policy: form.prescription_policy }),
         ...(form.refund_policy           && { refund_policy: form.refund_policy }),
       };
@@ -222,7 +222,7 @@ export default function SignupPage() {
                 </div>
                 <button onClick={() => step1Ok && setStep(2)} disabled={!step1Ok}
                   style={{ ...btnPrimary, marginTop: 22, opacity: step1Ok ? 1 : 0.45 }}>
-                  Continue
+                  Continue →
                 </button>
               </div>
             )}
@@ -262,7 +262,7 @@ export default function SignupPage() {
                 <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
                   <button onClick={() => setStep(1)} style={btnGhost}>← Back</button>
                   <button onClick={() => step2Ok && setStep(3)} disabled={!step2Ok}
-                    style={{ ...btnPrimary, flex: 1, opacity: step2Ok ? 1 : 0.45 }}>Continue </button>
+                    style={{ ...btnPrimary, flex: 1, opacity: step2Ok ? 1 : 0.45 }}>Continue →</button>
                 </div>
               </div>
             )}
@@ -293,8 +293,8 @@ export default function SignupPage() {
                         onChange={set("service_areas")} onFocus={() => setFocused("sa")} onBlur={() => setFocused(null)}
                         style={iStyle(fo("sa"))} />
                     </Field>
-                    <Field label="Service Charge">
-                      <input type="text" placeholder="e.g. 5% or LKR 150" value={form.service_charge}
+                    <Field label="Service Charge (LKR)">
+                      <input type="number" min="0" step="0.01" placeholder="e.g. 150" value={form.service_charge}
                         onChange={set("service_charge")} onFocus={() => setFocused("sc")} onBlur={() => setFocused(null)}
                         style={iStyle(fo("sc"))} />
                     </Field>
@@ -363,7 +363,7 @@ const btnPrimary: CSSProperties = { width: "100%", background: "linear-gradient(
 const btnGhost: CSSProperties  = { background: "transparent", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(148,163,184,.12)", color: "#94a3b8", borderRadius: 12, padding: "13px 18px", fontSize: 13.5, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", whiteSpace: "nowrap" as const };
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
   .orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
   .orb1{width:500px;height:500px;background:rgba(14,165,233,0.05);top:-180px;left:-160px;animation:d1 22s ease-in-out infinite alternate}
   .orb2{width:380px;height:380px;background:rgba(129,140,248,0.04);bottom:-120px;right:-100px;animation:d2 26s ease-in-out infinite alternate}
