@@ -10,10 +10,13 @@ def get_or_create_patient(db: Session, phone: str, name: str = None) -> models.P
     """
     Get a patient by phone_number or create if not exists.
     """
-    patient = db.query(models.Patient).filter(models.Patient.phone_number == phone).first()
-    if patient:
-        logger.info(f"[ORDER_SERVICE] Found existing patient for phone {phone}")
-        return patient
+    # Note: Because phone numbers are encrypted non-deterministically, 
+    # we must compare them in-memory after decryption for search.
+    patients = db.query(models.Patient).all()
+    for p in patients:
+        if p.phone_number == phone:
+            logger.info(f"[ORDER_SERVICE] Found existing patient via in-memory match: {phone}")
+            return p
 
     patient = models.Patient(phone_number=phone, name=name)
     db.add(patient)
