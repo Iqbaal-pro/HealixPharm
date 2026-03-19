@@ -65,7 +65,15 @@ def fetch_sheet_data():
 
     headers = values[0]
     data = values[1:]
-    return pd.DataFrame(data, columns=headers)
+    
+    num_cols = len(headers)
+    padded_data = []
+    for row in data:
+        if len(row) < num_cols:
+            row.extend([""] * (num_cols - len(row)))
+        padded_data.append(row[:num_cols])
+
+    return pd.DataFrame(padded_data, columns=headers)
 
 def sync_to_db(df):
     """Sync DataFrame rows to the MySQL patients table and return the latest timestamp."""
@@ -76,6 +84,16 @@ def sync_to_db(df):
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor()
         
+        import sys
+        
+        # Initialize Twilio client dynamically
+        twilio_client = None
+        try:
+            from app.whatsapp.twilio_client import TwilioWhatsAppClient
+            twilio_client = TwilioWhatsAppClient()
+        except Exception as te:
+            print(f"[WARNING] Could not initialize Twilio client for welcomes: {te}")
+            
         count = 0
         latest_ts = None
         
@@ -84,7 +102,18 @@ def sync_to_db(df):
             ts_str = row.get("Timestamp")
             
             name = row.get("Full Name", "")
-            phone = str(row.get("Contact Number", "")).strip().replace(" ", "")
+            raw_phone = str(row.get("Contact Number", "")).strip().replace(" ", "").replace("-", "")
+            
+            # Normalize Sri Lankan Google Form numbers to Twilio E.164 exact format (+947...)
+            clean_phone = raw_phone
+            if raw_phone.startswith("07"):
+                clean_phone = "+94" + raw_phone[1:]
+            elif raw_phone.startswith("7"):
+                clean_phone = "+94" + raw_phone
+            elif raw_phone.startswith("94"):
+                clean_phone = "+" + raw_phone
+                
+            phone = clean_phone
             lang = row.get("Language Preference", "English")
             dob = row.get("Date of Birth", "")
             age = row.get("Age", "")
@@ -93,6 +122,10 @@ def sync_to_db(df):
             
             if not phone:
                 continue
+
+            # Check if this patient already exists (to prevent spamming updates)
+            cursor.execute("SELECT id FROM patients WHERE phone_number = %s", (phone,))
+            is_new_patient = (cursor.fetchone() is None)
 
             query = """
                 INSERT INTO patients (name, phone_number, language, date_of_birth, consent, age)
@@ -105,6 +138,22 @@ def sync_to_db(df):
                     age = VALUES(age)
             """
             cursor.execute(query, (name, phone, lang, dob, consent, age))
+            
+            # Sub-task: Send automated welcome message if this was a brand new registration
+            if is_new_patient and twilio_client:
+                firstName = name.split()[0] if name else ""
+                welcome_msg = (
+                    f"Hi {firstName}! 🎉\n\n"
+                    "Your HealixPharm registration is completed "
+                    "You now have full access to our pharmacy bot services.\n\n"
+                    "Please reply with *'hi'* or *'menu'* right here to get started!"
+                )
+                try:
+                    twilio_client.send_text(phone, welcome_msg)
+                    print(f"[WB_SERVICE] Sent automated registration welcome to {phone}")
+                except Exception as we:
+                    print(f"[WARNING] Failed to send welcome to {phone}: {we}")
+            
             count += 1
             
             # Keep track of the latest timestamp in the processed batch
@@ -168,9 +217,9 @@ def main():
         except Exception as e:
             print(f"[ERROR] Sync cycle failed: {e}")
         
-        # Wait for 5 minutes (300 seconds)
-        print("Waiting 5 minutes for next sync...")
-        time.sleep(300)
+        # Wait for 30 seconds
+        print("Waiting 30 seconds for next sync...")
+        time.sleep(30)
 
 if __name__ == "__main__":
     main()
