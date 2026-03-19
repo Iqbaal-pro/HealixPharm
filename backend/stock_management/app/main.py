@@ -58,10 +58,13 @@ app = FastAPI(
 )
 
 # ─── CORS Middleware ───────────────────────────────────────────────
-# Allow all origins for now (can be restricted to Vercel URL later)
+# Restrict origins to frontend URLs for security with credentials
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with specific Vercel URL if desired
+    allow_origins=[
+        "https://healixpharm-frontend.onrender.com",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

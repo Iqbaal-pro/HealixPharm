@@ -78,4 +78,10 @@ class Settings:
     def STOCK_DATABASE_URL(self):
         return f"mysql+mysqlconnector://{self.STOCK_DB_USER}:{self.STOCK_DB_PASSWORD}@{self.STOCK_DB_HOST}:{self.STOCK_DB_PORT}/{self.STOCK_DB_NAME}"
 
+    # ─── Encryption ───────────────────────────────────────────
+    ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "xvLGCSII8i_3daoPlLoMePD_jtIScXT3M2Z1CO8qb-8=")
+
+    # ─── Auth ───────────────────────────────────────────────
+    AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "healix_pharm_secret_key_2024_secure_v2")
+
 settings = Settings()
