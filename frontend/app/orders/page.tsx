@@ -27,6 +27,7 @@ export default function OrdersPage() {
   const [search, setSearch]           = useState("");
   const [selected, setSelected]       = useState<OrderDetail|null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [presignedUrl, setPresignedUrl] = useState<string|null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMsg, setActionMsg]     = useState("");
   const [showApprove, setShowApprove] = useState(false);
@@ -44,8 +45,18 @@ export default function OrdersPage() {
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const openDetail = async (id: number) => {
-    setDetailLoading(true); setActionMsg(""); setShowApprove(false);
-    try { setSelected(await fetchOrderDetail(id)); }
+    setDetailLoading(true); setActionMsg(""); setShowApprove(false); setPresignedUrl(null);
+    try {
+      const detail = await fetchOrderDetail(id);
+      setSelected(detail);
+      if (detail.prescription_url) {
+        try {
+          const BOT_BASE = process.env.NEXT_PUBLIC_BOT_API_URL ?? "http://localhost:8001";
+          const res = await fetch(`${BOT_BASE}/api/storage/presigned-url?key=${encodeURIComponent(detail.prescription_url)}`);
+          if (res.ok) { const data = await res.json(); setPresignedUrl(data.url); }
+        } catch { /* show nothing if presign fails */ }
+      }
+    }
     catch { setSelected(null); } finally { setDetailLoading(false); }
   };
 
@@ -233,9 +244,13 @@ export default function OrdersPage() {
                 {selected.prescription_url && (
                   <div className="mb-14">
                     <div className="section-label mb-6">Prescription</div>
-                    <a href={selected.prescription_url} target="_blank" rel="noreferrer">
-                      <img src={selected.prescription_url} alt="prescription" className="rx-img"/>
-                    </a>
+                    {presignedUrl ? (
+                      <a href={presignedUrl} target="_blank" rel="noreferrer">
+                        <img src={presignedUrl} alt="prescription" className="rx-img"/>
+                      </a>
+                    ) : (
+                      <div style={{ color: "#475569", fontSize: 13 }}>Loading image...</div>
+                    )}
                   </div>
                 )}
 
