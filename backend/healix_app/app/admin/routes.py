@@ -469,6 +469,8 @@ def notify_prescription_issued(payload: schemas.NotifyBillPayload, db: Session =
             # Update user state in bot to handle the next input (1 or 2)
             UserState_wb.set_user_state(payload.patient_phone, "awaiting_payment_selection")
             logger.info(f"[ADMIN] Order {order.token} transitioned to AWAITING_PAYMENT_SELECTION")
+        else:
+            logger.warning(f"[ADMIN] Order ID {payload.order_id} not found in database!")
 
     # 2. Build and send WhatsApp message
     item_lines = "\n".join([f"  • {i.medicine_name} x{i.quantity} — Rs. {i.subtotal:.2f}" for i in payload.items])
