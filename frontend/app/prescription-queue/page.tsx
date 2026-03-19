@@ -288,7 +288,7 @@ export default function PrescriptionPage() {
         const rx = await createPrescription({
           patient_id:           Number(patientId),
           uploaded_by_staff_id: Number(staffId),
-          medicine_name:        med.medicine_name.trim(),
+          medicine_name:        (med.medicine_name ?? "").trim(),
           dose_per_day:         Number(med.dose_per_day),
           start_date:           startDate,
           quantity_given:       Number(med.quantity_given),
@@ -336,7 +336,6 @@ export default function PrescriptionPage() {
         setNotifyStatus("sending");
         const totalReminders = savedRxs.reduce((s, rx) => s + (rx.reminders_scheduled || 0), 0);
         const notifResult = await notifyPrescriptionIssued({
-          order_id: selected?.order_id,
           patient_phone: patientPhone.trim(),
           items: billItems.filter(i => i.quantity > 0),
           total_amount: billTotal,
@@ -369,7 +368,7 @@ export default function PrescriptionPage() {
     patientId !== "" && staffId !== "" &&
     medicines.every(m =>
       m.medicine_id !== null &&
-      m.medicine_name.trim() !== "" &&
+      (m.medicine_name ?? "").trim() !== "" &&
       Number(m.dose_per_day) > 0 &&
       Number(m.quantity_given) > 0 &&
       mealTimesValid(m)
@@ -469,10 +468,7 @@ export default function PrescriptionPage() {
                     {pending.map(p => (
                       <div key={p.order_id} className="queue-item" onClick={() => selectQueueItem(p)}>
                         <div className="queue-thumb">
-                          {p.prescription_url
-                            ? <img src={p.prescription_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display="none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }} />
-                            : null}
-                          <span className="queue-thumb-empty" style={{ display: p.prescription_url ? "none" : undefined }}>🖼</span>
+                          <span className="queue-thumb-empty">🖼</span>
                         </div>
                         <div className="queue-info">
                           <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>
