@@ -288,11 +288,14 @@ export default function PrescriptionPage() {
         const rx = await createPrescription({
           patient_id:           Number(patientId),
           uploaded_by_staff_id: Number(staffId),
+          staff_id:             Number(staffId),
+          medicine_id:          med.medicine_id!,
           medicine_name:        (med.medicine_name ?? "").trim(),
           dose_per_day:         Number(med.dose_per_day),
           start_date:           startDate,
           quantity_given:       Number(med.quantity_given),
           is_continuous:        med.is_continuous,
+          reminder_type:        med.meal_times.length > 0 ? "MEAL_BASED" : "TIME_BASED",
           meals:                med.meals || undefined,
           meal_times:           med.meal_times.length ? med.meal_times.join(",") : undefined,
         });
@@ -317,13 +320,13 @@ export default function PrescriptionPage() {
         const med = medicines[i];
         if (!med.medicine_id || !Number(med.quantity_given)) continue;
         const result = await issueMedicine({
-          prescription_id: rx.id,
+          prescription_id: rx.prescription_id ?? rx.id,
           medicine_id:     med.medicine_id,
           quantity:        Number(med.quantity_given),
         });
         results.push({ ...result, medicine_name: rx.medicine_name });
         setSession(prev => [{
-          seq: counter + i, prescription_id: rx.id, medicine_id: med.medicine_id!,
+          seq: counter + i, prescription_id: rx.prescription_id ?? rx.id, medicine_id: med.medicine_id!,
           quantity: Number(med.quantity_given), remaining_stock: result.remaining_stock,
           medicine_name: rx.medicine_name, time: new Date().toLocaleTimeString(),
         }, ...prev]);
@@ -468,7 +471,10 @@ export default function PrescriptionPage() {
                     {pending.map(p => (
                       <div key={p.order_id} className="queue-item" onClick={() => selectQueueItem(p)}>
                         <div className="queue-thumb">
-                          <span className="queue-thumb-empty">🖼</span>
+                          {p.prescription_url
+                            ? <img src={p.prescription_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display="none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }} />
+                            : null}
+                          <span className="queue-thumb-empty" style={{ display: p.prescription_url ? "none" : undefined }}>🖼</span>
                         </div>
                         <div className="queue-info">
                           <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>
@@ -848,7 +854,7 @@ export default function PrescriptionPage() {
                     const done = issueResults.find(r => r.medicine_name === rx.medicine_name);
                     const daysSupply = med ? Math.floor(Number(med.quantity_given) / Number(med.dose_per_day)) : 0;
                     return (
-                      <div key={rx.id} style={{
+                      <div key={rx.prescription_id ?? rx.id} style={{
                         background: done ? "rgba(74,222,128,0.04)" : "rgba(255,255,255,0.02)",
                         border: `1px solid ${done ? "rgba(74,222,128,0.15)" : "rgba(148,163,184,0.08)"}`,
                         borderRadius: 14, padding: "16px 18px",
@@ -857,14 +863,14 @@ export default function PrescriptionPage() {
                           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                             <span style={{ fontWeight: 700, color: "#e2e8f0", fontSize: 14 }}>{rx.medicine_name}</span>
                             <span style={{ fontSize: 12, color: "#475569" }}>
-                              Rx #{rx.id} · {med?.dose_per_day}×/day · {med?.quantity_given} units · {daysSupply}d supply
+                              Rx #{rx.prescription_id ?? rx.id} · {med?.dose_per_day}×/day · {med?.quantity_given} units · {daysSupply}d supply
                               {med?.meals ? ` · ${med.meals} meal` : ""}
                               {med?.meal_times?.length ? ` · ${med.meal_times.join(", ")}` : ""}
                               {med?.is_continuous ? " · continuous" : ""}
                             </span>
-                            {rx.reminders_scheduled > 0 && (
+                            {(rx.reminders_scheduled ?? 0) > 0 && (
                               <span style={{ fontSize: 11, color: "#818cf8" }}>
-                                 {rx.reminders_scheduled} dose reminder{rx.reminders_scheduled > 1 ? "s" : ""} scheduled via SMS
+                                 {rx.reminders_scheduled} dose reminder{(rx.reminders_scheduled ?? 0) > 1 ? "s" : ""} scheduled via SMS
                               </span>
                             )}
                           </div>

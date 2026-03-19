@@ -46,29 +46,35 @@ export interface ApprovalItem {
 export interface CreatePrescriptionPayload {
   patient_id: number;
   uploaded_by_staff_id: number;
+  staff_id: number;
+  medicine_id: number;
   medicine_name: string;
   dose_per_day: number;
   start_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  reminder_type: "TIME_BASED" | "MEAL_BASED";
   meals?: string;
   meal_times?: string;
 }
 
 export interface PrescriptionResponse {
   id: number;
-  patient_id: number;
-  uploaded_by_staff_id: number;
+  message: string;
+  prescription_id: number;
+  patient_id?: number;
+  uploaded_by_staff_id?: number;
+  medicine_id?: number;
   medicine_name: string;
-  dose_per_day: number;
-  start_date: string;
-  end_date: string;
-  quantity_given: number;
-  is_continuous: boolean;
+  dose_per_day?: number;
+  start_date?: string;
+  end_date?: string;
+  quantity_given?: number;
+  is_continuous?: boolean;
   meals?: string;
   meal_times?: string;
-  created_at: string;
-  reminders_scheduled: number;
+  created_at?: string;
+  reminders_scheduled?: number;
 }
 
 export interface IssuePayload {
@@ -97,7 +103,6 @@ export interface BillItem {
 }
 
 export interface NotifyBillPayload {
-  order_id?: number | null;
   patient_phone: string;
   items: BillItem[];
   total_amount: number;
