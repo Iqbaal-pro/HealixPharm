@@ -20,8 +20,13 @@ class NotificationService:
         Send WhatsApp confirmation message including order token via Twilio.
         """
         text = (
-            f"Your order has been received and is pending pharmacist verification.\n"
-            f"Order Token: {order_token}"
+            f"Your prescription has been successfully received! 📄✅\n\n"
+            f"📦 *Order Token:* {order_token}\n\n"
+            f"*What happens next?*\n"
+            f"1️⃣ A pharmacist is currently reviewing your prescription.\n"
+            f"2️⃣ Once approved, you will automatically receive a message here with your total bill and secure payment option.\n"
+            f"3️⃣ Your medicine will be prepared for delivery!\n\n"
+            f"_(Type 'menu' to return to the main menu at any time)_"
         )
         logger.info(f"[NOTIFY] Sending WhatsApp confirmation to {to_phone} for token {order_token}")
         return self.twilio_wa.send_text(to_phone, text)
