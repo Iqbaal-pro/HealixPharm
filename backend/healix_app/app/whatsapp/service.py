@@ -53,8 +53,8 @@ class WhatsAppService_wb:
             UserState_wb.set_user_state(user_id, state["current_step"], {"is_first_message": False})
 
             welcome_text = (
-                "Welcome to HealixPharm! 🏥\n\n"
-                "📖 *How to use Healix Pharm Bot:*\n"
+                "Welcome to HealiXPharm 🏥\n\n"
+                "📖 *How to use HealiXPharm Bot:*\n\n"
                 "1️⃣ *Select* an option below.\n"
                 "2️⃣ *Follow* the prompts.\n"
                 "3️⃣ *Type* 'menu' anytime to return home.\n\n"
