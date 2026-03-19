@@ -66,7 +66,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # ─── Register all routers ──────────────────────────────────────────
 app.include_router(inventory_router)
 app.include_router(prescription_router)
