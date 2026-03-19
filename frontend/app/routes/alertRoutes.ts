@@ -1,4 +1,6 @@
 // app/routes/alertRoutes.ts
+// STOCK_BASE = NEXT_PUBLIC_API_URL (port 8000)
+// Backend prefix: /alerts
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -25,15 +27,15 @@ export interface StockAlert {
   resolved_at: string | null;
 }
 
-// GET /stock-alerts/
+// GET /alerts/active
 export async function getAlerts(token: string | null): Promise<StockAlert[]> {
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${BASE}/stock-alerts/`, { headers });
+  const res = await fetch(`${BASE}/alerts/active`, { headers });
   return handleResponse<StockAlert[]>(res);
 }
 
-// POST /stock-alerts/{id}/acknowledge
+// POST /alerts/{id}/acknowledge
 export async function acknowledgeAlert(
   id: number,
   acknowledgedBy: number,
@@ -41,10 +43,32 @@ export async function acknowledgeAlert(
 ): Promise<unknown> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${BASE}/stock-alerts/${id}/acknowledge`, {
+  const res = await fetch(`${BASE}/alerts/${id}/acknowledge`, {
     method: "POST",
     headers,
     body: JSON.stringify({ acknowledged_by: acknowledgedBy }),
   });
+  return handleResponse<unknown>(res);
+}
+
+// POST /alerts/{id}/resolve
+export async function resolveAlert(
+  id: number,
+  token: string | null
+): Promise<unknown> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE}/alerts/${id}/resolve`, {
+    method: "POST",
+    headers,
+  });
+  return handleResponse<unknown>(res);
+}
+
+// POST /alerts/check
+export async function triggerAlertCheck(token: string | null): Promise<unknown> {
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE}/alerts/check`, { method: "POST", headers });
   return handleResponse<unknown>(res);
 }

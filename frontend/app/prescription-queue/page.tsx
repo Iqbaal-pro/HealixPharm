@@ -385,7 +385,7 @@ export default function PrescriptionPage() {
     return                            { label: "Active",         color: "#4ade80", bg: "rgba(74,222,128,0.08)",  border: "rgba(74,222,128,0.2)"  };
   };
   const filteredHistory = historyRecords.filter(r =>
-    r.medicine_name.toLowerCase().includes(search.toLowerCase()) ||
+    (r.medicine_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
     String(r.patient_id).includes(search) || String(r.id).includes(search)
   );
   const stockColor = (n: number) => n === 0 ? "#f87171" : n < 10 ? "#fbbf24" : "#4ade80";
@@ -1145,7 +1145,7 @@ export default function PrescriptionPage() {
             {historyLoading ? (
               <div className="loading-cell row g-12"><span className="spinner" /><span>Loading prescriptions…</span></div>
             ) : historyRecords.filter(r =>
-                r.medicine_name.toLowerCase().includes(rxSearch.toLowerCase()) ||
+                (r.medicine_name ?? "").toLowerCase().includes(rxSearch.toLowerCase()) ||
                 String(r.patient_id).includes(rxSearch) || String(r.id).includes(rxSearch)
               ).length === 0 ? (
               <div className="center p-empty">
@@ -1165,7 +1165,7 @@ export default function PrescriptionPage() {
                   <tbody>
                     {historyRecords
                       .filter(r =>
-                        r.medicine_name.toLowerCase().includes(rxSearch.toLowerCase()) ||
+                        (r.medicine_name ?? "").toLowerCase().includes(rxSearch.toLowerCase()) ||
                         String(r.patient_id).includes(rxSearch) || String(r.id).includes(rxSearch)
                       )
                       .map(r => {
