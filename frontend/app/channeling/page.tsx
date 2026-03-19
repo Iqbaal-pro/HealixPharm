@@ -109,8 +109,8 @@ export default function ChannellingPage() {
   };
 
   const filtered = doctors.filter(d => {
-    const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
-                        d.hospital.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (d.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
+                        (d.hospital?.toLowerCase() || "").includes(search.toLowerCase());
     const matchSpec = filterSpec ? d.specialization === filterSpec : true;
     return matchSearch && matchSpec;
   });
