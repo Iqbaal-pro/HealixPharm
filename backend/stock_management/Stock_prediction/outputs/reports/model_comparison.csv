@@ -1,0 +1,7 @@
+﻿Model,MAE (units),RMSE (units),R²,MAPE (%),Avg April Pred,Verdict
+Random Forest (current),95.62,392.93,0.6076,50.89,255.5,Acceptable ⚠️
+KNN (k=3),100.48,394.43,0.6046,54.36,259.1,Acceptable ⚠️
+Extra Trees,99.84,396.99,0.5995,52.24,252.5,Acceptable ⚠️
+Gradient Boosting,108.06,403.26,0.5867,58.97,251.3,Acceptable ⚠️
+Ridge Regression,340.68,1596.46,-5.4771,176.05,326.6,Needs Work ❌
+Linear Regression,514.58,5065.15,-64.2003,315.64,1799.1,Needs Work ❌
