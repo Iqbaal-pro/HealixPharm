@@ -203,6 +203,9 @@ function ResultsContent() {
   const [selectedSlot, setSelectedSlot]         = useState("");
   const [selectedHospital, setSelectedHospital] = useState("");
 
+  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate]     = useState("");
+
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
@@ -379,7 +382,13 @@ function ResultsContent() {
         <DoctorDetail
           doctor={selectedDoctor}
           selectedSlot={selectedSlot}
-          onSelectSlot={setSelectedSlot}
+          selectedSlotId={selectedSlotId}
+          selectedDate={selectedDate}
+          onSelectSlot={(time, id, date) => {
+            setSelectedSlot(time);
+            setSelectedSlotId(id);
+            setSelectedDate(date);
+          }}
           selectedHospital={selectedHospital}
           onSelectHospital={setSelectedHospital}
           onBook={() => setStep("book")}
@@ -388,10 +397,12 @@ function ResultsContent() {
       )}
 
       {/* Book */}
-      {step === "book" && selectedDoctor && selectedSlot && (
+      {step === "book" && selectedDoctor && selectedSlot && selectedSlotId !== null && (
         <BookingForm
           doctor={selectedDoctor}
           slot={selectedSlot}
+          slotId={selectedSlotId!}
+          date={selectedDate}
           hospital={selectedHospital || selectedDoctor.hospital}
           onBack={() => setStep("detail")}
         />

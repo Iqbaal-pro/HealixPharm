@@ -52,16 +52,22 @@ class WhatsAppService_wb:
             logger.info(f"[WB_SERVICE] First interaction from user {user_id}")
             UserState_wb.set_user_state(user_id, state["current_step"], {"is_first_message": False})
 
-            self.twilio_wa.send_text(user_id, "Welcome to HealixPharm")
-
-            guidance = (
-                "📖 *How to use Healix Pharm Bot:*\n\n"
-                "1️⃣ *Select* an option from the menu below.\n\n"
-                "2️⃣ *Follow* the prompts (e.g., upload prescription).\n\n"
-                "3️⃣ *Type* 'menu' or 'hi' anytime to return home."
+            welcome_text = (
+                "Welcome to HealixPharm! 🏥\n\n"
+                "📖 *How to use Healix Pharm Bot:*\n"
+                "1️⃣ *Select* an option below.\n"
+                "2️⃣ *Follow* the prompts.\n"
+                "3️⃣ *Type* 'menu' anytime to return home.\n\n"
+                "Please reply with 1, 2, 3, or 4."
             )
-            self.twilio_wa.send_text(user_id, guidance)
-            self.send_main_menu(user_id)
+            buttons = [
+                {"id": "order", "title": "Order Medicine"},
+                {"id": "doctor", "title": "Channel Doctor"},
+                {"id": "disease", "title": "Disease Updates"},
+                {"id": "agent", "title": "Contact Agent"}
+            ]
+            self.twilio_wa.send_menu(user_id, welcome_text, buttons)
+            UserState_wb.set_user_state(user_id, "main_menu")
             return
 
         if message_type == "text":
@@ -103,12 +109,6 @@ class WhatsAppService_wb:
         # 2. STATE CHECK
         state = UserState_wb.get_user_state(user_id)
         current_step = state.get("current_step", "main_menu")
-        
-        # Universal Back to Main Menu handler
-        if body == "1" and current_step in ["disease_info", "doctor_info"]:
-            logger.info(f"[WB_SERVICE] User {user_id} selected Back to Main Menu")
-            self.send_main_menu(user_id)
-            return
         
         # Mappings
         faq_menu_mapping = {
@@ -232,10 +232,9 @@ class WhatsAppService_wb:
                 return
 
             if body in ["order medicine", "order now", "order"]:
-                self.twilio_wa.send_menu(
+                self.twilio_wa.send_text(
                     user_id,
-                    "Please upload your prescription photo.",
-                    [{"id": "back_to_main", "title": "Back to Main Menu"}]
+                    "Please upload your prescription photo.\n\n_(Type 'menu' to return)_"
                 )
                 UserState_wb.set_user_state(user_id, "awaiting_prescription")
                 return
@@ -255,7 +254,7 @@ class WhatsAppService_wb:
         # Default fallback for unrecognized input
         self.twilio_wa.send_text(
             user_id, 
-            "Please type 1 to go back to the Main Menu, or type menu anytime."
+            "Sorry, I didn't understand that. \n\n_(Please type 'menu' to return)_"
         )
 
     def _handle_button_click(self, user_id: str, button_id: str):
@@ -265,10 +264,9 @@ class WhatsAppService_wb:
         logger.info(f"[WB_SERVICE] BUTTON_CLICK_HANDLER | User: {user_id} | Button: {button_id}")
 
         if button_id == "order":
-            self.twilio_wa.send_menu(
+            self.twilio_wa.send_text(
                 user_id,
-                "Please upload your prescription photo.",
-                [{"id": "back_to_main", "title": "Back to Main Menu"}]
+                "Please upload your prescription photo.\n\n_(Type 'menu' to return)_"
             )
             UserState_wb.set_user_state(user_id, "awaiting_prescription")
 
@@ -348,16 +346,15 @@ class WhatsAppService_wb:
             db.close()
 
         if not is_enabled:
-            self.twilio_wa.send_menu(
+            self.twilio_wa.send_text(
                 user_id,
                 (
                     "*Doctor Channelling*\n\n"
                     "This pharmacy doesn't offer online channelling just yet.\n\n"
                     "To book a doctor appointment, please reach us directly:\n"
                     "Call or WhatsApp the pharmacy\n\n"
-                    "Type *menu* anytime to go back."
-                ),
-                [{"id": "back_to_main", "title": "Back to Main Menu"}]
+                    "_(Type 'menu' to return)_"
+                )
             )
             UserState_wb.set_user_state(user_id, "doctor_info")
             return
@@ -369,12 +366,11 @@ class WhatsAppService_wb:
             f"🔗 {settings.BASE_URL}/channelling\n\n"
             "A small service fee is charged at booking.\n"
             "Consultation fee is paid directly at the hospital.\n\n"
-            "Need help? Type *agent* to chat with us, or *menu* to go back."
+            "_(Type 'menu' to return)_"
         )
-        self.twilio_wa.send_menu(
+        self.twilio_wa.send_text(
             user_id,
-            message,
-            [{"id": "back_to_main", "title": "Back to Main Menu"}]
+            message
         )
         UserState_wb.set_user_state(user_id, "doctor_info")
 
@@ -396,10 +392,9 @@ class WhatsAppService_wb:
                     msg += self.notifications.build_alert_message(alert) + "\n\n"
                 msg += "Please follow MOH guidelines and take necessary precautions."
 
-            self.twilio_wa.send_menu(
+            self.twilio_wa.send_text(
                 user_id,
-                msg,
-                [{"id": "back_to_main", "title": "Back to Main Menu"}]
+                msg + "\n\n_(Type 'menu' to return)_"
             )
             UserState_wb.set_user_state(user_id, "disease_info")
         finally:
@@ -436,7 +431,7 @@ class WhatsAppService_wb:
             {"id": "agent_call", "title": "Call Pharmacy"},
             {"id": "back_to_main", "title": "Back to Main Menu"}
         ]
-        self.twilio_wa.send_menu(user_id, "Please choose an option:", buttons)
+        self.twilio_wa.send_menu(user_id, "Please reply with 1, 2, or 3.", buttons)
         UserState_wb.set_user_state(user_id, "agent_menu")
 
     def send_delay_menu(self, user_id: str):
