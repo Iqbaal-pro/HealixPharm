@@ -36,7 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Include Routers
 app.include_router(whatsapp_router)
 app.include_router(admin_router)

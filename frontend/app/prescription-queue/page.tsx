@@ -1186,8 +1186,8 @@ export default function PrescriptionPage() {
                               </span>
                             </td>
                             {/* NEW: Status badge */}
-                            <td className="td">
-                              <span className="badge" style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: 11 }}>
+                            <td className="td" style={{ whiteSpace: "nowrap", minWidth: 110 }}>
+                              <span className="badge" style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: 11, whiteSpace: "nowrap", display: "inline-block" }}>
                                 {s.label}
                               </span>
                             </td>

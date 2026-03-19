@@ -399,7 +399,7 @@ textarea { font-family: 'Inter', sans-serif; }
 .skel-val          { height:32px; width:60%; background:rgba(148,163,184,0.06); border-radius:8px; margin-bottom:6px; }
 .skel-label        { height:12px; width:80%; background:rgba(148,163,184,0.04); border-radius:6px; }
 .table-wrap        { overflow-x:auto; }
-.full-table        { width:100%; border-collapse:collapse; }
+.full-table        { width:100%; border-collapse:collapse; min-width:700px; }
 .td-id             { color:#38bdf8; font-weight:500; }
 .td-muted          { color:#94a3b8; }
 .td-bright         { color:#cbd5e1; }
