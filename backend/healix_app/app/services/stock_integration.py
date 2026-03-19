@@ -178,17 +178,41 @@ class StockIntegrationService:
                 
     def get_channelling_service_charge(self) -> float:
         """
-        Fetch channelling service charge from pharmacy registration.
+        Fetch channelling-specific service charge from pharmacy registration.
+        Falls back to general service_charge if not set.
         """
         db = StockSession()
         try:
-            sql = text("SELECT service_charge FROM pharmacies LIMIT 1")
+            sql = text("SELECT channelling_service_charge, service_charge FROM pharmacies LIMIT 1")
             row = db.execute(sql).first()
-            if row and row._mapping["service_charge"]:
-                return float(row._mapping["service_charge"])
+            if row:
+                val = row._mapping.get("channelling_service_charge")
+                if val is not None and val > 0:
+                    return float(val)
+                # fallback to general service charge
+                fallback = row._mapping.get("service_charge")
+                if fallback:
+                    return float(fallback)
             return 0.0
         except Exception as e:
-            logger.error(f"[STOCK_BRIDGE] Failed to fetch service charge: {e}")
+            logger.error(f"[STOCK_BRIDGE] Failed to fetch channelling service charge: {e}")
             return 0.0
+        finally:
+            db.close()
+
+    def set_channelling_service_charge(self, amount: float) -> bool:
+        """
+        Update the channelling service charge for the pharmacy.
+        """
+        db = StockSession()
+        try:
+            sql = text("UPDATE pharmacies SET channelling_service_charge = :amount LIMIT 1")
+            db.execute(sql, {"amount": amount})
+            db.commit()
+            return True
+        except Exception as e:
+            logger.error(f"[STOCK_BRIDGE] Failed to update channelling service charge: {e}")
+            db.rollback()
+            return False
         finally:
             db.close()

@@ -11,17 +11,19 @@ class Settings:
     TWILIO_WHATSAPP_WEBHOOK_TOKEN = os.getenv("TWILIO_WHATSAPP_WEBHOOK_TOKEN", "HEAL")
     
     # Database
-    DB_HOST = os.getenv("DB_HOST", "localhost")
-    DB_PORT = os.getenv("DB_PORT", "3306")
+    DB_HOST = os.getenv("DB_HOST", "ballast.proxy.rlwy.net")
+    DB_PORT = os.getenv("DB_PORT", "33283")
     DB_USER = os.getenv("DB_USER", "root")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-    DB_NAME = os.getenv("DB_NAME", "healix")
-    
-    # Construct DATABASE_URL from components if available, else use raw URL
-    DATABASE_URL = os.getenv(
-        "DATABASE_URL", 
-        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+    DB_NAME = os.getenv("DB_NAME", "railway")
+
+    # Construct DATABASE_URL at property time so .env values are used
+    @property
+    def DATABASE_URL(self):
+        raw = os.getenv("DATABASE_URL")
+        if raw:
+            return raw
+        return f"mysql+pymysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
     
     # AWS S3
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
@@ -56,12 +58,12 @@ class Settings:
         "🚨 *ALERT:* {disease_name} in {region}. *Threat Level:* {threat_level}. Source: MoH"
     )
 
-    # Stock Management DB (MySQL)
-    STOCK_DB_USER = os.getenv("STOCK_DB_USER", "stock_user")
-    STOCK_DB_PASSWORD = os.getenv("STOCK_DB_PASSWORD", "stock123")
-    STOCK_DB_HOST = os.getenv("STOCK_DB_HOST", "127.0.0.1")
-    STOCK_DB_PORT = int(os.getenv("STOCK_DB_PORT", 3306))
-    STOCK_DB_NAME = os.getenv("STOCK_DB_NAME", "stock_management_db")
+    # Stock Management DB = same Railway DB
+    STOCK_DB_USER = os.getenv("STOCK_DB_USER", "root")
+    STOCK_DB_PASSWORD = os.getenv("STOCK_DB_PASSWORD", "")
+    STOCK_DB_HOST = os.getenv("STOCK_DB_HOST", "ballast.proxy.rlwy.net")
+    STOCK_DB_PORT = int(os.getenv("STOCK_DB_PORT", 33283))
+    STOCK_DB_NAME = os.getenv("STOCK_DB_NAME", "railway")
 
     # PayHere Configuration
     PAYHERE_MERCHANT_ID = os.getenv("PAYHERE_MERCHANT_ID", "need_to_be_fill")

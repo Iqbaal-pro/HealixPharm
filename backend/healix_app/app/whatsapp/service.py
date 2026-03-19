@@ -480,10 +480,10 @@ class WhatsAppService_wb:
         try:
             # Fetch the main pharmacy record (there's only one pharmacy profile per instance)
             pharmacy = db.query(models.Pharmacy).first()
+            msg = None
 
             if selection == "faq_hours":
                 msg = f"📍 *Location & Hours*\n\n*Hours:* {pharmacy.opening_hours if pharmacy and pharmacy.opening_hours else 'Not set'}\n*Address:* {pharmacy.address if pharmacy and pharmacy.address else 'Not set'}"
-                self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_delivery_areas":
                 msg = (
@@ -491,11 +491,9 @@ class WhatsAppService_wb:
                     f"• Serving: {pharmacy.service_areas if pharmacy and pharmacy.service_areas else 'Most local areas'}\n"
                     f"• Est. Time: {pharmacy.estimated_delivery_time if pharmacy and pharmacy.estimated_delivery_time else '2-4 hours'}"
                 )
-                self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_prescription":
                 msg = f"💊 *Prescription Requirements*\n\n{pharmacy.prescription_policy if pharmacy and pharmacy.prescription_policy else 'A valid prescription is required for most medicines. Please upload a clear photo of your prescription.'}"
-                self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_order_status":
                 patient = db.query(models.Patient).filter_by(phone_number=user_id).first()
@@ -511,15 +509,12 @@ class WhatsAppService_wb:
                         msg = "No active orders found for your number."
                 else:
                     msg = "No patient profile found."
-                self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_delivery_charges":
                 msg = f"💰 *Delivery Charges*\n\nOur standard delivery charge is Rs. {pharmacy.service_charge if pharmacy and pharmacy.service_charge is not None else '150.00'}."
-                self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "faq_refunds":
                 msg = f"📝 *Refund & Cancellation*\n\n{pharmacy.refund_policy if pharmacy and pharmacy.refund_policy else 'Please contact us for details regarding refunds and cancellations.'}"
-                self.twilio_wa.send_text(user_id, msg)
 
             elif selection == "back_to_main":
                 self.send_main_menu(user_id)
@@ -528,6 +523,11 @@ class WhatsAppService_wb:
             else:
                  # Fallback if selection doesn't match
                  self.send_faq_menu(user_id)
+                 return
+
+            if msg:
+                faq_footer = "\n\n_(Reply 1-7 for another question, or type 'menu' to exit)_"
+                self.twilio_wa.send_text(user_id, msg + faq_footer)
 
         finally:
             db.close()

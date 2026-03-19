@@ -96,14 +96,17 @@ export default function AnalyticsPage() {
               Demand trends, reorder recommendations and stockout risk
             </p>
           </div>
-          <button onClick={fetchAll} disabled={loading}
-            style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: 10, color: "#38bdf8", fontSize: 13, fontFamily: "'DM Sans',sans-serif", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-              style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }}>
-              <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-            </svg>
-            Refresh
-          </button>
+          <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+            <Link href="/stock-management" style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"9px 16px", background:"rgba(148,163,184,0.06)", border:"1px solid rgba(148,163,184,0.12)", borderRadius:10, color:"#94a3b8", fontSize:13, fontFamily:"'DM Sans',sans-serif", textDecoration:"none", cursor:"pointer" }}>← Back</Link>
+            <button onClick={fetchAll} disabled={loading}
+              style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: 10, color: "#38bdf8", fontSize: 13, fontFamily: "'DM Sans',sans-serif", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                style={{ animation: loading ? "spin 0.8s linear infinite" : "none" }}>
+                <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Summary cards — click to switch tab */}

@@ -185,7 +185,7 @@ export default function SlotsPage() {
           <div style={{ background: "rgba(8,16,32,0.7)", border: "1px solid rgba(148,163,184,0.09)", borderRadius: 14, overflow: "hidden" }}>
             <div style={{ display: "flex", borderBottom: "1px solid rgba(148,163,184,0.08)" }}>
               {(["single","bulk"] as const).map(t => (
-                <button key={t} onClick={() => setBulkTab(t)} style={{ flex: 1, padding: "11px 0", fontSize: 12, fontWeight: 600, background: bulkTab === t ? "rgba(56,189,248,0.08)" : "transparent", borderBottom: bulkTab === t ? "2px solid #38bdf8" : "2px solid transparent", color: bulkTab === t ? "#38bdf8" : "#475569", border: "none", cursor: "pointer", textTransform: "capitalize", letterSpacing: "0.03em" }}>
+                <button key={t} onClick={() => setBulkTab(t)} style={{ flex: 1, padding: "11px 0", fontSize: 12, fontWeight: 600, background: bulkTab === t ? "rgba(56,189,248,0.08)" : "transparent", borderBottom: bulkTab === t ? "2px solid #38bdf8" : "2px solid transparent", color: bulkTab === t ? "#38bdf8" : "#475569", cursor: "pointer", textTransform: "capitalize", letterSpacing: "0.03em" }}>
                   {t === "single" ? "Single Slot" : "Bulk Add"}
                 </button>
               ))}

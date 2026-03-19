@@ -15,6 +15,24 @@ from app.echannelling_service import (
 router = APIRouter(prefix="/api", tags=["Channelling"])
 logger = logging.getLogger(__name__)
 
+# ── Channelling Settings ──────────────────────────────────────────
+@router.get("/admin/channelling-settings")
+async def get_channelling_settings():
+    from app.services.stock_integration import StockIntegrationService
+    stock = StockIntegrationService()
+    return {
+        "channelling_service_charge": stock.get_channelling_service_charge()
+    }
+
+@router.post("/admin/channelling-settings")
+async def update_channelling_settings(body: dict):
+    from app.services.stock_integration import StockIntegrationService
+    amount = body.get("channelling_service_charge", 0)
+    stock  = StockIntegrationService()
+    ok     = stock.set_channelling_service_charge(float(amount))
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to update service charge")
+    return {"channelling_service_charge": float(amount)}
 
 # ── Schemas ──────────────────────────────────────────────────────
 class PatientIn(BaseModel):
@@ -322,7 +340,13 @@ async def add_slot(doctor_id: int, body: SlotIn, db: Session = Depends(get_db)):
     db.add(slot)
     db.commit()
     db.refresh(slot)
-    return slot
+    return {
+        "id":       slot.id,
+        "hospital": slot.hospital_name,
+        "date":     slot.date,
+        "time":     slot.time,
+        "booked":   slot.booked,
+    }
 
 @router.get("/admin/doctors/{doctor_id}/slots")
 async def get_all_slots(doctor_id: int, db: Session = Depends(get_db)):

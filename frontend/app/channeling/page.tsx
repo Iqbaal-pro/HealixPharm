@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getDoctors, deleteDoctor, updateDoctor, Doctor, DoctorPayload } from "../routes/channelingRoutes";
+import { getDoctors, deleteDoctor, updateDoctor, getChannellingSettings, updateChannellingSettings, Doctor, DoctorPayload } from "../routes/channelingRoutes";
 
 const SPECIALIZATIONS = [
   "General Practitioner","Cardiologist","Dermatologist","Neurologist",
@@ -35,6 +35,13 @@ export default function ChannellingPage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError]     = useState("");
 
+  // Service charge state — inside component
+  const [serviceCharge, setServiceCharge]           = useState<number>(0);
+  const [serviceChargeInput, setServiceChargeInput] = useState<string>("");
+  const [savingCharge, setSavingCharge]             = useState(false);
+  const [chargeSuccess, setChargeSuccess]           = useState(false);
+  const [chargeError, setChargeError]               = useState("");
+
   const load = async () => {
     try {
       setLoading(true); setError("");
@@ -43,7 +50,29 @@ export default function ChannellingPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    // Load service charge
+    getChannellingSettings()
+      .then(d => {
+        setServiceCharge(d.channelling_service_charge);
+        setServiceChargeInput(String(d.channelling_service_charge || ""));
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveCharge = async () => {
+    const amount = parseFloat(serviceChargeInput);
+    if (isNaN(amount) || amount < 0) { setChargeError("Enter a valid amount."); return; }
+    setSavingCharge(true); setChargeError(""); setChargeSuccess(false);
+    try {
+      const result = await updateChannellingSettings(amount);
+      setServiceCharge(result.channelling_service_charge);
+      setChargeSuccess(true);
+      setTimeout(() => setChargeSuccess(false), 3000);
+    } catch (e: any) { setChargeError(e.message); }
+    finally { setSavingCharge(false); }
+  };
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Delete Dr. ${name}? This will also remove all their time slots.`)) return;
@@ -101,7 +130,6 @@ export default function ChannellingPage() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "#f1f5f9", letterSpacing: "-0.02em", marginBottom: 4 }}>E-Channelling</h1>
           <p style={{ fontSize: 13, color: "#475569" }}>Manage doctors and time slots for the patient booking portal.</p>
         </div>
-        {/* FIXED: single 'l' in channeling */}
         <Link href="/channeling/add" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 18px", borderRadius: 10, background: "linear-gradient(90deg, #0369a1, #4f46e5)", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
           Add Doctor
@@ -122,6 +150,47 @@ export default function ChannellingPage() {
         ))}
       </div>
 
+      {/* E-Channelling Service Charge */}
+      <div style={{ background: "rgba(8,16,32,0.7)", border: "1px solid rgba(148,163,184,0.09)", borderRadius: 14, padding: "20px 24px", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0", marginBottom: 4 }}>E-Channelling Service Charge</p>
+            <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>
+              Fee charged to patients when booking an appointment. Currently&nbsp;
+              <strong style={{ color: "#38bdf8" }}>Rs. {serviceCharge.toLocaleString()}</strong>
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <div style={{ position: "relative" }}>
+              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#475569", pointerEvents: "none" }}>Rs.</span>
+              <input
+                type="number"
+                min="0"
+                placeholder="150"
+                value={serviceChargeInput}
+                onChange={e => { setServiceChargeInput(e.target.value); setChargeError(""); setChargeSuccess(false); }}
+                style={{ ...inp, width: 140, paddingLeft: 36 }}
+              />
+            </div>
+            <button
+              onClick={handleSaveCharge}
+              disabled={savingCharge || serviceChargeInput === String(serviceCharge)}
+              style={{
+                padding: "9px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                border: "none", cursor: "pointer", whiteSpace: "nowrap",
+                background: chargeSuccess ? "rgba(74,222,128,0.15)" : "linear-gradient(90deg, #0369a1, #4f46e5)",
+                color: chargeSuccess ? "#4ade80" : "#fff",
+                opacity: (savingCharge || serviceChargeInput === String(serviceCharge)) ? 0.5 : 1,
+                transition: "all 0.2s",
+              }}
+            >
+              {savingCharge ? "Saving..." : chargeSuccess ? "✓ Saved" : "Update"}
+            </button>
+          </div>
+        </div>
+        {chargeError && <p style={{ color: "#f87171", fontSize: 12, margin: "8px 0 0" }}>{chargeError}</p>}
+      </div>
+
       {/* Filters */}
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
         <div style={{ position: "relative", flex: 1 }}>
@@ -139,6 +208,7 @@ export default function ChannellingPage() {
         )}
       </div>
 
+      {/* Error */}
       {error && (
         <div style={{ color: "#f87171", fontSize: 13, padding: "12px 16px", background: "rgba(248,113,113,0.08)", borderRadius: 10, border: "1px solid rgba(248,113,113,0.2)", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           {error}
@@ -146,6 +216,7 @@ export default function ChannellingPage() {
         </div>
       )}
 
+      {/* Loading skeletons */}
       {loading && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[1,2,3].map(i => (
@@ -156,6 +227,7 @@ export default function ChannellingPage() {
         </div>
       )}
 
+      {/* Empty */}
       {!loading && !error && filtered.length === 0 && (
         <div style={{ textAlign: "center", padding: "56px 0" }}>
           <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(148,163,184,0.06)", border: "1px solid rgba(148,163,184,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 22 }}>👨‍⚕️</div>
@@ -164,6 +236,7 @@ export default function ChannellingPage() {
         </div>
       )}
 
+      {/* Doctor table */}
       {!loading && !error && filtered.length > 0 && (
         <div style={{ background: "rgba(8,16,32,0.7)", border: "1px solid rgba(148,163,184,0.09)", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1.4fr 1.6fr 90px 100px 160px", gap: 12, padding: "11px 20px", borderBottom: "1px solid rgba(148,163,184,0.07)", background: "rgba(255,255,255,0.02)" }}>
@@ -195,7 +268,6 @@ export default function ChannellingPage() {
               </span>
               <div style={{ display: "flex", gap: 5 }}>
                 <button onClick={() => openEdit(d)} style={{ padding: "5px 9px", borderRadius: 7, fontSize: 11, fontWeight: 600, background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.15)", color: "#94a3b8", cursor: "pointer" }}>Edit</button>
-                {/* FIXED: single 'l' */}
                 <Link href={`/channeling/${d.id}/slots`} style={{ padding: "5px 9px", borderRadius: 7, fontSize: 11, fontWeight: 600, background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", color: "#38bdf8", textDecoration: "none" }}>Slots</Link>
                 <button onClick={() => handleDelete(d.id, d.name)} disabled={deleting === d.id} style={{ padding: "5px 9px", borderRadius: 7, fontSize: 11, fontWeight: 600, background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", color: "#f87171", cursor: "pointer", opacity: deleting === d.id ? 0.5 : 1 }}>
                   {deleting === d.id ? "..." : "Del"}
