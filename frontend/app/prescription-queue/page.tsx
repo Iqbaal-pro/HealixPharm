@@ -336,6 +336,7 @@ export default function PrescriptionPage() {
         setNotifyStatus("sending");
         const totalReminders = savedRxs.reduce((s, rx) => s + (rx.reminders_scheduled || 0), 0);
         const notifResult = await notifyPrescriptionIssued({
+          order_id: selected?.order_id,
           patient_phone: patientPhone.trim(),
           items: billItems.filter(i => i.quantity > 0),
           total_amount: billTotal,

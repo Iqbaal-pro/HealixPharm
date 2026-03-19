@@ -451,3 +451,43 @@ def create_moh_alert(payload: schemas.AlertCreate, db: Session = Depends(get_db)
 def list_active_moh_alerts(db: Session = Depends(get_db)):
     """List all currently active MOH disease alerts."""
     return alert_service.get_all_active_alerts(db)
+
+@router.post("/notify/prescription-issued")
+def notify_prescription_issued(payload: schemas.NotifyBillPayload, db: Session = Depends(get_db)):
+    """
+    Bridge endpoint for the pharmacist portal.
+    Sends an itemized bill to the patient and transitions the Order to AWAITING_PAYMENT_SELECTION.
+    """
+    # 1. Update Order status if order_id is provided
+    if payload.order_id:
+        order = db.query(models.Order).filter(models.Order.id == payload.order_id).first()
+        if order:
+            order.status = "AWAITING_PAYMENT_SELECTION"
+            order.total_amount = payload.total_amount
+            db.commit()
+            
+            # Update user state in bot to handle the next input (1 or 2)
+            UserState_wb.set_user_state(payload.patient_phone, "awaiting_payment_selection")
+            logger.info(f"[ADMIN] Order {order.token} transitioned to AWAITING_PAYMENT_SELECTION")
+        else:
+            logger.warning(f"[ADMIN] Order ID {payload.order_id} not found in database!")
+
+    # 2. Build and send WhatsApp message
+    item_lines = "\n".join([f"  • {i.medicine_name} x{i.quantity} — Rs. {i.subtotal:.2f}" for i in payload.items])
+    
+    msg = (
+        f"Your prescription has been reviewed and approved! ✅\n\n"
+        f"*Bill Summary:*\n{item_lines}\n\n"
+        f"*Total Amount: Rs. {payload.total_amount:.2f}*\n\n"
+        f"Please choose your payment method:\n"
+        f"1️⃣ Cash on Delivery\n"
+        f"2️⃣ Online Payment\n\n"
+        f"⚠️ Please respond with 1 or 2 to proceed."
+    )
+    
+    try:
+        notif.twilio_wa.send_text(payload.patient_phone, msg)
+        return {"success": True, "message": "Notification sent and order updated"}
+    except Exception as e:
+        logger.error(f"Failed to send prescription issuance notification: {e}")
+        return {"success": False, "message": f"Failed to send WhatsApp: {str(e)}"}

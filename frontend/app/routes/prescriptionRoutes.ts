@@ -97,6 +97,7 @@ export interface BillItem {
 }
 
 export interface NotifyBillPayload {
+  order_id?: number | null;
   patient_phone: string;
   items: BillItem[];
   total_amount: number;

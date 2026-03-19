@@ -69,3 +69,16 @@ class AlertResponseSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class BillItem(BaseModel):
+    medicine_name: str
+    quantity: int
+    unit_price: float
+    subtotal: float
+
+class NotifyBillPayload(BaseModel):
+    order_id: Optional[int] = None
+    patient_phone: str
+    items: List[BillItem]
+    total_amount: float
+    reminders_scheduled: int = 0
+
