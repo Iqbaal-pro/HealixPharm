@@ -31,7 +31,10 @@ app = FastAPI(title="HealixPharm - WhatsApp Bot")
 # ─── CORS Middleware ───────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://healixpharm-frontend.onrender.com",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
