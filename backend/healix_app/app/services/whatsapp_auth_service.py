@@ -19,7 +19,7 @@ class WhatsAppAuthService:
         patient = db.query(models.Patient).filter(
             models.Patient.phone_number == phone_number
         ).first()
-        
+
         if patient:
             logger.info(f"[AUTH_SERVICE] Patient verified: {phone_number}")
             return True

@@ -94,3 +94,15 @@ export async function cancelAppointment(payhereOrderId: string) {
   });
   return handleResponse<{ message: string; booking_ref: string }>(res);
 }
+// ── Search Filter Options ──────────────────────────────────────────────────
+// Fetches distinct specializations and hospitals from real doctor data
+
+export async function fetchFilterOptions(): Promise<{
+  specializations: string[];
+  hospitals: string[];
+}> {
+  const doctors = await fetchDoctors({});
+  const specializations = [...new Set(doctors.map(d => d.specialization))].sort();
+  const hospitals       = [...new Set(doctors.map(d => d.hospital))].sort();
+  return { specializations, hospitals };
+}
