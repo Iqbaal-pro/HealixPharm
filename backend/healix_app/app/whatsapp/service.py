@@ -179,7 +179,7 @@ class WhatsAppService_wb:
                 ticket = db.query(models.SupportTicket).filter(
                     models.SupportTicket.patient_id == patient.id,
                     models.SupportTicket.status == "ACTIVE"
-                ).first()
+                ).order_by(models.SupportTicket.created_at.desc()).first()
                 if ticket:
                     add_support_message(db, ticket.id, "USER", body)
             finally:
@@ -190,8 +190,7 @@ class WhatsAppService_wb:
         if current_step == "awaiting_payment_selection":
             db = SessionLocal()
             try:
-                logger.info(f"[SERVICE] Handling payment selection for {user_id} | Choice: {body}")
-                patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
+                patient = get_or_create_patient(db, phone=user_id)
                 if patient:
                     # Find the latest order awaiting payment selection
                     order = db.query(models.Order).filter(
@@ -350,8 +349,8 @@ class WhatsAppService_wb:
         db = SessionLocal()
         try:
             setting    = db.query(models.PharmacySetting).filter_by(key="echannelling_enabled").first()
-            #is_enabled = setting and setting.value.strip().lower() == "true"
-            is_enabled = True
+            is_enabled = setting and setting.value.strip().lower() == "true"
+            #is_enabled = True
             
         finally:
             db.close()
@@ -502,7 +501,7 @@ class WhatsAppService_wb:
                 msg = f"💊 *Prescription Requirements*\n\n{pharmacy.prescription_policy if pharmacy and pharmacy.prescription_policy else 'A valid prescription is required for most medicines. Please upload a clear photo of your prescription.'}"
 
             elif selection == "faq_order_status":
-                patient = db.query(models.Patient).filter_by(phone_number=user_id).first()
+                patient = get_or_create_patient(db, phone=user_id)
                 if patient:
                     order = db.query(models.Order).filter(
                         models.Order.patient_id == patient.id,
@@ -589,7 +588,7 @@ def check_agent_delay(user_id: str):
     logger.info(f"[TIMER] Checking delay for user {user_id}")
     db = SessionLocal()
     try:
-        patient = db.query(models.Patient).filter(models.Patient.phone_number == user_id).first()
+        patient = get_or_create_patient(db, phone=user_id)
         if not patient:
             logger.warning(f"[TIMER] Patient {user_id} not found in DB")
             return

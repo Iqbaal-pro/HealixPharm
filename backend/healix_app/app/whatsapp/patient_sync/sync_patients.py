@@ -8,6 +8,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+from app.utils.encryption import encrypt_data
 
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -127,6 +128,12 @@ def sync_to_db(df):
             cursor.execute("SELECT id FROM patients WHERE phone_number = %s", (phone,))
             is_new_patient = (cursor.fetchone() is None)
 
+            # Encrypt sensitive data before inserting
+            enc_name = encrypt_data(name)
+            enc_phone = encrypt_data(phone)
+            enc_lang = encrypt_data(lang)
+            enc_dob = encrypt_data(dob)
+
             query = """
                 INSERT INTO patients (name, phone_number, language, date_of_birth, consent, age)
                 VALUES (%s, %s, %s, %s, %s, %s)
@@ -137,7 +144,7 @@ def sync_to_db(df):
                     consent = VALUES(consent),
                     age = VALUES(age)
             """
-            cursor.execute(query, (name, phone, lang, dob, consent, age))
+            cursor.execute(query, (enc_name, enc_phone, enc_lang, enc_dob, consent, age))
             
             # Sub-task: Send automated welcome message if this was a brand new registration
             if is_new_patient and twilio_client:

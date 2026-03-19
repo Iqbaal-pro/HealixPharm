@@ -56,7 +56,7 @@ export default function DashboardPage() {
   };
 
   const filtered = recentPrescriptions.filter(p =>
-    (p.medicine_name?.toLowerCase() || "").includes(search.toLowerCase()) ||
+    (p.medicine_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
     String(p.patient_id).includes(search) || String(p.id).includes(search)
   );
 
