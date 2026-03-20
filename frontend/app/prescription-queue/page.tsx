@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import {
   getPendingPrescriptions, createPrescription, issueMedicine,
   getAllPrescriptions, notifyPrescriptionIssued, getOrderDetail,
-  getPresignedUrl, uploadPrescriptionImage, checkImageClarity,
+  getPresignedUrl, uploadPrescriptionImage, checkImageClarity, getIssuedToday,
   type PendingPrescription, type PrescriptionResponse,
-  type PrescriptionRecord, type IssueResponse,
+  type PrescriptionRecord, type IssueResponse, type IssuedTodayRecord,
 } from "../routes/prescriptionRoutes";
 import {
   getPendingReminders, sendOneTimeReminder, markContinuous,
@@ -27,11 +27,6 @@ interface MedRow {
   meals:          Meals;
   meal_times:     string[];
   is_continuous:  boolean;
-}
-
-interface SessionRecord {
-  seq: number; prescription_id: number; medicine_id: number;
-  quantity: number; remaining_stock: number; medicine_name: string; time: string;
 }
 
 const TODAY     = new Date().toISOString().split("T")[0];
@@ -95,7 +90,8 @@ export default function PrescriptionPage() {
   const [notifyMsg,      setNotifyMsg]      = useState("");  // NEW
   const [sendWhatsApp,   setSendWhatsApp]   = useState(true);  // NEW: opt-in toggle
 
-  const [session, setSession] = useState<SessionRecord[]>([]);
+  const [session, setSession] = useState<IssuedTodayRecord[]>([]);
+  const [sessionHidden, setSessionHidden] = useState(false);
   const [counter, setCounter] = useState(1);
 
   // History
@@ -114,7 +110,11 @@ export default function PrescriptionPage() {
   const [processingAll,    setProcessingAll]    = useState(false);
   const [rxSearch,         setRxSearch]         = useState("");
 
-  useEffect(() => { fetchPending(); }, []);
+  useEffect(() => { fetchPending(); fetchSession(); }, []);
+  useEffect(() => {
+    const interval = setInterval(fetchSession, 30000);
+    return () => clearInterval(interval);
+  }, []);
   useEffect(() => { if (tab === "history" || tab === "reminders" || tab === "forecast") fetchHistory(historyFilter); }, [tab, historyFilter]);
   useEffect(() => { if (tab === "reminders") fetchReminders(); }, [tab]);
 
@@ -215,6 +215,11 @@ export default function PrescriptionPage() {
     }
   };
 
+  const fetchSession = async () => {
+    try { setSession(await getIssuedToday()); }
+    catch { /* silent */ }
+  };
+
   const fetchPending = async () => {
     setLoadingList(true);
     try { setPending(await getPendingPrescriptions()); }
@@ -299,7 +304,6 @@ export default function PrescriptionPage() {
           meals:                med.meals || undefined,
           meal_times:           med.meal_times.length ? med.meal_times.join(",") : undefined,
         });
-        // Backend only returns {message, prescription_id} — merge medicine_name from form
         rxs.push({ ...rx, medicine_name: (med.medicine_name ?? "").trim() });
       }
       setSavedRxs(rxs);
@@ -326,14 +330,22 @@ export default function PrescriptionPage() {
           quantity:        Number(med.quantity_given),
         });
         results.push({ ...result, medicine_name: rx.medicine_name });
-        setSession(prev => [{
-          seq: counter + i, prescription_id: rx.prescription_id ?? rx.id, medicine_id: med.medicine_id!,
-          quantity: Number(med.quantity_given), remaining_stock: result.remaining_stock,
-          medicine_name: rx.medicine_name, time: new Date().toLocaleTimeString(),
-        }, ...prev]);
       }
       setCounter(c => c + savedRxs.length);
       setIssueResults(results);
+      setSessionHidden(false);
+      fetchSession();
+      // If this came from a WhatsApp queue item, mark the order as processed
+      if (selected?.order_id) {
+        try {
+          const BOT_BASE = process.env.NEXT_PUBLIC_BOT_API_URL ?? "http://localhost:8001";
+          await fetch(`${BOT_BASE}/admin/orders/${selected.order_id}/status`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "APPROVED" }),
+          });
+        } catch { /* silent — don't block the flow */ }
+      }
 
       // Send WhatsApp bill if opted in and phone provided
       if (sendWhatsApp && patientPhone.trim()) {
@@ -365,8 +377,9 @@ export default function PrescriptionPage() {
 
   // Validation
   const mealTimesValid = (med: MedRow) =>
-    med.meal_times.length === Number(med.dose_per_day) &&
-    med.meal_times.every(t => t.trim() !== "");
+    med.meal_times.length > 0
+      ? med.meal_times.every(t => t.trim() !== "")
+      : true;
 
   const saveValid =
     patientId !== "" && staffId !== "" &&
@@ -750,8 +763,8 @@ export default function PrescriptionPage() {
                             })}
                           </div>
                           {med.meal_times.length === 0 && (
-                            <span style={{ fontSize: 11, color: "#f87171", marginTop: 6, display: "block" }}>
-                               Select at least one meal time
+                            <span style={{ fontSize: 11, color: "#475569", marginTop: 6, display: "block" }}>
+                               Optional — leave empty for time-based reminders
                             </span>
                           )}
                         </div>
@@ -861,7 +874,7 @@ export default function PrescriptionPage() {
                           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                             <span style={{ fontWeight: 700, color: "#e2e8f0", fontSize: 14 }}>{rx.medicine_name}</span>
                             <span style={{ fontSize: 12, color: "#475569" }}>
-                              Rx #{rx.prescription_id ?? rx.id} · {med?.dose_per_day}×/day · {med?.quantity_given} units · {daysSupply}d supply
+                              Rx #{rx.id} · {med?.dose_per_day}×/day · {med?.quantity_given} units · {daysSupply}d supply
                               {med?.meals ? ` · ${med.meals} meal` : ""}
                               {med?.meal_times?.length ? ` · ${med.meal_times.join(", ")}` : ""}
                               {med?.is_continuous ? " · continuous" : ""}
@@ -921,33 +934,37 @@ export default function PrescriptionPage() {
                 <h2 className="card-title">Session</h2>
                 <p className="card-sub">Issued this session.</p>
               </div>
-              {session.length > 0 && <button className="btn-danger" onClick={() => setSession([])}>Clear</button>}
+              {session.length > 0 && <button className="btn-danger" onClick={() => setSessionHidden(h => !h)}>{sessionHidden ? "Show" : "Hide"}</button>}
             </div>
             {session.length === 0 ? (
               <div className="center p-empty-sm">
                 <div className="empty-icon-sm"></div>
                 <p className="empty-note">Nothing issued yet.</p>
               </div>
+            ) : sessionHidden ? (
+              <div className="center p-empty-sm">
+                <p className="empty-note" style={{ color: "#475569", fontSize: 12 }}>{session.length} items hidden — click Show to view</p>
+              </div>
             ) : (
               <>
                 <div className="col g-7">
                   {session.map(r => (
-                    <div key={r.seq} className="session-item">
+                    <div key={r.id} className="session-item">
                       <div className="session-item-left">
                         <div className="session-rx">Rx <span className="session-rx-id">#{r.prescription_id}</span></div>
                         <div className="session-med">{r.medicine_name}</div>
-                        <div className="session-time">{r.time}</div>
+                        <div className="session-time">{new Date(r.issued_at).toLocaleTimeString()}</div>
                       </div>
                       <div className="session-right">
-                        <div className="session-qty">×{r.quantity}</div>
-                        <div style={{ color: stockColor(r.remaining_stock), fontSize: 12 }}>{r.remaining_stock} left</div>
+                        <div className="session-qty">×{r.quantity_issued}</div>
+                        <div style={{ color: "#94a3b8", fontSize: 12 }}>Patient #{r.patient_id}</div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="row g-20 mt-12 session-footer">
-                  <MiniStat label="Processed" value={String(session.length)}                                 color="#38bdf8" />
-                  <MiniStat label="Units"      value={String(session.reduce((s, r) => s + r.quantity, 0))}  color="#818cf8" />
+                  <MiniStat label="Processed" value={String(session.length)}                                          color="#38bdf8" />
+                  <MiniStat label="Units"      value={String(session.reduce((s, r) => s + r.quantity_issued, 0))}  color="#818cf8" />
                 </div>
               </>
             )}
