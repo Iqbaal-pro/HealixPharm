@@ -137,6 +137,21 @@ class WhatsAppService_wb:
             )
             return
 
+        if current_step in ["waiting_for_agent", "agent_delay_menu"]:
+            db = SessionLocal()
+            try:
+                patient = get_or_create_patient(db, phone=user_id)
+                active_ticket = db.query(models.SupportTicket).filter(
+                    models.SupportTicket.patient_id == patient.id,
+                    models.SupportTicket.status == "ACTIVE"
+                ).first()
+                if active_ticket:
+                    logger.info(f"[WB_SERVICE] Found ACTIVE ticket for {user_id}. Moving to live_chat.")
+                    current_step = "live_chat"
+                    UserState_wb.set_user_state(user_id, "live_chat")
+            finally:
+                db.close()
+
         if current_step == "agent_menu":
             if body in agent_menu_mapping:
                 button_id = agent_menu_mapping[body]

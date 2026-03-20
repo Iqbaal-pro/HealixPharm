@@ -375,6 +375,9 @@ def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = De
         from app.whatsapp.twilio_client import TwilioWhatsAppClient
         twilio = TwilioWhatsAppClient()
         twilio.send_text(user_phone, payload.body)
+        
+        # Ensure user state is live_chat when agent sends a message
+        UserState_wb.set_user_state(user_phone, "live_chat")
     except Exception as e:
         logger.error(f"Failed to send agent message to {user_phone}: {e}")
         raise HTTPException(status_code=500, detail="Failed to send WhatsApp message")
