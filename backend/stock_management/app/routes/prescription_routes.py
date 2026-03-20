@@ -18,16 +18,6 @@ from app.services import s3_service
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
 
 
-class PrescriptionCreate(BaseModel):
-    patient_id: int
-    uploaded_by_staff_id: int
-    medicine_name: str
-    dose_per_day: int = 1
-    quantity_given: int = 0
-    is_continuous: bool = False
-    start_date: Optional[datetime] = None
-
-
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
@@ -79,6 +69,49 @@ def list_prescriptions(
 
     return output
 
+
+
+@router.get("/issued-today")
+def get_issued_today(db: Session = Depends(get_db)):
+    """
+    Fetch all medicines issued today — used to sync session across machines.
+    """
+    from app.models.issued_item import IssuedItem
+    from app.models.medicine import Medicine
+    from datetime import date
+
+    today_start = datetime.combine(date.today(), datetime.min.time())
+
+    rows = (
+        db.query(
+            IssuedItem.id,
+            IssuedItem.prescription_id,
+            IssuedItem.patient_id,
+            IssuedItem.medicine_id,
+            IssuedItem.quantity_issued,
+            IssuedItem.issued_at,
+            IssuedItem.issued_by,
+            Medicine.name.label("medicine_name"),
+        )
+        .join(Medicine, Medicine.id == IssuedItem.medicine_id)
+        .filter(IssuedItem.issued_at >= today_start)
+        .order_by(IssuedItem.issued_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id":              r.id,
+            "prescription_id": r.prescription_id,
+            "patient_id":      r.patient_id,
+            "medicine_id":     r.medicine_id,
+            "medicine_name":   r.medicine_name,
+            "quantity_issued": r.quantity_issued,
+            "issued_at":       r.issued_at.isoformat() if r.issued_at else None,
+            "issued_by":       r.issued_by,
+        }
+        for r in rows
+    ]
 
 @router.get("/{prescription_id}/image-url")
 def get_prescription_image_url(
