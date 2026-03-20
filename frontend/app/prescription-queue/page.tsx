@@ -299,7 +299,8 @@ export default function PrescriptionPage() {
           meals:                med.meals || undefined,
           meal_times:           med.meal_times.length ? med.meal_times.join(",") : undefined,
         });
-        rxs.push(rx);
+        // Backend only returns {message, prescription_id} — merge medicine_name from form
+        rxs.push({ ...rx, medicine_name: (med.medicine_name ?? "").trim() });
       }
       setSavedRxs(rxs);
       setIssueResults([]);
