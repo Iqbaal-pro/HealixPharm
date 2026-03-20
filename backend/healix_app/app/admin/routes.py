@@ -404,9 +404,10 @@ def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     if user_phone:
         UserState_wb.set_user_state(user_phone, "main_menu")
         try:
-            from app.whatsapp.twilio_client import TwilioWhatsAppClient
-            twilio = TwilioWhatsAppClient()
-            twilio.send_text(user_phone, "Chat ended by pharmacy.\nYou have been returned to the main menu.")
+            from app.whatsapp.service import WhatsAppService_wb
+            service = WhatsAppService_wb()
+            service.twilio_wa.send_text(user_phone, "Chat ended by pharmacy.")
+            service.send_main_menu(user_phone)
         except Exception as e:
             logger.error(f"Failed to notify user {user_phone} of chat closure: {e}")
 
