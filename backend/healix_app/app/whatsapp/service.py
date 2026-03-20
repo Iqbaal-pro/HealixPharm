@@ -337,7 +337,7 @@ class WhatsAppService_wb:
             self.send_main_menu(user_id)
 
     def _handle_doctor_button(self, user_id: str):
-      """
+        """
         Handles the doctor button click.
         Checks if there are any active doctors added via the pharmacy portal.
         If yes, sends the booking portal link. If no, sends a message to call.
