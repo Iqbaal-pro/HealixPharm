@@ -471,10 +471,7 @@ export default function PrescriptionPage() {
                     {pending.map(p => (
                       <div key={p.order_id} className="queue-item" onClick={() => selectQueueItem(p)}>
                         <div className="queue-thumb">
-                          {p.prescription_url
-                            ? <img src={p.prescription_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display="none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }} />
-                            : null}
-                          <span className="queue-thumb-empty" style={{ display: p.prescription_url ? "none" : undefined }}>🖼</span>
+                          <span className="queue-thumb-empty">🖼</span>
                         </div>
                         <div className="queue-info">
                           <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>

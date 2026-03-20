@@ -60,8 +60,8 @@ export interface CreatePrescriptionPayload {
 
 export interface PrescriptionResponse {
   id: number;
-  message: string;
   prescription_id: number;
+  message: string;
   patient_id?: number;
   uploaded_by_staff_id?: number;
   medicine_id?: number;
