@@ -381,7 +381,23 @@ def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = De
 
     return {"status": "SENT"}
 
-
+@router.get("/support/tickets/{ticket_id}/messages")
+def get_ticket_messages(ticket_id: int, db: Session = Depends(get_db)):
+    """
+    Get all messages for a ticket — both USER and AGENT messages.
+    """
+    ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return [
+        {
+            "id":          m.id,
+            "sender_type": m.sender_type,
+            "body":        m.body,
+            "created_at":  m.created_at.isoformat() if m.created_at else None,
+        }
+        for m in sorted(ticket.messages, key=lambda m: m.created_at or "")
+    ]
 @router.post("/support/tickets/{ticket_id}/close")
 def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     """
