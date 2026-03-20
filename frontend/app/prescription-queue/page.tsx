@@ -299,7 +299,8 @@ export default function PrescriptionPage() {
           meals:                med.meals || undefined,
           meal_times:           med.meal_times.length ? med.meal_times.join(",") : undefined,
         });
-        rxs.push(rx);
+        // Backend only returns {message, prescription_id} — merge medicine_name from form
+        rxs.push({ ...rx, medicine_name: (med.medicine_name ?? "").trim() });
       }
       setSavedRxs(rxs);
       setIssueResults([]);
@@ -471,10 +472,7 @@ export default function PrescriptionPage() {
                     {pending.map(p => (
                       <div key={p.order_id} className="queue-item" onClick={() => selectQueueItem(p)}>
                         <div className="queue-thumb">
-                          {p.prescription_url
-                            ? <img src={p.prescription_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display="none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }} />
-                            : null}
-                          <span className="queue-thumb-empty" style={{ display: p.prescription_url ? "none" : undefined }}>🖼</span>
+                          <span className="queue-thumb-empty">🖼</span>
                         </div>
                         <div className="queue-info">
                           <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>

@@ -60,8 +60,8 @@ export interface CreatePrescriptionPayload {
 
 export interface PrescriptionResponse {
   id: number;
-  message: string;
   prescription_id: number;
+  message: string;
   patient_id?: number;
   uploaded_by_staff_id?: number;
   medicine_id?: number;
@@ -112,7 +112,15 @@ export interface NotifyBillPayload {
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(err.detail ?? "Request failed");
+    const detail = err.detail;
+    if (Array.isArray(detail)) {
+      // FastAPI 422 validation error — extract readable messages
+      const msg = detail.map((e: { loc?: string[]; msg?: string }) =>
+        `${e.loc ? e.loc.join(" → ") : "field"}: ${e.msg ?? "invalid"}`
+      ).join(", ");
+      throw new Error(msg);
+    }
+    throw new Error(typeof detail === "string" ? detail : "Request failed");
   }
   return res.json() as Promise<T>;
 }
