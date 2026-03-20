@@ -3,6 +3,8 @@ from app.models.batch import MedicineBatch
 from app.models.stock_log import StockLog
 from app.models.issued_item import IssuedItem
 from sqlalchemy.orm import Session
+from datetime import datetime
+
 
 class StockUpdateService:
     """
