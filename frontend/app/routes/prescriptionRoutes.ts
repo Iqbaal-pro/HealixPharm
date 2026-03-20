@@ -20,6 +20,7 @@ export interface PrescriptionRecord {
   created_at: string;
   remaining_days: number;
   is_completed: boolean;
+  reminders_count?: number;
 }
 
 export interface PrescriptionOrderItem {

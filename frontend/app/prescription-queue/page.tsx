@@ -104,7 +104,6 @@ export default function PrescriptionPage() {
   const [remindersLoading, setRemindersLoading] = useState(false);
   const [reminderMsg,      setReminderMsg]      = useState("");
   const [reminderActionId, setReminderActionId] = useState<number | null>(null);
-  const [processingAll,    setProcessingAll]    = useState(false);
   const [rxSearch,         setRxSearch]         = useState("");
 
   useEffect(() => { fetchPending(); fetchSession(); }, []);
@@ -136,15 +135,16 @@ export default function PrescriptionPage() {
     catch { setReminders([]); }
     finally { setRemindersLoading(false); }
   };
+
   const handleSendOneTime = async (prescriptionId: number) => {
     setReminderActionId(prescriptionId); setReminderMsg("");
     try {
       const res = await sendOneTimeReminder(prescriptionId);
       setReminderMsg(` Reminder sent to ${res.patient ?? "patient"} for ${res.medicine ?? "medicine"}.`);
-      fetchReminders();
     } catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed to send reminder"); }
     finally { setReminderActionId(null); }
   };
+
   const handleMarkContinuous = async (prescriptionId: number, current: boolean) => {
     setReminderActionId(prescriptionId); setReminderMsg("");
     try {
@@ -153,12 +153,6 @@ export default function PrescriptionPage() {
       fetchHistory(historyFilter);
     } catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed to update"); }
     finally { setReminderActionId(null); }
-  };
-  const handleProcessAll = async () => {
-    setProcessingAll(true); setReminderMsg("");
-    try { const res = await processReminders(); setReminderMsg(` ${res.message}`); fetchReminders(); }
-    catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed"); }
-    finally { setProcessingAll(false); }
   };
 
   // ── Data fetches ───────────────────────────────────────────────────────────
@@ -1046,28 +1040,27 @@ export default function PrescriptionPage() {
             </div>
           )}
 
-          {/* Pending reminders */}
+          {/* Scheduled reminders — read only */}
           <div className="glass-card panel-p16-20 mb-20">
             <div className="row g-12 row-wrap mb-14" style={{ justifyContent: "space-between" }}>
-              <h2 className="panel-title">Pending Reminders</h2>
-              <div className="row g-8">
-                <button className="btn-ghost btn-ghost-sm" onClick={fetchReminders}>↻ Refresh</button>
-                <button className="btn-primary" style={{ fontSize: 12, padding: "6px 14px" }}
-                  onClick={handleProcessAll} disabled={processingAll}>
-                  {processingAll ? <><span className="spinner" />Processing…</> : "▶ Process All"}
-                </button>
+              <div>
+                <h2 className="panel-title">Scheduled Reminders</h2>
+                <p className="panel-sub" style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>
+                  These fire automatically via SMS — no action needed.
+                </p>
               </div>
+              <button className="btn-ghost btn-ghost-sm" onClick={fetchReminders}>↻ Refresh</button>
             </div>
             {remindersLoading ? (
               <div className="loading-cell row g-12"><span className="spinner" /><span>Loading…</span></div>
             ) : reminders.length === 0 ? (
-              <div className="center p-empty"><div className="empty-icon-md"></div><p className="empty-text">No pending reminders.</p></div>
+              <div className="center p-empty"><div className="empty-icon-md"></div><p className="empty-text">No upcoming reminders.</p></div>
             ) : (
               <div className="table-wrap">
                 <table className="full-table">
                   <thead>
                     <tr className="thead-border">
-                      {["ID", "Prescription", "Scheduled", "Type", "Dose", "Meal timing", "Channel", ""].map(h =>
+                      {["Rx ID", "Scheduled", "Type", "Dose", "Meal timing", "Channel"].map(h =>
                         <th key={h} className="th">{h}</th>
                       )}
                     </tr>
@@ -1075,7 +1068,6 @@ export default function PrescriptionPage() {
                   <tbody>
                     {reminders.map(r => (
                       <tr key={r.id} className="tr-border">
-                        <td className="td td-order-id">#{r.id}</td>
                         <td className="td td-order-id">Rx #{r.prescription_id}</td>
                         <td className="td td-date">{new Date(r.reminder_time).toLocaleString()}</td>
                         <td className="td">
@@ -1088,20 +1080,9 @@ export default function PrescriptionPage() {
                             {r.one_time ? "One-time" : r.dose_number > 0 ? "Dose" : "Refill"}
                           </span>
                         </td>
-                        <td className="td" style={{ color: "#e2e8f0", fontWeight: 500 }}>
-                          {doseLabel(r)}
-                        </td>
-                        <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>
-                          {mealLabel(r.meal_timing)}
-                        </td>
+                        <td className="td" style={{ color: "#e2e8f0", fontWeight: 500 }}>{doseLabel(r)}</td>
+                        <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>{mealLabel(r.meal_timing)}</td>
                         <td className="td"><span className="badge">{r.channel.toUpperCase()}</span></td>
-                        <td className="td">
-                          <button className="btn-sm btn-sm-green" style={{ fontSize: 11 }}
-                            onClick={() => handleSendOneTime(r.prescription_id)}
-                            disabled={reminderActionId === r.prescription_id}>
-                            {reminderActionId === r.prescription_id ? "…" : "Send Now"}
-                          </button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1110,13 +1091,13 @@ export default function PrescriptionPage() {
             )}
           </div>
 
-          {/* Per-prescription reminder controls */}
+          {/* Continuous refill toggle per prescription */}
           <div className="glass-card panel-p16-20">
             <div className="row g-12 row-wrap mb-14" style={{ justifyContent: "space-between" }}>
               <div>
-                <h2 className="panel-title">Prescription Reminder Controls</h2>
+                <h2 className="panel-title">Continuous Refill Reminders</h2>
                 <p className="panel-sub" style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>
-                  Send a one-time SMS or toggle recurring refill reminders per prescription
+                  Toggle to keep sending refill reminders after medicine runs out.
                 </p>
               </div>
               <button className="btn-ghost btn-ghost-sm" onClick={() => fetchHistory(historyFilter)}>↻ Refresh</button>
@@ -1128,21 +1109,21 @@ export default function PrescriptionPage() {
                 value={rxSearch} onChange={e => setRxSearch(e.target.value)} />
             </div>
             {historyLoading ? (
-              <div className="loading-cell row g-12"><span className="spinner" /><span>Loading prescriptions…</span></div>
+              <div className="loading-cell row g-12"><span className="spinner" /><span>Loading…</span></div>
             ) : historyRecords.filter(r =>
                 (r.medicine_name ?? "").toLowerCase().includes(rxSearch.toLowerCase()) ||
                 String(r.patient_id).includes(rxSearch) || String(r.id).includes(rxSearch)
               ).length === 0 ? (
               <div className="center p-empty">
                 <div className="empty-icon-md"></div>
-                <p className="empty-text">No prescriptions. Switch to Queue tab to create one first.</p>
+                <p className="empty-text">No prescriptions found.</p>
               </div>
             ) : (
               <div className="table-wrap">
                 <table className="full-table">
                   <thead>
                     <tr className="thead-border">
-                      {["Rx ID", "Patient", "Medicine", "Doses", "Remaining", "Status", "Refill?", "Actions"].map(h =>
+                      {["Rx ID", "Patient", "Medicine", "Doses/Day", "Remaining", "SMS Scheduled", "Status", "Auto-Refill"].map(h =>
                         <th key={h} className="th">{h}</th>
                       )}
                     </tr>
@@ -1160,19 +1141,23 @@ export default function PrescriptionPage() {
                             <td className="td td-order-id">#{r.id}</td>
                             <td className="td td-order-id">#{r.patient_id}</td>
                             <td className="td" style={{ color: "#e2e8f0", fontWeight: 500 }}>{r.medicine_name}</td>
-                            <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>
-                              {r.dose_per_day}×/day{r.meals ? ` · ${r.meals}` : ""}
-                            </td>
-                            {/* NEW: Remaining days with color */}
+                            <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>{r.dose_per_day}×/day</td>
                             <td className="td">
                               <span style={{ fontWeight: 700,
                                 color: r.remaining_days <= 0 ? "#f87171" : r.remaining_days <= 3 ? "#fbbf24" : "#4ade80" }}>
                                 {Math.round(r.remaining_days)}d
                               </span>
                             </td>
-                            {/* NEW: Status badge */}
-                            <td className="td" style={{ whiteSpace: "nowrap", minWidth: 110 }}>
-                              <span className="badge" style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: 11, whiteSpace: "nowrap", display: "inline-block" }}>
+                            <td className="td">
+                              {r.reminders_count !== undefined ? (
+                                <span style={{ fontSize: 12, fontWeight: 600,
+                                  color: r.reminders_count > 0 ? "#4ade80" : "#475569" }}>
+                                  {r.reminders_count > 0 ? `✓ ${r.reminders_count} pending` : "None"}
+                                </span>
+                              ) : <span style={{ color: "#334155", fontSize: 12 }}>—</span>}
+                            </td>
+                            <td className="td">
+                              <span className="badge" style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: 11 }}>
                                 {s.label}
                               </span>
                             </td>
@@ -1181,14 +1166,7 @@ export default function PrescriptionPage() {
                                 disabled={reminderActionId === r.id}
                                 className={r.is_continuous ? "btn-sm btn-sm-green" : "btn-sm"}
                                 style={{ opacity: reminderActionId === r.id ? 0.5 : 1 }}>
-                                {reminderActionId === r.id ? "…" : r.is_continuous ? " On" : "Off"}
-                              </button>
-                            </td>
-                            <td className="td">
-                              <button className="btn-sm" style={{ fontSize: 11 }}
-                                onClick={() => handleSendOneTime(r.id)}
-                                disabled={reminderActionId === r.id}>
-                                {reminderActionId === r.id ? "…" : " Send SMS"}
+                                {reminderActionId === r.id ? "…" : r.is_continuous ? "✓ On" : "Off"}
                               </button>
                             </td>
                           </tr>
