@@ -337,21 +337,22 @@ class WhatsAppService_wb:
             self.send_main_menu(user_id)
 
     def _handle_doctor_button(self, user_id: str):
-        """
+      """
         Handles the doctor button click.
-        Checks if eChannelling is enabled for this pharmacy first.
+        Checks if there are any active doctors added via the pharmacy portal.
+        If yes, sends the booking portal link. If no, sends a message to call.
         """
         logger.info(f"[WB_SERVICE] User {user_id} clicked DOCTOR button")
         from app.core.config import settings
-        from app.db import SessionLocal
-        from app import models
+        from app.channelling_models import Doctor
 
         db = SessionLocal()
         try:
-            setting    = db.query(models.PharmacySetting).filter_by(key="echannelling_enabled").first()
-            is_enabled = setting and setting.value.strip().lower() == "true"
-            #is_enabled = True
-            
+            active_doctor_count = db.query(Doctor).filter(Doctor.available == True).count()
+            is_enabled = active_doctor_count > 0
+        except Exception as e:
+            logger.error(f"[WB_SERVICE] Failed to check doctors: {e}")
+            is_enabled = False
         finally:
             db.close()
 
@@ -373,15 +374,12 @@ class WhatsAppService_wb:
             "*Book a Doctor Appointment*\n\n"
             "Ready to see a doctor? It's quick and easy!\n\n"
             "Visit our portal to choose your doctor and pick a time slot:\n"
-            f"🔗 {settings.BASE_URL}/channelling\n\n"
+            f"🔗 {settings.BASE_URL}/channel\n\n"
             "A small service fee is charged at booking.\n"
             "Consultation fee is paid directly at the hospital.\n\n"
             "_(Type 'menu' to return)_"
         )
-        self.twilio_wa.send_text(
-            user_id,
-            message
-        )
+        self.twilio_wa.send_text(user_id, message)
         UserState_wb.set_user_state(user_id, "doctor_info")
 
     def _handle_disease_updates(self, user_id: str):
