@@ -291,14 +291,17 @@ async def update_doctor(doctor_id: int, body: DoctorIn, db: Session = Depends(ge
 
 @router.delete("/admin/doctors/{doctor_id}")
 async def delete_doctor(doctor_id: int, db: Session = Depends(get_db)):
-    from app.channelling_models import Doctor
+    from app.channelling_models import Doctor, ChannellingAppointment, TimeSlot, OtherHospital
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")
+    # Delete related appointments first to avoid FK constraint
+    db.query(ChannellingAppointment).filter(
+        ChannellingAppointment.doctor_id == doctor_id
+    ).delete(synchronize_session=False)
     db.delete(doctor)
     db.commit()
     return {"message": "Doctor deleted"}
-
 
 # ── Admin — Other Hospitals ───────────────────────────────────────
 @router.post("/admin/doctors/{doctor_id}/other-hospitals")

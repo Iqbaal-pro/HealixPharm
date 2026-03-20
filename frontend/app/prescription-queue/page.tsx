@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import {
   getPendingPrescriptions, createPrescription, issueMedicine,
-  getAllPrescriptions, notifyPrescriptionIssued, getOrderDetail,
+  getAllPrescriptions, getOrderDetail,
   getPresignedUrl, uploadPrescriptionImage, checkImageClarity, getIssuedToday,
-  type PendingPrescription, type PrescriptionResponse,
+  type PendingPrescription, type PrescriptionOrderItem, type PrescriptionResponse,
   type PrescriptionRecord, type IssueResponse, type IssuedTodayRecord,
 } from "../routes/prescriptionRoutes";
 import {
@@ -86,9 +86,6 @@ export default function PrescriptionPage() {
   const [issuing,        setIssuing]        = useState(false);
   const [issueError,     setIssueError]     = useState("");
   const [issueResults,   setIssueResults]   = useState<(IssueResponse & { medicine_name: string })[]>([]);
-  const [notifyStatus,   setNotifyStatus]   = useState<"idle"|"sending"|"sent"|"failed">("idle");  // NEW
-  const [notifyMsg,      setNotifyMsg]      = useState("");  // NEW
-  const [sendWhatsApp,   setSendWhatsApp]   = useState(true);  // NEW: opt-in toggle
 
   const [session, setSession] = useState<IssuedTodayRecord[]>([]);
   const [sessionHidden, setSessionHidden] = useState(false);
@@ -107,7 +104,6 @@ export default function PrescriptionPage() {
   const [remindersLoading, setRemindersLoading] = useState(false);
   const [reminderMsg,      setReminderMsg]      = useState("");
   const [reminderActionId, setReminderActionId] = useState<number | null>(null);
-  const [processingAll,    setProcessingAll]    = useState(false);
   const [rxSearch,         setRxSearch]         = useState("");
 
   useEffect(() => { fetchPending(); fetchSession(); }, []);
@@ -139,15 +135,16 @@ export default function PrescriptionPage() {
     catch { setReminders([]); }
     finally { setRemindersLoading(false); }
   };
+
   const handleSendOneTime = async (prescriptionId: number) => {
     setReminderActionId(prescriptionId); setReminderMsg("");
     try {
       const res = await sendOneTimeReminder(prescriptionId);
       setReminderMsg(` Reminder sent to ${res.patient ?? "patient"} for ${res.medicine ?? "medicine"}.`);
-      fetchReminders();
     } catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed to send reminder"); }
     finally { setReminderActionId(null); }
   };
+
   const handleMarkContinuous = async (prescriptionId: number, current: boolean) => {
     setReminderActionId(prescriptionId); setReminderMsg("");
     try {
@@ -156,12 +153,6 @@ export default function PrescriptionPage() {
       fetchHistory(historyFilter);
     } catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed to update"); }
     finally { setReminderActionId(null); }
-  };
-  const handleProcessAll = async () => {
-    setProcessingAll(true); setReminderMsg("");
-    try { const res = await processReminders(); setReminderMsg(` ${res.message}`); fetchReminders(); }
-    catch (e: unknown) { setReminderMsg(e instanceof Error ? e.message : "Failed"); }
-    finally { setProcessingAll(false); }
   };
 
   // ── Data fetches ───────────────────────────────────────────────────────────
@@ -172,12 +163,33 @@ export default function PrescriptionPage() {
     setFreshUrl(null);
     setUploadFile(null); setUploadPreview(null); setUploadStatus("idle"); setUploadMsg(""); setUploadedKey(null);
     setStep("save");
+    // Auto-fill patient ID from order
+    if (p.patient_id) setPatientId(String(p.patient_id));
     if (p.order_id) {
       setUrlLoading(true);
       try {
-        // If we have an s3_key directly, use getPresignedUrl for a cleaner fresh URL
-        // Otherwise fall back to getOrderDetail
-        const detail = await getOrderDetail(p.order_id) as { prescription_url?: string; prescription?: { s3_key?: string } };
+        const detail = await getOrderDetail(p.order_id) as {
+          prescription_url?: string;
+          prescription?: { s3_key?: string };
+          items?: { medicine_id: number; medicine_name: string; quantity: number }[];
+        };
+        // Auto-fill medicines from approved order items (available in detail)
+        if (detail?.items && detail.items.length > 0) {
+          const filledMeds = detail.items.map(item => ({
+            ...EMPTY_MED,
+            medicine_id:    item.medicine_id,
+            medicine_name:  item.medicine_name,
+            quantity_given: String(item.quantity),
+          }));
+          setMedicines(filledMeds);
+          setMedSearch(filledMeds.map(m => m.medicine_name));
+          setMedResults(filledMeds.map(() => []));
+        } else {
+          setMedicines([{ ...EMPTY_MED }]);
+          setMedSearch([""]);
+          setMedResults([[]]);
+        }
+        // Load prescription image
         const s3Key = detail?.prescription?.s3_key;
         if (s3Key) {
           const url = await getPresignedUrl(s3Key);
@@ -187,6 +199,9 @@ export default function PrescriptionPage() {
         }
       } catch {
         setFreshUrl(p.prescription_url ?? null);
+        setMedicines([{ ...EMPTY_MED }]);
+        setMedSearch([""]);
+        setMedResults([[]]);
       } finally {
         setUrlLoading(false);
       }
@@ -308,8 +323,6 @@ export default function PrescriptionPage() {
       }
       setSavedRxs(rxs);
       setIssueResults([]);
-      setNotifyStatus("idle");
-      setNotifyMsg("");
       setStep("issue");
     } catch (e: unknown) { setSaveError(e instanceof Error ? e.message : "Failed to save"); }
     finally { setSaving(false); }
@@ -317,7 +330,7 @@ export default function PrescriptionPage() {
 
   // ── Issue ──────────────────────────────────────────────────────────────────
   const handleIssueAll = async () => {
-    setIssuing(true); setIssueError(""); setNotifyStatus("idle"); setNotifyMsg("");
+    setIssuing(true); setIssueError("");
     const results: (IssueResponse & { medicine_name: string })[] = [];
     try {
       for (let i = 0; i < savedRxs.length; i++) {
@@ -342,24 +355,13 @@ export default function PrescriptionPage() {
           await fetch(`${BOT_BASE}/admin/orders/${selected.order_id}/status`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "APPROVED" }),
+            body: JSON.stringify({ status: "AWAITING_PAYMENT_SELECTION" }),
           });
         } catch { /* silent — don't block the flow */ }
+        fetchPending(); // remove from queue after processing
       }
 
-      // Send WhatsApp bill if opted in and phone provided
-      if (sendWhatsApp && patientPhone.trim()) {
-        setNotifyStatus("sending");
-        const totalReminders = savedRxs.reduce((s, rx) => s + (rx.reminders_scheduled || 0), 0);
-        const notifResult = await notifyPrescriptionIssued({
-          patient_phone: patientPhone.trim(),
-          items: billItems.filter(i => i.quantity > 0),
-          total_amount: billTotal,
-          reminders_scheduled: totalReminders,
-        });
-        setNotifyStatus(notifResult.success ? "sent" : "failed");
-        setNotifyMsg(notifResult.message);
-      }
+
     } catch (e: unknown) { setIssueError(e instanceof Error ? e.message : "Failed to issue"); }
     finally { setIssuing(false); }
   };
@@ -371,7 +373,6 @@ export default function PrescriptionPage() {
     setMedicines([{ ...EMPTY_MED }]);
     setMedSearch([""]); setMedResults([[]]);
     setSaveError(""); setIssueError("");
-    setNotifyStatus("idle"); setNotifyMsg("");
     fetchPending();
   };
 
@@ -461,8 +462,8 @@ export default function PrescriptionPage() {
               <div className="glass-card panel-p24">
                 <div className="row row-between mb-18">
                   <div>
-                    <h2 className="card-title">WhatsApp Queue</h2>
-                    <p className="card-sub">Prescriptions sent by patients.</p>
+                    <h2 className="card-title">Ready to Dispense</h2>
+                    <p className="card-sub">Paid and confirmed orders — issue stock and set up reminders.</p>
                   </div>
                   <div className="row g-8">
                     <button className="btn-manual" onClick={() => { setSelected(null); setStep("save"); }}>+ Enter Manually</button>
@@ -476,8 +477,8 @@ export default function PrescriptionPage() {
                 ) : pending.length === 0 ? (
                   <div className="center p-empty">
                     <div className="empty-icon-lg"></div>
-                    <p className="empty-text mb-6">No pending WhatsApp prescriptions</p>
-                    <p className="empty-sub mb-20">Patients send images via WhatsApp → saved to AWS → appear here.</p>
+                    <p className="empty-text mb-6">No orders ready to dispense</p>
+                    <p className="empty-sub mb-20">Orders appear here once payment is received (Paid, Confirmed, or Cash on Delivery).</p>
                     <button className="btn-primary" onClick={() => { setSelected(null); setStep("save"); }}>+ Enter Manually</button>
                   </div>
                 ) : (
@@ -488,7 +489,7 @@ export default function PrescriptionPage() {
                           <span className="queue-thumb-empty">🖼</span>
                         </div>
                         <div className="queue-info">
-                          <div className="queue-info-title">Prescription <span className="queue-info-id">#{p.order_id}</span></div>
+                          <div className="queue-info-title">Order <span className="queue-info-id">#{p.order_id}</span>{p.items?.length > 0 && <span style={{fontSize:11,color:"#475569",marginLeft:8}}>{p.items.length} medicine{p.items.length>1?"s":""}</span>}</div>
                           {p.patient_id && <div className="queue-info-phone">Patient ID: #{p.patient_id}</div>}
                           {p.phone && <div className="queue-info-phone">{p.phone}</div>}
                           <div className="queue-info-date">{new Date(p.created_at).toLocaleString()}</div>
@@ -604,15 +605,7 @@ export default function PrescriptionPage() {
                     <input type="number" min="1" placeholder="e.g. 3" className="input-field"
                       value={staffId} onChange={e => setStaffId(e.target.value)} />
                   </div>
-                  {/* NEW: Patient phone */}
-                  <div className="col g-6">
-                    <label className="form-label">
-                      Patient WhatsApp Number
-                      <span style={{ marginLeft: 6, fontSize: 10, color: "#475569", fontWeight: 400 }}>for bill notification</span>
-                    </label>
-                    <input type="tel" placeholder="+94771234567" className="input-field"
-                      value={patientPhone} onChange={e => setPatientPhone(e.target.value)} />
-                  </div>
+
                   <div className="col g-6">
                     <label className="form-label">Start Date</label>
                     <input type="date" className="input-field" style={{ colorScheme: "dark" }}
@@ -838,26 +831,7 @@ export default function PrescriptionPage() {
                   </div>
                 </div>
 
-                {/* NEW: WhatsApp notification opt-in */}
-                <div style={{ background: "rgba(74,222,128,0.04)", border: "1px solid rgba(74,222,128,0.12)", borderRadius: 12, padding: "14px 18px", marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div className={`toggle-track ${sendWhatsApp ? "toggle-track-on" : "toggle-track-off"}`}
-                        onClick={() => setSendWhatsApp(v => !v)}>
-                        <div className={`toggle-thumb ${sendWhatsApp ? "toggle-thumb-on" : "toggle-thumb-off"}`} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>Send bill via WhatsApp</div>
-                        <div style={{ fontSize: 11, color: "#475569" }}>
-                          {patientPhone ? `Will send to ${patientPhone}` : "Enter patient phone number in Save step"}
-                        </div>
-                      </div>
-                    </div>
-                    {!patientPhone && sendWhatsApp && (
-                      <span style={{ fontSize: 11, color: "#fbbf24" }}> No phone number entered</span>
-                    )}
-                  </div>
-                </div>
+
 
                 <div className="col g-10 mb-14">
                   {savedRxs.map((rx, idx) => {
@@ -897,20 +871,7 @@ export default function PrescriptionPage() {
 
                 {issueError && <div className="warn-box mb-14"><p className="hint hint-err"> {issueError}</p></div>}
 
-                {/* NEW: WhatsApp notification status */}
-                {notifyStatus !== "idle" && (
-                  <div style={{
-                    marginBottom: 14, padding: "12px 16px", borderRadius: 10,
-                    background: notifyStatus === "sent" ? "rgba(74,222,128,0.08)" : notifyStatus === "failed" ? "rgba(248,113,113,0.08)" : "rgba(56,189,248,0.08)",
-                    border: `1px solid ${notifyStatus === "sent" ? "rgba(74,222,128,0.2)" : notifyStatus === "failed" ? "rgba(248,113,113,0.2)" : "rgba(56,189,248,0.2)"}`,
-                    color: notifyStatus === "sent" ? "#4ade80" : notifyStatus === "failed" ? "#f87171" : "#38bdf8",
-                    fontSize: 13,
-                  }}>
-                    {notifyStatus === "sending" && <><span className="spinner" style={{ marginRight: 8 }} />Sending WhatsApp bill…</>}
-                    {notifyStatus === "sent"    && ` WhatsApp bill sent to ${patientPhone}`}
-                    {notifyStatus === "failed"  && ` WhatsApp failed: ${notifyMsg}`}
-                  </div>
-                )}
+
 
                 <div className="row g-10">
                   <button className="btn-primary flex-1" onClick={handleIssueAll}
@@ -1079,28 +1040,27 @@ export default function PrescriptionPage() {
             </div>
           )}
 
-          {/* Pending reminders */}
+          {/* Scheduled reminders — read only */}
           <div className="glass-card panel-p16-20 mb-20">
             <div className="row g-12 row-wrap mb-14" style={{ justifyContent: "space-between" }}>
-              <h2 className="panel-title">Pending Reminders</h2>
-              <div className="row g-8">
-                <button className="btn-ghost btn-ghost-sm" onClick={fetchReminders}>↻ Refresh</button>
-                <button className="btn-primary" style={{ fontSize: 12, padding: "6px 14px" }}
-                  onClick={handleProcessAll} disabled={processingAll}>
-                  {processingAll ? <><span className="spinner" />Processing…</> : "▶ Process All"}
-                </button>
+              <div>
+                <h2 className="panel-title">Scheduled Reminders</h2>
+                <p className="panel-sub" style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>
+                  These fire automatically via SMS — no action needed.
+                </p>
               </div>
+              <button className="btn-ghost btn-ghost-sm" onClick={fetchReminders}>↻ Refresh</button>
             </div>
             {remindersLoading ? (
               <div className="loading-cell row g-12"><span className="spinner" /><span>Loading…</span></div>
             ) : reminders.length === 0 ? (
-              <div className="center p-empty"><div className="empty-icon-md"></div><p className="empty-text">No pending reminders.</p></div>
+              <div className="center p-empty"><div className="empty-icon-md"></div><p className="empty-text">No upcoming reminders.</p></div>
             ) : (
               <div className="table-wrap">
                 <table className="full-table">
                   <thead>
                     <tr className="thead-border">
-                      {["ID", "Prescription", "Scheduled", "Type", "Dose", "Meal timing", "Channel", ""].map(h =>
+                      {["Rx ID", "Scheduled", "Type", "Dose", "Meal timing", "Channel"].map(h =>
                         <th key={h} className="th">{h}</th>
                       )}
                     </tr>
@@ -1108,7 +1068,6 @@ export default function PrescriptionPage() {
                   <tbody>
                     {reminders.map(r => (
                       <tr key={r.id} className="tr-border">
-                        <td className="td td-order-id">#{r.id}</td>
                         <td className="td td-order-id">Rx #{r.prescription_id}</td>
                         <td className="td td-date">{new Date(r.reminder_time).toLocaleString()}</td>
                         <td className="td">
@@ -1121,20 +1080,9 @@ export default function PrescriptionPage() {
                             {r.one_time ? "One-time" : r.dose_number > 0 ? "Dose" : "Refill"}
                           </span>
                         </td>
-                        <td className="td" style={{ color: "#e2e8f0", fontWeight: 500 }}>
-                          {doseLabel(r)}
-                        </td>
-                        <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>
-                          {mealLabel(r.meal_timing)}
-                        </td>
+                        <td className="td" style={{ color: "#e2e8f0", fontWeight: 500 }}>{doseLabel(r)}</td>
+                        <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>{mealLabel(r.meal_timing)}</td>
                         <td className="td"><span className="badge">{r.channel.toUpperCase()}</span></td>
-                        <td className="td">
-                          <button className="btn-sm btn-sm-green" style={{ fontSize: 11 }}
-                            onClick={() => handleSendOneTime(r.prescription_id)}
-                            disabled={reminderActionId === r.prescription_id}>
-                            {reminderActionId === r.prescription_id ? "…" : "Send Now"}
-                          </button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1143,13 +1091,13 @@ export default function PrescriptionPage() {
             )}
           </div>
 
-          {/* Per-prescription reminder controls */}
+          {/* Continuous refill toggle per prescription */}
           <div className="glass-card panel-p16-20">
             <div className="row g-12 row-wrap mb-14" style={{ justifyContent: "space-between" }}>
               <div>
-                <h2 className="panel-title">Prescription Reminder Controls</h2>
+                <h2 className="panel-title">Continuous Refill Reminders</h2>
                 <p className="panel-sub" style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>
-                  Send a one-time SMS or toggle recurring refill reminders per prescription
+                  Toggle to keep sending refill reminders after medicine runs out.
                 </p>
               </div>
               <button className="btn-ghost btn-ghost-sm" onClick={() => fetchHistory(historyFilter)}>↻ Refresh</button>
@@ -1161,21 +1109,21 @@ export default function PrescriptionPage() {
                 value={rxSearch} onChange={e => setRxSearch(e.target.value)} />
             </div>
             {historyLoading ? (
-              <div className="loading-cell row g-12"><span className="spinner" /><span>Loading prescriptions…</span></div>
+              <div className="loading-cell row g-12"><span className="spinner" /><span>Loading…</span></div>
             ) : historyRecords.filter(r =>
                 (r.medicine_name ?? "").toLowerCase().includes(rxSearch.toLowerCase()) ||
                 String(r.patient_id).includes(rxSearch) || String(r.id).includes(rxSearch)
               ).length === 0 ? (
               <div className="center p-empty">
                 <div className="empty-icon-md"></div>
-                <p className="empty-text">No prescriptions. Switch to Queue tab to create one first.</p>
+                <p className="empty-text">No prescriptions found.</p>
               </div>
             ) : (
               <div className="table-wrap">
                 <table className="full-table">
                   <thead>
                     <tr className="thead-border">
-                      {["Rx ID", "Patient", "Medicine", "Doses", "Remaining", "Status", "Refill?", "Actions"].map(h =>
+                      {["Rx ID", "Patient", "Medicine", "Doses/Day", "Remaining", "SMS Scheduled", "Status", "Auto-Refill"].map(h =>
                         <th key={h} className="th">{h}</th>
                       )}
                     </tr>
@@ -1193,19 +1141,23 @@ export default function PrescriptionPage() {
                             <td className="td td-order-id">#{r.id}</td>
                             <td className="td td-order-id">#{r.patient_id}</td>
                             <td className="td" style={{ color: "#e2e8f0", fontWeight: 500 }}>{r.medicine_name}</td>
-                            <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>
-                              {r.dose_per_day}×/day{r.meals ? ` · ${r.meals}` : ""}
-                            </td>
-                            {/* NEW: Remaining days with color */}
+                            <td className="td" style={{ color: "#94a3b8", fontSize: 12 }}>{r.dose_per_day}×/day</td>
                             <td className="td">
                               <span style={{ fontWeight: 700,
                                 color: r.remaining_days <= 0 ? "#f87171" : r.remaining_days <= 3 ? "#fbbf24" : "#4ade80" }}>
                                 {Math.round(r.remaining_days)}d
                               </span>
                             </td>
-                            {/* NEW: Status badge */}
-                            <td className="td" style={{ whiteSpace: "nowrap", minWidth: 110 }}>
-                              <span className="badge" style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: 11, whiteSpace: "nowrap", display: "inline-block" }}>
+                            <td className="td">
+                              {r.reminders_count !== undefined ? (
+                                <span style={{ fontSize: 12, fontWeight: 600,
+                                  color: r.reminders_count > 0 ? "#4ade80" : "#475569" }}>
+                                  {r.reminders_count > 0 ? `✓ ${r.reminders_count} pending` : "None"}
+                                </span>
+                              ) : <span style={{ color: "#334155", fontSize: 12 }}>—</span>}
+                            </td>
+                            <td className="td">
+                              <span className="badge" style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: 11 }}>
                                 {s.label}
                               </span>
                             </td>
@@ -1214,14 +1166,7 @@ export default function PrescriptionPage() {
                                 disabled={reminderActionId === r.id}
                                 className={r.is_continuous ? "btn-sm btn-sm-green" : "btn-sm"}
                                 style={{ opacity: reminderActionId === r.id ? 0.5 : 1 }}>
-                                {reminderActionId === r.id ? "…" : r.is_continuous ? " On" : "Off"}
-                              </button>
-                            </td>
-                            <td className="td">
-                              <button className="btn-sm" style={{ fontSize: 11 }}
-                                onClick={() => handleSendOneTime(r.id)}
-                                disabled={reminderActionId === r.id}>
-                                {reminderActionId === r.id ? "…" : " Send SMS"}
+                                {reminderActionId === r.id ? "…" : r.is_continuous ? "✓ On" : "Off"}
                               </button>
                             </td>
                           </tr>

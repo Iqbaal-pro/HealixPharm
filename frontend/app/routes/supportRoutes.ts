@@ -45,3 +45,16 @@ export async function closeTicket(ticketId: number): Promise<unknown> {
   const res = await fetch(`${BASE}/admin/support/tickets/${ticketId}/close`, { method: "POST" });
   return handleResponse<unknown>(res);
 }
+
+export interface SupportMessage {
+  id: number;
+  sender_type: "USER" | "AGENT";
+  body: string;
+  created_at: string;
+}
+
+// GET /admin/support/tickets/{id}/messages
+export async function getTicketMessages(ticketId: number): Promise<SupportMessage[]> {
+  const res = await fetch(`${BASE}/admin/support/tickets/${ticketId}/messages`);
+  return handleResponse<SupportMessage[]>(res);
+}

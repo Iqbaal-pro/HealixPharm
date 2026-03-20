@@ -20,6 +20,14 @@ export interface PrescriptionRecord {
   created_at: string;
   remaining_days: number;
   is_completed: boolean;
+  reminders_count?: number;
+}
+
+export interface PrescriptionOrderItem {
+  medicine_id: number;
+  medicine_name: string;
+  quantity: number;
+  unit_price?: number;
 }
 
 export interface PendingPrescription {
@@ -29,6 +37,7 @@ export interface PendingPrescription {
   patient_id: number | null;
   prescription_url: string | null;
   created_at: string;
+  items: PrescriptionOrderItem[];
 }
 
 export interface MedicineSearchResult {
@@ -95,20 +104,6 @@ export interface IssueResponse {
   };
 }
 
-export interface BillItem {
-  medicine_name: string;
-  quantity: number;
-  unit_price: number;
-  subtotal: number;
-}
-
-export interface NotifyBillPayload {
-  patient_phone: string;
-  items: BillItem[];
-  total_amount: number;
-  reminders_scheduled: number;
-}
-
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Request failed" }));
@@ -118,9 +113,19 @@ async function handleResponse<T>(res: Response): Promise<T> {
 }
 
 export async function getPendingPrescriptions(): Promise<PendingPrescription[]> {
-  const res = await fetch(`${BOT_BASE}/admin/orders?status=PENDING_VERIFICATION`);
-  const orders = await handleResponse<any[]>(res);
-  // Map OrderSimpleSchema → PendingPrescription shape
+  // Fetch orders that are paid/confirmed and ready to dispense
+  const statuses = ["PAID", "CONFIRMED", "PENDING_ON_DELIVERY"];
+  const allOrders: any[] = [];
+  for (const status of statuses) {
+    try {
+      const res = await fetch(`${BOT_BASE}/admin/orders?status=${status}`);
+      if (res.ok) {
+        const orders = await res.json();
+        allOrders.push(...orders);
+      }
+    } catch { /* silent */ }
+  }
+  const orders = allOrders;
   return orders.map(o => ({
     order_id:         o.id,
     token:            o.token,
@@ -128,6 +133,12 @@ export async function getPendingPrescriptions(): Promise<PendingPrescription[]> 
     patient_id:       o.patient_id ?? null,
     prescription_url: o.prescription_url ?? null,
     created_at:       o.created_at,
+    items:            (o.items ?? []).map((i: any) => ({
+      medicine_id:   i.medicine_id,
+      medicine_name: i.medicine_name ?? "",
+      quantity:      i.quantity,
+      unit_price:    i.unit_price,
+    })),
   }));
 }
 
@@ -164,21 +175,6 @@ export async function confirmPayment(orderId: number) {
     method: "POST",
   });
   return handleResponse<unknown>(res);
-}
-
-// POST /admin/notify/prescription-issued — send WhatsApp bill + reminder confirmation
-export async function notifyPrescriptionIssued(payload: NotifyBillPayload): Promise<{ success: boolean; message: string }> {
-  try {
-    const res = await fetch(`${BOT_BASE}/admin/notify/prescription-issued`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) return { success: false, message: "WhatsApp notification failed" };
-    return handleResponse<{ success: boolean; message: string }>(res);
-  } catch {
-    return { success: false, message: "Could not reach notification service" };
-  }
 }
 
 export async function getAllPrescriptions(completedOnly?: boolean): Promise<PrescriptionRecord[]> {
