@@ -16,7 +16,7 @@ export interface Patient {
   name: string;
   phone_number: string;
   language: string;
-  consent: boolean;
+  consent: boolean | number | null;
 }
 
 export interface CreatePatientPayload {

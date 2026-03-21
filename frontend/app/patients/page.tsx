@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { getPatients, createPatient, updateConsent, type Patient } from "../routes/patientRoutes";
+import { getPatients, createPatient, type Patient } from "../routes/patientRoutes";
 
 export default function PatientsPage() {
   const [patients, setPatients]       = useState<Patient[]>([]);
@@ -10,7 +10,6 @@ export default function PatientsPage() {
   const [saving, setSaving]           = useState(false);
   const [msg, setMsg]                 = useState("");
   const [form, setForm]               = useState({ name: "", phone_number: "", language: "en", consent: false });
-  const [togglingId, setTogglingId]   = useState<number | null>(null);
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -32,13 +31,6 @@ export default function PatientsPage() {
       fetchPatients();
     } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Failed to create patient"); }
     finally { setSaving(false); }
-  };
-
-  const handleConsent = async (patient: Patient) => {
-    setTogglingId(patient.id);
-    try { await updateConsent(patient.id, !patient.consent); fetchPatients(); }
-    catch { setMsg("Failed to update consent."); }
-    finally { setTogglingId(null); }
   };
 
   const filtered = patients.filter(p =>
@@ -147,14 +139,16 @@ export default function PatientsPage() {
                         <td className="td td-phone-cell"><div className="td-phone">{p.phone_number}</div></td>
                         <td className="td"><span className="badge">{(p.language ?? "—").toUpperCase()}</span></td>
                         <td className="td">
-                          <button
-                            onClick={() => handleConsent(p)}
-                            disabled={togglingId === p.id}
-                            className={p.consent ? "btn-sm btn-sm-green" : "btn-sm"}
-                            style={{ opacity: togglingId === p.id ? 0.5 : 1 }}
-                          >
-                            {togglingId === p.id ? "…" : p.consent ? "✓ Consented" : "No Consent"}
-                          </button>
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 99,
+                            background: (p.consent === true || p.consent === 1) ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)",
+                            color: (p.consent === true || p.consent === 1) ? "#4ade80" : "#f87171",
+                            border: `1px solid ${(p.consent === true || p.consent === 1) ? "rgba(74,222,128,0.2)" : "rgba(248,113,113,0.2)"}` ,
+                          }}>
+                            <span style={{ width: 5, height: 5, borderRadius: "50%", background: (p.consent === true || p.consent === 1) ? "#4ade80" : "#f87171" }} />
+                            {p.consent === true || p.consent === 1 ? "Consented" : "Not Consented"}
+                          </span>
                         </td>
                       </tr>
                     ))}
