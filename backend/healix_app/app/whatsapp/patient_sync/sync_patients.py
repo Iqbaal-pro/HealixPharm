@@ -185,7 +185,7 @@ def sync_to_db(df):
                         firstName = name.split()[0] if name else ""
                         welcome_msg = (
                             f"Hi {firstName}! 🎉\n\n"
-                            "Your HealixPharm registration is completed.\n\n"
+                            "Your HealiXharm registration is completed.\n\n"
                             "Please reply with *'hi'* or *'menu'* right here to get started!"
                         )
                         try:
@@ -364,7 +364,7 @@ def main():
                 # Reverse sync: Delete orphaned sheet rows if they are missing from DB
                 creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
                 service = build("sheets", "v4", credentials=creds)
-                reverse_sync_deletions(service, last_sync)
+                # reverse_sync_deletions(service, last_sync)
             
         except Exception as e:
             print(f"[ERROR] Sync cycle failed: {e}")
