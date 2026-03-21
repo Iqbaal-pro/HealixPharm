@@ -375,13 +375,32 @@ def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = De
         from app.whatsapp.twilio_client import TwilioWhatsAppClient
         twilio = TwilioWhatsAppClient()
         twilio.send_text(user_phone, payload.body)
+        
+        # Ensure user state is live_chat when agent sends a message
+        UserState_wb.set_user_state(user_phone, "live_chat")
     except Exception as e:
         logger.error(f"Failed to send agent message to {user_phone}: {e}")
         raise HTTPException(status_code=500, detail="Failed to send WhatsApp message")
 
     return {"status": "SENT"}
 
-
+@router.get("/support/tickets/{ticket_id}/messages")
+def get_ticket_messages(ticket_id: int, db: Session = Depends(get_db)):
+    """
+    Get all messages for a ticket — both USER and AGENT messages.
+    """
+    ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return [
+        {
+            "id":          m.id,
+            "sender_type": m.sender_type,
+            "body":        m.body,
+            "created_at":  m.created_at.isoformat() if m.created_at else None,
+        }
+        for m in sorted(ticket.messages, key=lambda m: m.created_at or "")
+    ]
 @router.post("/support/tickets/{ticket_id}/close")
 def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     """
@@ -404,9 +423,10 @@ def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     if user_phone:
         UserState_wb.set_user_state(user_phone, "main_menu")
         try:
-            from app.whatsapp.twilio_client import TwilioWhatsAppClient
-            twilio = TwilioWhatsAppClient()
-            twilio.send_text(user_phone, "Chat ended by pharmacy.\nYou have been returned to the main menu.")
+            from app.whatsapp.service import WhatsAppService_wb
+            service = WhatsAppService_wb()
+            service.twilio_wa.send_text(user_phone, "Chat ended by pharmacy.")
+            service.send_main_menu(user_phone)
         except Exception as e:
             logger.error(f"Failed to notify user {user_phone} of chat closure: {e}")
 

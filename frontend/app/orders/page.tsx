@@ -50,11 +50,8 @@ export default function OrdersPage() {
       const detail = await fetchOrderDetail(id);
       setSelected(detail);
       if (detail.prescription_url) {
-        try {
-          const BOT_BASE = process.env.NEXT_PUBLIC_BOT_API_URL ?? "http://localhost:8001";
-          const res = await fetch(`${BOT_BASE}/api/storage/presigned-url?key=${encodeURIComponent(detail.prescription_url)}`);
-          if (res.ok) { const data = await res.json(); setPresignedUrl(data.url); }
-        } catch { /* show nothing if presign fails */ }
+        // Backend already returns a presigned URL — use it directly
+        setPresignedUrl(detail.prescription_url);
       }
     }
     catch { setSelected(null); } finally { setDetailLoading(false); }
@@ -244,13 +241,14 @@ export default function OrdersPage() {
                 {selected.prescription_url && (
                   <div className="mb-14">
                     <div className="section-label mb-6">Prescription</div>
-                    {presignedUrl ? (
-                      <a href={presignedUrl} target="_blank" rel="noreferrer">
-                        <img src={presignedUrl} alt="prescription" className="rx-img"/>
-                      </a>
-                    ) : (
-                      <div style={{ color: "#475569", fontSize: 13 }}>Loading image...</div>
-                    )}
+                    {presignedUrl === null
+                      ? <div style={{ color: "#475569", fontSize: 13 }}>Loading image...</div>
+                      : presignedUrl === "not_found"
+                      ? <div style={{ color: "#475569", fontSize: 13, padding: "12px", background: "rgba(148,163,184,0.06)", borderRadius: 8, border: "1px solid rgba(148,163,184,0.1)" }}>⚠ Image not available — file may have been deleted from storage.</div>
+                      : <a href={presignedUrl} target="_blank" rel="noreferrer">
+                          <img src={presignedUrl} alt="prescription" className="rx-img"/>
+                        </a>
+                    }
                   </div>
                 )}
 

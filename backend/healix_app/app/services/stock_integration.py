@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 stock_engine = create_engine(settings.STOCK_DATABASE_URL)
 StockSession = sessionmaker(bind=stock_engine)
 
+
 class StockIntegrationService:
     """
     Bridge service to interact with the external Stock Management MySQL DB.
