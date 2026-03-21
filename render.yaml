@@ -73,4 +73,4 @@ services:
       - key: NEXT_PUBLIC_API_URL
         sync: false
       - key: NEXT_PUBLIC_BOT_API_URL
-        sync: false
+        value: https://healixpharm-3bot.onrender.com
