@@ -135,7 +135,7 @@ def sync_to_db(df):
                 dob = row.get("Date of Birth", "")
                 age = row.get("Age", "")
                 consent_raw = str(row.get("Do you consent to receive medicine dosage reminders from the pharmacy?", "")).lower()
-                consent = 1 if "yes" in consent_raw else 0
+                consent = 1 if ("yes" in consent_raw or "agree" in consent_raw) else 0
                 
                 if not phone:
                     continue
