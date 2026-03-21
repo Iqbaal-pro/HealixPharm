@@ -114,106 +114,103 @@ def sync_to_db(df):
         latest_ts = None
         
         for _, row in df.iterrows():
-            # Mandatory Google Forms column
-            ts_str = row.get("Timestamp")
-            
-            name = row.get("Full Name", "")
-            raw_phone = str(row.get("Contact Number", "")).strip().replace(" ", "").replace("-", "")
-            
-            # Normalize Sri Lankan Google Form numbers to Twilio E.164 exact format (+947...)
-            clean_phone = raw_phone
-            if raw_phone.startswith("07"):
-                clean_phone = "+94" + raw_phone[1:]
-            elif raw_phone.startswith("7"):
-                clean_phone = "+94" + raw_phone
-            elif raw_phone.startswith("94"):
-                clean_phone = "+" + raw_phone
+            try:
+                # Mandatory Google Forms column
+                ts_str = row.get("Timestamp")
                 
-            phone = clean_phone
-            lang = row.get("Language Preference", "English")
-            dob = row.get("Date of Birth", "")
-            age = row.get("Age", "")
-            consent_raw = str(row.get("Do you consent to receive medicine dosage reminders from the pharmacy?", "")).lower()
-            consent = 1 if "yes" in consent_raw else 0
-            
-            if not phone:
-                continue
-
-            # Check if this patient already exists via in-memory cache
-            is_new_patient = (phone not in existing_phones)
-
-            # Encrypt sensitive data before inserting
-            enc_name = encrypt_data(name)
-            enc_phone = encrypt_data(phone)
-            enc_lang = encrypt_data(lang)
-            enc_dob = encrypt_data(dob)
-
-            if is_new_patient:
-                query = """
-                    INSERT INTO patients (name, phone_number, language, date_of_birth, consent, age)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """
-                cursor.execute(query, (enc_name, enc_phone, enc_lang, enc_dob, consent, age))
+                name = row.get("Full Name", "")
+                raw_phone = str(row.get("Contact Number", "")).strip().replace(" ", "").replace("-", "")
                 
-                # Add to cache for subsequent rows in this batch
-                existing_phones.add(phone)
-            else:
-                # Update existing patient using the encrypted phone as a key? 
-                # NO: We can't use enc_phone as a key because it's different every time.
-                # We need to find the correct ID first.
-                cursor.execute("SELECT id, phone_number FROM patients")
-                all_patients = cursor.fetchall()
-                target_id = None
-                for pid, ephone in all_patients:
-                    try:
-                        if decrypt_data(ephone) == phone:
-                            target_id = pid
-                            break
-                    except: continue
+                # Normalize Sri Lankan Google Form numbers to Twilio E.164 exact format (+947...)
+                clean_phone = raw_phone
+                if raw_phone.startswith("07"):
+                    clean_phone = "+94" + raw_phone[1:]
+                elif raw_phone.startswith("7"):
+                    clean_phone = "+94" + raw_phone
+                elif raw_phone.startswith("94"):
+                    clean_phone = "+" + raw_phone
+                    
+                phone = clean_phone
+                lang = row.get("Language Preference", "English")
+                dob = row.get("Date of Birth", "")
+                age = row.get("Age", "")
+                consent_raw = str(row.get("Do you consent to receive medicine dosage reminders from the pharmacy?", "")).lower()
+                consent = 1 if "yes" in consent_raw else 0
                 
-                if target_id:
+                if not phone:
+                    continue
+
+                # Check if this patient already exists via in-memory cache
+                if phone in existing_phones:
+                    # Update potentially? Yes, let's update.
+                    # Build encrypted update
+                    enc_name = encrypt_data(name)
+                    enc_lang = encrypt_data(lang)
+                    enc_dob = encrypt_data(dob)
+
+                    # Find ID
+                    cursor.execute("SELECT id, phone_number FROM patients")
+                    target_id = None
+                    for pid, ephone in cursor.fetchall():
+                        try:
+                            if decrypt_data(ephone) == phone:
+                                target_id = pid
+                                break
+                        except: continue
+                    
+                    if target_id:
+                        query = "UPDATE patients SET name=%s, language=%s, date_of_birth=%s, consent=%s, age=%s WHERE id=%s"
+                        cursor.execute(query, (enc_name, enc_lang, enc_dob, consent, age, target_id))
+                        conn.commit()
+                else:
+                    # Brand new patient
+                    enc_name = encrypt_data(name)
+                    enc_phone = encrypt_data(phone)
+                    enc_lang = encrypt_data(lang)
+                    enc_dob = encrypt_data(dob)
+
                     query = """
-                        UPDATE patients SET
-                            name = %s,
-                            language = %s,
-                            date_of_birth = %s,
-                            consent = %s,
-                            age = %s
-                        WHERE id = %s
+                        INSERT INTO patients (name, phone_number, language, date_of_birth, consent, age)
+                        VALUES (%s, %s, %s, %s, %s, %s)
                     """
-                    cursor.execute(query, (enc_name, enc_lang, enc_dob, consent, age, target_id))
-            
-            # Sub-task: Send automated welcome message if this was a brand new registration
-            if is_new_patient and twilio_client:
-                firstName = name.split()[0] if name else ""
-                welcome_msg = (
-                    f"Hi {firstName}! 🎉\n\n"
-                    "Your HealixPharm registration is completed "
-                    "You now have full access to our pharmacy bot services.\n\n"
-                    "Please reply with *'hi'* or *'menu'* right here to get started!"
-                )
-                try:
-                    twilio_client.send_text(phone, welcome_msg)
-                    print(f"[WB_SERVICE] Sent automated registration welcome to {phone}")
-                except Exception as we:
-                    print(f"[WARNING] Failed to send welcome to {phone}: {we}")
-            
-            count += 1
-            
-            # Keep track of the latest timestamp in the processed batch
-            if ts_str:
-                latest_ts = ts_str
+                    cursor.execute(query, (enc_name, enc_phone, enc_lang, enc_dob, consent, age))
+                    conn.commit()
+                    
+                    # Log success and update cache
+                    existing_phones.add(phone)
+                    count += 1
+                    
+                    # Send Welcome message ONLY for truly new additions after successful commit
+                    if twilio_client:
+                        firstName = name.split()[0] if name else ""
+                        welcome_msg = (
+                            f"Hi {firstName}! 🎉\n\n"
+                            "Your HealixPharm registration is completed.\n\n"
+                            "Please reply with *'hi'* or *'menu'* right here to get started!"
+                        )
+                        try:
+                            twilio_client.send_text(phone, welcome_msg)
+                            print(f"[WB_SERVICE] Sent automated registration welcome to {phone}")
+                        except Exception as we:
+                            print(f"[WARNING] Failed to send welcome to {phone}: {we}")
 
-        conn.commit()
+                # Update the progress timestamp
+                if ts_str:
+                    latest_ts = ts_str
+
+            except Exception as row_err:
+                print(f"[WARNING] Failed to process row for '{row.get('Full Name')}': {row_err}")
+                conn.rollback()
+
         if count > 0:
-            print(f"[SUCCESS] Updated {count} patient(s) in the database.")
+            print(f"[SUCCESS] Synced {count} new patient(s) in this cycle.")
         
         cursor.close()
         conn.close()
         return latest_ts
         
     except Exception as e:
-        print(f"[ERROR] Database update failed: {e}")
+        print(f"[ERROR] Sync session failed: {e}")
         return None
 
 def reverse_sync_deletions(service, last_sync):
@@ -269,8 +266,11 @@ def reverse_sync_deletions(service, last_sync):
 
             try:
                 row_ts = pd.to_datetime(ts_str)
-                # Only delete if row was ALREADY synced in the past (to avoid race condition with new rows)
-                if row_ts <= last_sync_dt:
+                # SAFETY: Only delete if row is at least 1 hour old (to avoid race conditions with new forms)
+                # AND has a timestamp <= last_sync (meaning it should have been synced before)
+                time_diff = (pd.Timestamp.now() - row_ts).total_seconds() / 3600
+                
+                if row_ts <= last_sync_dt and time_diff > 1:
                     if clean_phone not in db_phones:
                         rows_to_delete.append(i)
             except: continue
