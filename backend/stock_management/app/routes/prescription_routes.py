@@ -46,6 +46,12 @@ def list_prescriptions(
         med_name = medicine.name if medicine else "Unknown"
 
         remaining_days = calculate_remaining_days(p)
+        from app.models.reminder import Reminder as ReminderModel
+        reminders_count = db.query(ReminderModel).filter(
+            ReminderModel.prescription_id == p.id,
+            ReminderModel.status == "pending"
+        ).count()
+
         item = {
             "id": p.id,
             "patient_id": p.patient_id,
@@ -62,6 +68,7 @@ def list_prescriptions(
             "remaining_days": remaining_days,
             "is_completed": remaining_days <= 0,
             "has_image": bool(p.s3_key),
+            "reminders_count": reminders_count,
         }
 
         if not completed_only or item["is_completed"]:
@@ -178,9 +185,16 @@ def create_prescription(
             reminder_type=payload.reminder_type,
             first_dose_time=payload.first_dose_time or start,
         )
+        # Count reminders scheduled
+        from app.models.reminder import Reminder as ReminderModel
+        reminders_scheduled = db.query(ReminderModel).filter(
+            ReminderModel.prescription_id == rx.id
+        ).count()
         return {
             "message": "Prescription created and reminders scheduled",
-            "prescription_id": rx.id
+            "prescription_id": rx.id,
+            "reminders_scheduled": reminders_scheduled,
+            "medicine_name": db.query(Medicine).filter(Medicine.id == payload.medicine_id).first().name if db.query(Medicine).filter(Medicine.id == payload.medicine_id).first() else ""
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
