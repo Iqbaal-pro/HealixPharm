@@ -88,9 +88,11 @@ export default function SupportPage() {
       setActiveTicket(null);
       setMessages([]);
       fetchQueue();
+      setTimeout(() => setMsg(""), 3000);
     } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Failed to close"); }
     finally { setActionLoading(false); }
   };
+
 
   return (
     <div style={{ padding: "28px" }}>
