@@ -249,7 +249,7 @@ class WhatsAppService_wb:
             finally:
                 db.close()
 
-    # Handle numeric menu selections in main_menu
+        # Handle numeric menu selections in main_menu
         if current_step == "main_menu":
             menu_mapping = {"1": "order", "2": "doctor", "3": "disease", "4": "agent"}
             if body in menu_mapping:
