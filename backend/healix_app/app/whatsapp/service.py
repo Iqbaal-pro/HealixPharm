@@ -106,9 +106,39 @@ class WhatsAppService_wb:
             self.send_main_menu(user_id)
             return
 
-        # 2. STATE CHECK
+        # 2. INTERRUPT PATTERN: Priority for LIVE AGENT CHAT
+        db = SessionLocal()
+        try:
+            patient = get_or_create_patient(db, phone=user_id)
+            active_ticket = db.query(models.SupportTicket).filter(
+                models.SupportTicket.patient_id == patient.id,
+                models.SupportTicket.status == "ACTIVE"
+            ).order_by(models.SupportTicket.created_at.desc()).first()
+
+            if active_ticket:
+                # If we have a human talking, we switch to live_chat immediately
+                # even if the user is currently in a menu, FAQ, or other state.
+                state = UserState_wb.get_user_state(user_id)
+                if state.get("current_step") != "live_chat":
+                    logger.info(f"[WB_SERVICE] Agent has joined. Transitioning {user_id} to live_chat.")
+                    # Removed redundant message (already sent by admin portal)
+                    UserState_wb.set_user_state(user_id, "live_chat")
+
+                # Simply record the message and exit automated handlers
+                add_support_message(db, active_ticket.id, "USER", body)
+                return
+        finally:
+            db.close()
+
+        # 3. STATE CHECK
         state = UserState_wb.get_user_state(user_id)
         current_step = state.get("current_step", "main_menu")
+
+        # SELF-HEALING: If bot thinks it's in live_chat but NO active ticket was found in Block #2
+        if current_step == "live_chat" and not locals().get("active_ticket"):
+            logger.info(f"[WB_SERVICE] Self-healing: Resetting {user_id} from live_chat to main_menu (No active ticket).")
+            UserState_wb.set_user_state(user_id, "main_menu")
+            current_step = "main_menu"
         
         # Mappings
         faq_menu_mapping = {
@@ -138,19 +168,7 @@ class WhatsAppService_wb:
             return
 
         if current_step in ["waiting_for_agent", "agent_delay_menu"]:
-            db = SessionLocal()
-            try:
-                patient = get_or_create_patient(db, phone=user_id)
-                active_ticket = db.query(models.SupportTicket).filter(
-                    models.SupportTicket.patient_id == patient.id,
-                    models.SupportTicket.status == "ACTIVE"
-                ).first()
-                if active_ticket:
-                    logger.info(f"[WB_SERVICE] Found ACTIVE ticket for {user_id}. Moving to live_chat.")
-                    current_step = "live_chat"
-                    UserState_wb.set_user_state(user_id, "live_chat")
-            finally:
-                db.close()
+             pass
 
         if current_step == "agent_menu":
             if body in agent_menu_mapping:
@@ -188,6 +206,7 @@ class WhatsAppService_wb:
             return
 
         if current_step == "live_chat":
+            # (Note: This is now a safety fallback. The top-level check handles ACTIVE tickets)
             db = SessionLocal()
             try:
                 patient = get_or_create_patient(db, phone=user_id)
@@ -340,6 +359,12 @@ class WhatsAppService_wb:
             self.twilio_wa.send_text(user_id, "Thank you for your patience. An agent will be with you shortly.")
 
         elif button_id == "agent_back":
+            db = SessionLocal()
+            try:
+                patient = get_or_create_patient(db, phone=user_id)
+                close_all_user_tickets(db, patient)
+            finally:
+                db.close()
             self.send_agent_menu(user_id)
 
         elif button_id == "back_to_main":
