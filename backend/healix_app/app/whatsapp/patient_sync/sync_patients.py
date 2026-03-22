@@ -364,7 +364,7 @@ def main():
                 # Reverse sync: Delete orphaned sheet rows if they are missing from DB
                 creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
                 service = build("sheets", "v4", credentials=creds)
-                # reverse_sync_deletions(service, last_sync)
+                reverse_sync_deletions(service, last_sync)
             
         except Exception as e:
             print(f"[ERROR] Sync cycle failed: {e}")
