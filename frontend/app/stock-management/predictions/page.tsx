@@ -108,13 +108,7 @@ export default function PredictionsPage() {
           </div>
           <div style={{ fontSize: 12, color: "#475569" }}>Estimated for {summary?.target_month}</div>
         </div>
-        <div className="stat-card">
-          <div style={{ fontSize: 11, color: "#334155", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Model Accuracy</div>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 32, color: "#10b981", lineHeight: 1, marginBottom: 4 }}>
-            {summary ? `${(summary.model_r2 * 100).toFixed(1)}%` : "—"}
-          </div>
-          <div style={{ fontSize: 12, color: "#475569" }}>Verdict: {summary?.model_verdict}</div>
-        </div>
+
         <div className="stat-card">
           <div style={{ fontSize: 11, color: "#334155", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Items Predicted</div>
           <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 32, color: "#38bdf8", lineHeight: 1, marginBottom: 4 }}>
