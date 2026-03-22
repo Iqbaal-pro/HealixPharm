@@ -246,17 +246,24 @@ def reverse_sync_deletions(service, last_sync):
         if not values: return
 
         headers = values[0]
+        try:
+            ts_idx = headers.index("Timestamp")
+            phone_idx = headers.index("Contact Number")
+        except (ValueError, IndexError):
+            print("[ERROR] Required headers ('Timestamp', 'Contact Number') not found in Sheet.")
+            return
+
         rows_to_delete = []
         last_sync_dt = pd.to_datetime(last_sync)
 
         # Start from index 1 (skip headers)
         for i in range(1, len(values)):
             row = values[i]
-            # Ensure row has enough columns
-            if len(row) < 3: continue 
+            # Ensure row has required columns
+            if len(row) <= max(ts_idx, phone_idx): continue 
             
-            ts_str = row[0] # Timestamp is column A
-            raw_phone = str(row[2]).strip().replace(" ", "").replace("-", "") # Contact Number is column C
+            ts_str = row[ts_idx]
+            raw_phone = str(row[phone_idx]).strip().replace(" ", "").replace("-", "")
             
             # Normalize for comparison
             clean_phone = raw_phone
@@ -318,59 +325,52 @@ def reverse_sync_deletions(service, last_sync):
     except Exception as e:
         print(f"[ERROR] Reverse sync failed: {e}")
 
+def run_patient_sync_cycle():
+    """Performs a single synchronization cycle. Safe to call from a scheduler."""
+    try:
+        current_time = time.strftime('%Y-%m-%d %H:%M:%S')
+        last_sync = load_last_sync()
+        
+        df = fetch_sheet_data()
+        if df.empty:
+            return
+            
+        # Incremental filter
+        if last_sync and "Timestamp" in df.columns:
+            try:
+                df["Timestamp_Parsed"] = pd.to_datetime(df["Timestamp"])
+                last_sync_dt = pd.to_datetime(last_sync)
+                # Strictly greater than to avoid overlapping rows
+                df_filtered = df[df["Timestamp_Parsed"] > last_sync_dt].copy()
+                df_filtered = df_filtered.drop(columns=["Timestamp_Parsed"])
+            except Exception as te:
+                print(f"[WARNING] Timestamp parsing failed: {te}")
+                df_filtered = df
+        else:
+            df_filtered = df
+
+        if not df_filtered.empty:
+            print(f"[{current_time}] Sync: Found {len(df_filtered)} new row(s).")
+            latest_timestamp = sync_to_db(df_filtered)
+            if latest_timestamp:
+                save_last_sync(latest_timestamp)
+        
+        # Reverse sync: Delete orphaned sheet rows if they are missing from DB
+        creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        service = build("sheets", "v4", credentials=creds)
+        reverse_sync_deletions(service, last_sync)
+        
+    except Exception as e:
+        print(f"[ERROR] Sync cycle failed: {e}")
+
 def main():
     print("--- Incremental Patient Data Synchronization Service ---")
     print("Optimization: Only processing rows newer than last sync.")
-    print("Press Ctrl+C to stop.")
+    print("Mode: Standalone Loop (Press Ctrl+C to stop)")
     
     while True:
-        try:
-            current_time = time.strftime('%Y-%m-%d %H:%M:%S')
-            last_sync = load_last_sync()
-            
-            print(f"\n[{current_time}] Syncing data from Google Sheets...")
-            if last_sync:
-                print(f"Tracking increments since: {last_sync}")
-            
-            df = fetch_sheet_data()
-            if df.empty:
-                print("No data found in Google Sheets.")
-            else:
-                # Incremental filter
-                if last_sync and "Timestamp" in df.columns:
-                    # Filter for rows where Timestamp >= last_sync
-                    # This ensures sibling entries with same-second timestamps are never missed.
-                    try:
-                        df["Timestamp_Parsed"] = pd.to_datetime(df["Timestamp"])
-                        last_sync_dt = pd.to_datetime(last_sync)
-                        # Strictly greater than to avoid overlapping rows
-                        df_filtered = df[df["Timestamp_Parsed"] > last_sync_dt].copy()
-                        df_filtered = df_filtered.drop(columns=["Timestamp_Parsed"])
-                    except Exception as te:
-                        print(f"[WARNING] Timestamp parsing failed, falling back to full sync: {te}")
-                        df_filtered = df
-                else:
-                    df_filtered = df
-
-                if df_filtered.empty:
-                    print("No new rows since last sync.")
-                else:
-                    print(f"Found {len(df_filtered)} new row(s). Updating database...")
-                    latest_timestamp = sync_to_db(df_filtered)
-                    
-                    if latest_timestamp:
-                        save_last_sync(latest_timestamp)
-                
-                # Reverse sync: Delete orphaned sheet rows if they are missing from DB
-                creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-                service = build("sheets", "v4", credentials=creds)
-                reverse_sync_deletions(service, last_sync)
-            
-        except Exception as e:
-            print(f"[ERROR] Sync cycle failed: {e}")
-        
+        run_patient_sync_cycle()
         # Wait for 30 seconds
-        print("Waiting 30 seconds for next sync...")
         time.sleep(30)
 
 if __name__ == "__main__":
