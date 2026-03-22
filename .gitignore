@@ -38,3 +38,5 @@ __pycache__/
 *.pyd
 
 .env
+# Google service account key
+**/service_account.json
