@@ -222,13 +222,13 @@ class WhatsAppService_wb:
                 db.close()
             return
 
-        # Handle Payment Selection
-        if current_step == "awaiting_payment_selection":
+        # 4. Status-Driven Payment Selection (Prioritize over Menu)
+        if body in ["1", "2"]:
             db = SessionLocal()
             try:
                 patient = get_or_create_patient(db, phone=user_id)
                 if patient:
-                    # Find the latest order awaiting payment selection
+                    # Find the latest order that needs payment selection
                     order = db.query(models.Order).filter(
                         models.Order.patient_id == patient.id,
                         or_(
@@ -237,11 +237,8 @@ class WhatsAppService_wb:
                         )
                     ).order_by(models.Order.created_at.desc()).first()
 
-
-
-
                     if order:
-                        logger.info(f"[SERVICE] Found order {order.token} for payment selection.")
+                        logger.info(f"[SERVICE] Found order {order.token} for payment selection via status-check.")
                         if body == "1":  # COD
                             logger.info(f"[SERVICE] User {user_id} selected COD for order {order.token}")
                             order.payment_method = "COD"
@@ -267,14 +264,11 @@ class WhatsAppService_wb:
                             self.twilio_wa.send_text(user_id, f"Order {order.token} updated. 💳\n\nPlease use this secure link to complete your payment:\n{pay_url}\n\n⚠️ Payment must be made within 2 hours.")
                             UserState_wb.set_user_state(user_id, "main_menu")
                             return
-                    else:
-                        logger.warning(f"[SERVICE] No order awaiting payment selection found for patient {patient.id}")
-                else:
-                    logger.warning(f"[SERVICE] Patient not found for phone {user_id}")
             except Exception as e:
-                logger.error(f"[SERVICE] Error in payment selection: {e}")
+                logger.error(f"[SERVICE] Error in status-driven payment selection: {e}")
             finally:
                 db.close()
+
 
         # Handle numeric menu selections in main_menu
         if current_step == "main_menu":
