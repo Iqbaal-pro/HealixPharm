@@ -10,13 +10,19 @@ def get_or_create_patient(db: Session, phone: str, name: str = None) -> models.P
     """
     Get a patient by phone_number or create if not exists.
     """
-    # Note: Because phone numbers are encrypted non-deterministically, 
-    # we must compare them in-memory after decryption for search.
+    from app.utils.encryption import decrypt_data
     patients = db.query(models.Patient).all()
     for p in patients:
-        if p.phone_number == phone:
-            logger.info(f"[ORDER_SERVICE] Found existing patient via in-memory match: {phone}")
-            return p
+        try:
+            dec_phone = decrypt_data(p.phone_number)
+            if dec_phone == phone:
+                logger.info(f"[ORDER_SERVICE] Found existing patient via in-memory match: {phone}")
+                return p
+        except Exception:
+            # If decryption fails (e.g. legacy plain text), skip or try direct match
+            if p.phone_number == phone:
+                return p
+            continue
 
     patient = models.Patient(phone_number=phone, name=name)
     db.add(patient)

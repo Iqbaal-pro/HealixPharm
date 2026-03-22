@@ -30,8 +30,8 @@ class Settings:
     # AWS S3
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
-    AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "healix-prescriptions")
-    AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+    AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "healix-pharm-prescriptions")
+    AWS_REGION = os.getenv("AWS_REGION", "eu-north-1")
 
     # Twilio SMS (fallback notifications)
     TWILIO_SMS_FROM_NUMBER = os.getenv("TWILIO_SMS_FROM_NUMBER", "")

@@ -73,3 +73,12 @@ class PatientRepository:
             self.db.commit()
             self.db.refresh(patient)
         return patient
+
+    def delete(self, patient_id: int) -> bool:
+        """Remove a patient from the database."""
+        patient = self.get_by_id(patient_id)
+        if patient:
+            self.db.delete(patient)
+            self.db.commit()
+            return True
+        return False

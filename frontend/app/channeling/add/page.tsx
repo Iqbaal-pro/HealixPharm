@@ -82,7 +82,7 @@ export default function AddDoctorPage() {
 
   if (step === "done" && newDoctorId) {
     return (
-      <div style={{ padding: "32px 36px", maxWidth: 560 }}>
+      <div className="add-doctor-wrap" style={{ padding: "32px 36px", maxWidth: 560 }}>
         <div style={{ textAlign: "center", padding: "48px 32px", background: "rgba(8,16,32,0.7)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 16 }}>
           <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, margin: "0 auto 16px" }}>✓</div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#f1f5f9", marginBottom: 8 }}>Doctor Added</h2>
@@ -106,15 +106,22 @@ export default function AddDoctorPage() {
   }
 
   return (
-    <div style={{ padding: "32px 36px", maxWidth: 680 }}>
-      <div style={{ marginBottom: 28 }}>
-        {/* FIXED: single 'l' */}
-        <button onClick={() => router.push("/channeling")} style={{ background: "none", border: "none", color: "#475569", fontSize: 13, cursor: "pointer", marginBottom: 14, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
+    <div className="add-doctor-wrap" style={{ padding: "32px 36px", maxWidth: 680 }}>
+      <div className="page-spacer" />
+      <div className="fade-1" style={{ marginBottom: 28 }}>
+        <button onClick={() => router.push("/channeling")} className="btn-ghost btn-ghost-sm" style={{ marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Back to Doctors
         </button>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#f1f5f9", letterSpacing: "-0.02em", marginBottom: 4 }}>Add Doctor</h1>
-        <p style={{ fontSize: 13, color: "#475569" }}>This doctor will appear in the patient booking portal.</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div className="page-icon" style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.22)", boxShadow: "0 0 18px rgba(56,189,248,0.1)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/><path d="M19 8h2M21 6v4"/></svg>
+          </div>
+          <div>
+            <h1 className="page-title gradient-text">Add Doctor</h1>
+            <p className="page-sub">This doctor will appear in the patient booking portal.</p>
+          </div>
+        </div>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -123,7 +130,7 @@ export default function AddDoctorPage() {
             <label style={lbl}>Full Name *</label>
             <input style={inp} placeholder="Dr. Ayesha Perera" value={form.name} onChange={e => set("name", e.target.value)} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div className="add-doctor-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
               <label style={lbl}>Specialization *</label>
               <select style={{ ...inp, cursor: "pointer" }} value={form.specialization} onChange={e => set("specialization", e.target.value)}>
@@ -136,7 +143,7 @@ export default function AddDoctorPage() {
               <input style={inp} type="number" placeholder="2500" value={form.fee || ""} onChange={e => set("fee", parseFloat(e.target.value) || 0)} />
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div className="add-doctor-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div>
               <label style={lbl}>Experience <span style={{ color: "#334155", fontWeight: 400, textTransform: "none", fontSize: 10 }}>(optional)</span></label>
               <input style={inp} placeholder="10+ years" value={form.experience} onChange={e => set("experience", e.target.value)} />
