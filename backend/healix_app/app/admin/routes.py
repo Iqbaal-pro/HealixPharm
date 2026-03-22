@@ -133,7 +133,9 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
         if not success:
             raise HTTPException(status_code=500, detail=f"Failed to reserve stock for {med_details['name']}")
 
-        subtotal = med_details['selling_price'] * item.quantity
+        # Ensure price is float to avoid "unsupported operand type(s) for +=: 'float' and 'decimal.Decimal'"
+        price = float(med_details['selling_price'])
+        subtotal = price * item.quantity
         total_amount += subtotal
         
         new_item = models.OrderItem(
@@ -141,7 +143,7 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
             medicine_id=item.medicine_id,
             medicine_name=med_details['name'],
             quantity=item.quantity,
-            unit_price=med_details['selling_price'],
+            unit_price=price,
             subtotal=subtotal
         )
         db.add(new_item)
