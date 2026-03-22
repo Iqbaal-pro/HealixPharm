@@ -19,6 +19,7 @@ from app.auth_routes import router as auth_router
 # Scheduler
 from app.core.scheduler import scheduler
 from app.core.fulfillment_scheduler import monitor_fulfillment
+from app.whatsapp.patient_sync.sync_patients import run_patient_sync_cycle
 
 logging.basicConfig(
     level=logging.INFO,
@@ -80,8 +81,16 @@ async def startup_event():
         replace_existing=True
     )
 
-    
-    logger.info("[WB_MAIN] Background jobs scheduled (Fulfillment & Disease Alerts).")
+    # 4. Add Patient Sync job (Runs every 1 minute)
+    scheduler.add_job(
+        run_patient_sync_cycle,
+        "interval",
+        minutes=1,
+        id="patient_sync_job",
+        replace_existing=True
+    )
+
+    logger.info("[WB_MAIN] Background jobs scheduled (Fulfillment, Disease Alerts, & Patient Sync).")
 
 @app.on_event("shutdown")
 def shutdown_event():
