@@ -127,7 +127,7 @@ export default function Footer() {
 
               <div className="footer-col-title">Project</div>
               {projectLinks.map((l) => (
-                <Link key={l.label} href={l.href} className="footer-link" target="_blank" rel="noopener noreferrer">
+                <Link key={l.label} href={l.href} className="footer-link">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                     <path d="M9 18l6-6-6-6" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
