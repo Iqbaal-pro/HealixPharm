@@ -370,8 +370,8 @@ def main():
     
     while True:
         run_patient_sync_cycle()
-        # Wait for 30 seconds
-        time.sleep(30)
+        # Wait for 10 seconds
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()
