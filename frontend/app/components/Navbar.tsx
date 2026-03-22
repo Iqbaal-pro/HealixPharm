@@ -20,7 +20,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           border-radius: 10px;
           color: #f1f5f9;
           font-family: 'DM Sans', sans-serif;
-          font-size: 13.5px;
+          font-size: 14px;
           padding: 9px 14px 9px 38px;
           outline: none;
           transition: all 0.2s;

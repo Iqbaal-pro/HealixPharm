@@ -1,11 +1,9 @@
-// app/routes/prescriptionRoutes.ts
+//   app/routes/prescriptionRoutes.ts
 //   STOCK_BASE  = NEXT_PUBLIC_API_URL       (Stock Management – port 8000)
 //   BOT_BASE    = NEXT_PUBLIC_BOT_API_URL   (WhatsApp Bot     – port 8001)
 
 const STOCK_BASE = process.env.NEXT_PUBLIC_API_URL     ?? "http://localhost:8000";
 const BOT_BASE   = process.env.NEXT_PUBLIC_BOT_API_URL ?? "http://localhost:8001";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface PrescriptionRecord {
   id: number;
@@ -14,20 +12,32 @@ export interface PrescriptionRecord {
   medicine_name: string;
   dose_per_day: number;
   start_date: string;
+  end_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  meals?: string;
+  meal_times?: string;
   created_at: string;
   remaining_days: number;
   is_completed: boolean;
+  reminders_count?: number;
 }
 
-// Returned by GET /admin/prescriptions/queue  (BOT_BASE)
+export interface PrescriptionOrderItem {
+  medicine_id: number;
+  medicine_name: string;
+  quantity: number;
+  unit_price?: number;
+}
+
 export interface PendingPrescription {
   order_id: number;
   token: string;
   phone: string;
-  prescription_url: string | null;  // fresh presigned S3 URL
+  patient_id: number | null;
+  prescription_url: string | null;
   created_at: string;
+  items: PrescriptionOrderItem[];
 }
 
 export interface MedicineSearchResult {
@@ -45,23 +55,35 @@ export interface ApprovalItem {
 export interface CreatePrescriptionPayload {
   patient_id: number;
   uploaded_by_staff_id: number;
+  staff_id: number;
+  medicine_id: number;
   medicine_name: string;
   dose_per_day: number;
   start_date: string;
   quantity_given: number;
   is_continuous: boolean;
+  reminder_type: "TIME_BASED" | "MEAL_BASED";
+  meals?: string;
+  meal_times?: string;
 }
 
 export interface PrescriptionResponse {
   id: number;
-  patient_id: number;
-  uploaded_by_staff_id: number;
+  prescription_id: number;
+  message?: string;
+  patient_id?: number;
+  uploaded_by_staff_id?: number;
+  medicine_id?: number;
   medicine_name: string;
-  dose_per_day: number;
-  start_date: string;
-  quantity_given: number;
-  is_continuous: boolean;
-  created_at: string;
+  dose_per_day?: number;
+  start_date?: string;
+  end_date?: string;
+  quantity_given?: number;
+  is_continuous?: boolean;
+  meals?: string;
+  meal_times?: string;
+  created_at?: string;
+  reminders_scheduled?: number;
 }
 
 export interface IssuePayload {
@@ -82,8 +104,6 @@ export interface IssueResponse {
   };
 }
 
-// ── Helper ────────────────────────────────────────────────────────────────────
-
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Request failed" }));
@@ -92,27 +112,46 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// ── BOT_BASE endpoints ────────────────────────────────────────────────────────
-
-// GET /admin/prescriptions/queue  — pending WhatsApp orders with S3 presigned URLs
 export async function getPendingPrescriptions(): Promise<PendingPrescription[]> {
-  const res = await fetch(`${BOT_BASE}/admin/prescriptions/queue`);
-  return handleResponse<PendingPrescription[]>(res);
+  // Fetch orders that are paid/confirmed and ready to dispense
+  const statuses = ["PAID", "CONFIRMED", "PENDING_ON_DELIVERY"];
+  const allOrders: any[] = [];
+  for (const status of statuses) {
+    try {
+      const res = await fetch(`${BOT_BASE}/admin/orders?status=${status}`);
+      if (res.ok) {
+        const orders = await res.json();
+        allOrders.push(...orders);
+      }
+    } catch { /* silent */ }
+  }
+  const orders = allOrders;
+  return orders.map(o => ({
+    order_id:         o.id,
+    token:            o.token,
+    phone:            o.phone ?? "",
+    patient_id:       o.patient_id ?? null,
+    prescription_url: o.prescription_url ?? null,
+    created_at:       o.created_at,
+    items:            (o.items ?? []).map((i: any) => ({
+      medicine_id:   i.medicine_id,
+      medicine_name: i.medicine_name ?? "",
+      quantity:      i.quantity,
+      unit_price:    i.unit_price,
+    })),
+  }));
 }
 
-// GET /admin/orders/{id}
 export async function getOrderDetail(orderId: number) {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}`);
   return handleResponse<unknown>(res);
 }
 
-// GET /admin/medicines/search?q=
 export async function searchMedicines(q: string): Promise<MedicineSearchResult[]> {
   const res = await fetch(`${BOT_BASE}/admin/medicines/search?q=${encodeURIComponent(q)}`);
   return handleResponse<MedicineSearchResult[]>(res);
 }
 
-// POST /admin/orders/{id}/approve
 export async function approveOrder(orderId: number, items: ApprovalItem[]) {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}/approve`, {
     method: "POST",
@@ -122,7 +161,6 @@ export async function approveOrder(orderId: number, items: ApprovalItem[]) {
   return handleResponse<unknown>(res);
 }
 
-// POST /admin/orders/{id}/status
 export async function updateOrderStatus(orderId: number, status: "APPROVED" | "REJECTED") {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}/status`, {
     method: "POST",
@@ -132,7 +170,6 @@ export async function updateOrderStatus(orderId: number, status: "APPROVED" | "R
   return handleResponse<unknown>(res);
 }
 
-// POST /admin/orders/{id}/confirm-payment
 export async function confirmPayment(orderId: number) {
   const res = await fetch(`${BOT_BASE}/admin/orders/${orderId}/confirm-payment`, {
     method: "POST",
@@ -140,16 +177,12 @@ export async function confirmPayment(orderId: number) {
   return handleResponse<unknown>(res);
 }
 
-// ── STOCK_BASE endpoints ──────────────────────────────────────────────────────
-
-// GET /prescriptions/?completed_only=
 export async function getAllPrescriptions(completedOnly?: boolean): Promise<PrescriptionRecord[]> {
   const qs = completedOnly !== undefined ? `?completed_only=${completedOnly}` : "";
   const res = await fetch(`${STOCK_BASE}/prescriptions/${qs}`);
   return handleResponse<PrescriptionRecord[]>(res);
 }
 
-// POST /prescriptions/
 export async function createPrescription(
   payload: CreatePrescriptionPayload
 ): Promise<PrescriptionResponse> {
@@ -161,7 +194,6 @@ export async function createPrescription(
   return handleResponse<PrescriptionResponse>(res);
 }
 
-// POST /prescriptions/issue
 export async function issueMedicine(payload: IssuePayload): Promise<IssueResponse> {
   const qs = new URLSearchParams({
     prescription_id: String(payload.prescription_id),
@@ -170,4 +202,60 @@ export async function issueMedicine(payload: IssuePayload): Promise<IssueRespons
   });
   const res = await fetch(`${STOCK_BASE}/prescriptions/issue?${qs}`, { method: "POST" });
   return handleResponse<IssueResponse>(res);
+}
+
+// ── Storage / Image routes (BOT_BASE /api/...) ────────────────────────────────
+
+// GET /api/storage/presigned-url?key=...&expires_in=3600
+// Returns a fresh S3 presigned URL for any prescription image key
+export async function getPresignedUrl(key: string): Promise<string> {
+  const qs = new URLSearchParams({ key, expires_in: "3600" });
+  const res = await fetch(`${BOT_BASE}/api/storage/presigned-url?${qs}`);
+  const data = await handleResponse<{ url: string }>(res);
+  return data.url;
+}
+
+// POST /api/storage/upload-prescription?prescription_id=...
+// Uploads a prescription image file to S3, returns the s3_key
+export async function uploadPrescriptionImage(
+  file: File,
+  prescriptionId: string
+): Promise<{ key: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(
+    `${BOT_BASE}/api/storage/upload-prescription?prescription_id=${encodeURIComponent(prescriptionId)}`,
+    { method: "POST", body: formData }
+  );
+  return handleResponse<{ key: string }>(res);
+}
+
+// POST /api/image/check-clarity
+// Checks if an image is clear enough before uploading
+export async function checkImageClarity(
+  file: File
+): Promise<{ is_clear: boolean; message: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BOT_BASE}/api/image/check-clarity`, {
+    method: "POST",
+    body: formData,
+  });
+  return handleResponse<{ is_clear: boolean; message: string }>(res);
+}
+
+export interface IssuedTodayRecord {
+  id: number;
+  prescription_id: number;
+  patient_id: number;
+  medicine_id: number;
+  medicine_name: string;
+  quantity_issued: number;
+  issued_at: string;
+  issued_by: number | null;
+}
+
+export async function getIssuedToday(): Promise<IssuedTodayRecord[]> {
+  const res = await fetch(`${STOCK_BASE}/prescriptions/issued-today`);
+  return handleResponse<IssuedTodayRecord[]>(res);
 }

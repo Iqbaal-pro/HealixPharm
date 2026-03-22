@@ -18,5 +18,6 @@ class Reminder(Base):
     channel = Column(String(20), default="sms")
     status = Column(String(20), default="pending")   # pending | sent
     one_time = Column(Boolean, default=False)
+    reminder_type = Column(String(20), default="DOSE") # DOSE | REFILL
 
     created_at = Column(DateTime, default=datetime.utcnow)

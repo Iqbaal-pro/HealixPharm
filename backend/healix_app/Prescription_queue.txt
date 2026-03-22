@@ -1,0 +1,58 @@
+Technical Note: Prescription Model & Schema Alignment
+Date: 2026-03-16
+Subject: Conflict Resolution between WhatsApp Bot and Stock Management Schema
+
+1. Context
+The prescriptions table in the shared MySQL database is used by two separate applications:
+
+Stock Management app: Stores final, authenticated prescriptions with specific medication and staff links.
+WhatsApp Bot: Stores initial image uploads from patients at the start of an order request.
+2. The Problem
+The physical database schema contains several mandatory (NOT NULL) columns that were recently added to support the Stock Management system's logic:
+
+medicine_id: Direct link to an inventory item.
+staff_id & uploaded_by_staff_id: Direct link to a physical pharmacist.
+patient_id: Direct link to a registered patient.
+At the moment a patient uploads an image via WhatsApp, none of the professional data (Medicine/Staff) exists yet. The patient is simply initiating a request. This mismatch caused the database to reject bot uploads, resulting in a system crash.
+
+3. Implementation Logic (The Fix)
+To maintain system availability without modifying the shared database structure, the bot now uses a Placeholder Strategy:
+
+Model Alignment
+The Python 
+Prescription
+ model in 
+models.py
+ was updated to include all 25 columns found in the physical schema to ensure data integrity during ORM operations.
+
+Placeholder Values
+In 
+order_service.py
+, the 
+create_order_with_prescription
+ function now injects the following default values for initial bot uploads:
+
+patient_id: Set to the actual 
+id
+ of the messaging user (resolved via 
+get_or_create_patient
+).
+medicine_id: Set to 1 (Placeholder medicine).
+staff_id / uploaded_by_staff_id: Set to 1 (Placeholder/Admin staff).
+medicine_name: Set to "WhatsApp Uploaded".
+4. Operational Flow
+Ingestion: Patient sends image -> Bot saves record using placeholders -> Record appears in Pharmacist Queue.
+Review: Pharmacist views the image and performs the real authentication.
+Correction: When the pharmacist approves the order, the system creates 
+OrderItem
+ records which contain the actual medication and pricing data.
+5. Future Recommendations
+For a cleaner long-term solution, consider:
+
+Making medicine_id and staff_id nullable in the database.
+Splitting the ingestion into two tables: raw_prescription_images (for the bot) and authenticated_prescriptions (for stock).
+IMPORTANT
+
+Do not remove the placeholder values from 
+order_service.py
+ unless the database schema is updated to allow null values for those columns.

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from datetime import datetime
 from app.database.base import Base
 
@@ -15,23 +15,37 @@ class Prescription(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    uploaded_by_staff_id = Column(Integer, nullable=False)
+    medicine_id = Column(Integer, ForeignKey("medicines.id"), nullable=False)
+    staff_id = Column(Integer, nullable=False)
+    uploaded_by_staff_id = Column(Integer, nullable=True) # For compatibility/tracking
 
-    # Medicine details for reminders
-    medicine_name = Column(String(100), nullable=False)
+    # Scheduling details
     dose_per_day = Column(Integer, nullable=False, default=1)
     
-    # --- New Dose Reminder Fields (Migrated from healix_extra) ---
     dose_quantity = Column(Integer, nullable=True, default=0)
     interval_hours = Column(Integer, nullable=True, default=0)
     meal_timing = Column(String(100), nullable=True)
     start_time = Column(DateTime, nullable=True)
     # -----------------------------------------------------------
 
-    start_date = Column(DateTime, default=datetime.utcnow)
     quantity_given = Column(Integer, nullable=False, default=0)
+    start_date = Column(DateTime, default=datetime.utcnow)
+    end_date = Column(DateTime, nullable=False)
+    
+    # Reminder Configuration
+    reminder_type = Column(String(20), nullable=False)  # TIME_BASED | MEAL_BASED
+    
+    # For Time-Based
+    first_dose_time = Column(DateTime, nullable=True)
+    
+    # For Meal-Based
+    meal_instruction = Column(String(20), nullable=True) # BEFORE_MEAL | AFTER_MEAL
+    meal_types = Column(String(100), nullable=True)      # Comma-separated: BREAKFAST,LUNCH,DINNER
 
     # Pharmacist checkbox: long-term / continuous medication
     is_continuous = Column(Boolean, default=False)
+
+    # S3 image reference (prescription scan/photo)
+    s3_key = Column(String(500), nullable=True)   # e.g. "prescriptions/2024/rx_42.jpg"
 
     created_at = Column(DateTime, default=datetime.utcnow)

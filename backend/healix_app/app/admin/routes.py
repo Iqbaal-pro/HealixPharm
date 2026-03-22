@@ -7,6 +7,7 @@ from app import models
 from app.admin import schemas
 from app.services.notification_service import NotificationService
 from app.services.stock_integration import StockIntegrationService
+from app.services.s3_service import generate_presigned_url
 from app.services import alert_service
 from app.whatsapp.state import UserState_wb
 import logging
@@ -36,6 +37,12 @@ def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
     for o in orders:
         res = schemas.OrderSimpleSchema.from_orm(o)
         res.phone = o.patient.phone_number
+        res.patient_id = o.patient_id
+        if o.prescription and o.prescription.s3_key:
+            try:
+                res.prescription_url = generate_presigned_url(o.prescription.s3_key)
+            except Exception as e:
+                logger.warning(f"Failed to generate presigned URL for order {o.id}: {e}")
         result.append(res)
     return result
 
@@ -50,7 +57,8 @@ def get_order_details(order_id: int, db: Session = Depends(get_db)):
     res = schemas.OrderDetailSchema.from_orm(order)
     res.phone = order.patient.phone_number
     if order.prescription:
-        res.prescription_url = order.prescription.s3_url
+        # Generate a fresh 1-hour presigned URL for the frontend
+        res.prescription_url = generate_presigned_url(order.prescription.s3_key)
     return res
 
 
@@ -367,13 +375,32 @@ def send_agent_message(ticket_id: int, payload: MessagePayload, db: Session = De
         from app.whatsapp.twilio_client import TwilioWhatsAppClient
         twilio = TwilioWhatsAppClient()
         twilio.send_text(user_phone, payload.body)
+        
+        # Ensure user state is live_chat when agent sends a message
+        UserState_wb.set_user_state(user_phone, "live_chat")
     except Exception as e:
         logger.error(f"Failed to send agent message to {user_phone}: {e}")
         raise HTTPException(status_code=500, detail="Failed to send WhatsApp message")
 
     return {"status": "SENT"}
 
-
+@router.get("/support/tickets/{ticket_id}/messages")
+def get_ticket_messages(ticket_id: int, db: Session = Depends(get_db)):
+    """
+    Get all messages for a ticket — both USER and AGENT messages.
+    """
+    ticket = db.query(models.SupportTicket).filter(models.SupportTicket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return [
+        {
+            "id":          m.id,
+            "sender_type": m.sender_type,
+            "body":        m.body,
+            "created_at":  m.created_at.isoformat() if m.created_at else None,
+        }
+        for m in sorted(ticket.messages, key=lambda m: m.created_at or "")
+    ]
 @router.post("/support/tickets/{ticket_id}/close")
 def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     """
@@ -396,9 +423,10 @@ def admin_close_ticket(ticket_id: int, db: Session = Depends(get_db)):
     if user_phone:
         UserState_wb.set_user_state(user_phone, "main_menu")
         try:
-            from app.whatsapp.twilio_client import TwilioWhatsAppClient
-            twilio = TwilioWhatsAppClient()
-            twilio.send_text(user_phone, "Chat ended by pharmacy.\nYou have been returned to the main menu.")
+            from app.whatsapp.service import WhatsAppService_wb
+            service = WhatsAppService_wb()
+            service.twilio_wa.send_text(user_phone, "Chat ended by pharmacy.")
+            service.send_main_menu(user_phone)
         except Exception as e:
             logger.error(f"Failed to notify user {user_phone} of chat closure: {e}")
 
@@ -443,3 +471,43 @@ def create_moh_alert(payload: schemas.AlertCreate, db: Session = Depends(get_db)
 def list_active_moh_alerts(db: Session = Depends(get_db)):
     """List all currently active MOH disease alerts."""
     return alert_service.get_all_active_alerts(db)
+
+@router.post("/notify/prescription-issued")
+def notify_prescription_issued(payload: schemas.NotifyBillPayload, db: Session = Depends(get_db)):
+    """
+    Bridge endpoint for the pharmacist portal.
+    Sends an itemized bill to the patient and transitions the Order to AWAITING_PAYMENT_SELECTION.
+    """
+    # 1. Update Order status if order_id is provided
+    if payload.order_id:
+        order = db.query(models.Order).filter(models.Order.id == payload.order_id).first()
+        if order:
+            order.status = "AWAITING_PAYMENT_SELECTION"
+            order.total_amount = payload.total_amount
+            db.commit()
+            
+            # Update user state in bot to handle the next input (1 or 2)
+            UserState_wb.set_user_state(payload.patient_phone, "awaiting_payment_selection")
+            logger.info(f"[ADMIN] Order {order.token} transitioned to AWAITING_PAYMENT_SELECTION")
+        else:
+            logger.warning(f"[ADMIN] Order ID {payload.order_id} not found in database!")
+
+    # 2. Build and send WhatsApp message
+    item_lines = "\n".join([f"  • {i.medicine_name} x{i.quantity} — Rs. {i.subtotal:.2f}" for i in payload.items])
+    
+    msg = (
+        f"Your prescription has been reviewed and approved! ✅\n\n"
+        f"*Bill Summary:*\n{item_lines}\n\n"
+        f"*Total Amount: Rs. {payload.total_amount:.2f}*\n\n"
+        f"Please choose your payment method:\n"
+        f"1️⃣ Cash on Delivery\n"
+        f"2️⃣ Online Payment\n\n"
+        f"⚠️ Please respond with 1 or 2 to proceed."
+    )
+    
+    try:
+        notif.twilio_wa.send_text(payload.patient_phone, msg)
+        return {"success": True, "message": "Notification sent and order updated"}
+    except Exception as e:
+        logger.error(f"Failed to send prescription issuance notification: {e}")
+        return {"success": False, "message": f"Failed to send WhatsApp: {str(e)}"}

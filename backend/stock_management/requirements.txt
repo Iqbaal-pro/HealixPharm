@@ -12,4 +12,10 @@ opencv-python-headless
 apscheduler
 python-dotenv
 python-multipart
+cryptography
+pandas
+numpy
+scikit-learn
+matplotlib
+openpyxl
 pytest

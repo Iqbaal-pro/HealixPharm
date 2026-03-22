@@ -12,3 +12,4 @@ pydantic-settings
 apscheduler
 pymysql
 mysql-connector-python
+cryptography

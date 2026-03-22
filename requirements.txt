@@ -30,6 +30,14 @@ apscheduler
 # Utilities
 python-dotenv
 python-multipart
+cryptography
+
+# ML & Data (Stock Prediction)
+pandas
+numpy
+scikit-learn
+matplotlib
+openpyxl
 
 # Testing
 pytest

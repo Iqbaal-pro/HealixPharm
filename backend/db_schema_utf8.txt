@@ -1,0 +1,320 @@
+﻿TABLE: alert_broadcast_log
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: alert_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: phone_number | VARCHAR(64) | PK=False | Null_Ok=False
+  COLUMN: send_status | VARCHAR(64) | PK=False | Null_Ok=False
+  COLUMN: api_response | TEXT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: moh_disease_alerts
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: disease_name | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: region | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: threat_level | VARCHAR(64) | PK=False | Null_Ok=False
+  COLUMN: start_date | DATETIME | PK=False | Null_Ok=False
+  COLUMN: end_date | DATETIME | PK=False | Null_Ok=False
+  COLUMN: status | VARCHAR(64) | PK=False | Null_Ok=True
+  COLUMN: broadcast_sent | TINYINT | PK=False | Null_Ok=True
+  COLUMN: retry_count | INTEGER | PK=False | Null_Ok=True
+  COLUMN: last_attempt_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: updated_at | DATETIME | PK=False | Null_Ok=True
+TABLE: channelling_appointments
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: booking_ref | VARCHAR(64) | PK=False | Null_Ok=False
+  COLUMN: payhere_order_id | VARCHAR(128) | PK=False | Null_Ok=True
+  COLUMN: doctor_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: patient_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: hospital | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: slot_time | VARCHAR(20) | PK=False | Null_Ok=False
+  COLUMN: date | VARCHAR(20) | PK=False | Null_Ok=False
+  COLUMN: consultation_fee | FLOAT | PK=False | Null_Ok=False
+  COLUMN: service_fee | FLOAT | PK=False | Null_Ok=False
+  COLUMN: total_fee | FLOAT | PK=False | Null_Ok=False
+  COLUMN: notes | TEXT | PK=False | Null_Ok=True
+  COLUMN: status | ENUM | PK=False | Null_Ok=False
+  COLUMN: whatsapp_sent | TINYINT | PK=False | Null_Ok=True
+  COLUMN: sms_sent | TINYINT | PK=False | Null_Ok=True
+  COLUMN: email_sent | TINYINT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: doctors
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: name | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: specialization | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: hospital | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: qualifications | VARCHAR(500) | PK=False | Null_Ok=True
+  COLUMN: experience | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: fee | FLOAT | PK=False | Null_Ok=False
+  COLUMN: service_fee | FLOAT | PK=False | Null_Ok=False
+  COLUMN: initials | VARCHAR(10) | PK=False | Null_Ok=True
+  COLUMN: available | TINYINT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: channelling_patients
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: full_name | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: id_type | VARCHAR(20) | PK=False | Null_Ok=False
+  COLUMN: id_number | VARCHAR(100) | PK=False | Null_Ok=False
+  COLUMN: email | VARCHAR(255) | PK=False | Null_Ok=True
+  COLUMN: phone | VARCHAR(64) | PK=False | Null_Ok=False
+  COLUMN: address | TEXT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: delivery_settings
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: area | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: charge | FLOAT | PK=False | Null_Ok=False
+  COLUMN: estimated_time | VARCHAR(100) | PK=False | Null_Ok=True
+TABLE: inventory
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: batch_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: quantity_available | INTEGER | PK=False | Null_Ok=True
+  COLUMN: quantity_reserved | INTEGER | PK=False | Null_Ok=True
+  COLUMN: quantity_damaged | INTEGER | PK=False | Null_Ok=True
+  COLUMN: quantity_expired | INTEGER | PK=False | Null_Ok=True
+  COLUMN: reorder_level | INTEGER | PK=False | Null_Ok=True
+  COLUMN: reorder_quantity | INTEGER | PK=False | Null_Ok=True
+  COLUMN: turnover_rate | DECIMAL(10, 4) | PK=False | Null_Ok=True
+  COLUMN: last_stock_update | DATETIME | PK=False | Null_Ok=True
+  COLUMN: last_dispensed_at | DATETIME | PK=False | Null_Ok=True
+TABLE: medicines
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: name | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: sku | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: dosage_form | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: strength | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: unit_of_measurement | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: category | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: manufacturer | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: registration_number | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: cost_price | DECIMAL(10, 2) | PK=False | Null_Ok=True
+  COLUMN: selling_price | DECIMAL(10, 2) | PK=False | Null_Ok=True
+  COLUMN: minimum_stock_threshold | INTEGER | PK=False | Null_Ok=True
+  COLUMN: maximum_stock_level | INTEGER | PK=False | Null_Ok=True
+  COLUMN: is_active | TINYINT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: medicine_batches
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: batch_number | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: manufacture_date | DATETIME | PK=False | Null_Ok=True
+  COLUMN: expiry_date | DATETIME | PK=False | Null_Ok=True
+  COLUMN: received_date | DATETIME | PK=False | Null_Ok=True
+  COLUMN: cost_price | FLOAT | PK=False | Null_Ok=True
+  COLUMN: supplier_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: supplier_name | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: is_active | TINYINT | PK=False | Null_Ok=True
+  COLUMN: is_expired | TINYINT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: issued_items
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: prescription_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: patient_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: batch_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: quantity_issued | INTEGER | PK=False | Null_Ok=False
+  COLUMN: issued_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: issued_by | INTEGER | PK=False | Null_Ok=True
+TABLE: prescriptions
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: patient_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: uploaded_by_staff_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: dose_per_day | INTEGER | PK=False | Null_Ok=False
+  COLUMN: start_date | DATETIME | PK=False | Null_Ok=True
+  COLUMN: quantity_given | INTEGER | PK=False | Null_Ok=False
+  COLUMN: is_continuous | TINYINT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: staff_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: end_date | DATETIME | PK=False | Null_Ok=True
+  COLUMN: reminder_type | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: first_dose_time | DATETIME | PK=False | Null_Ok=True
+  COLUMN: meal_instruction | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: meal_types | VARCHAR(100) | PK=False | Null_Ok=True
+TABLE: patients
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: member_id | VARCHAR(255) | PK=False | Null_Ok=True
+  COLUMN: name | VARCHAR(600) | PK=False | Null_Ok=True
+  COLUMN: phone_number | VARCHAR(600) | PK=False | Null_Ok=True
+  COLUMN: language | VARCHAR(600) | PK=False | Null_Ok=True
+  COLUMN: date_of_birth | VARCHAR(600) | PK=False | Null_Ok=True
+  COLUMN: consent | TINYINT | PK=False | Null_Ok=True
+  COLUMN: age | VARCHAR(600) | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: order_items
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: order_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: medicine_name | VARCHAR(255) | PK=False | Null_Ok=True
+  COLUMN: quantity | INTEGER | PK=False | Null_Ok=False
+  COLUMN: unit_price | FLOAT | PK=False | Null_Ok=False
+  COLUMN: subtotal | FLOAT | PK=False | Null_Ok=False
+TABLE: orders
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: token | VARCHAR(64) | PK=False | Null_Ok=False
+  COLUMN: status | VARCHAR(64) | PK=False | Null_Ok=False
+  COLUMN: user_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: total_amount | FLOAT | PK=False | Null_Ok=True
+  COLUMN: payment_method | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: payment_provider | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: payment_status | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: payment_reference | VARCHAR(255) | PK=False | Null_Ok=True
+  COLUMN: paid_amount | FLOAT | PK=False | Null_Ok=True
+  COLUMN: paid_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: approved_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: cancelled_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: reminder_count | INTEGER | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: other_hospitals
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: doctor_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: name | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: days | VARCHAR(255) | PK=False | Null_Ok=True
+  COLUMN: hours | VARCHAR(100) | PK=False | Null_Ok=True
+TABLE: payments
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: order_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: provider | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: status | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: reference | VARCHAR(255) | PK=False | Null_Ok=True
+  COLUMN: amount | FLOAT | PK=False | Null_Ok=True
+  COLUMN: ipn_payload | TEXT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: pharmacies
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: user_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: pharmacy_name | VARCHAR(100) | PK=False | Null_Ok=False
+  COLUMN: contact_number | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: whatsapp_number | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: address | TEXT | PK=False | Null_Ok=True
+  COLUMN: opening_hours | TEXT | PK=False | Null_Ok=True
+  COLUMN: estimated_delivery_time | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: service_areas | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: service_charge | FLOAT | PK=False | Null_Ok=True
+  COLUMN: prescription_policy | TEXT | PK=False | Null_Ok=True
+  COLUMN: refund_policy | TEXT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: users
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: username | VARCHAR(50) | PK=False | Null_Ok=False
+  COLUMN: email | VARCHAR(100) | PK=False | Null_Ok=False
+  COLUMN: password | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: pharmacy_settings
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: key | VARCHAR(100) | PK=False | Null_Ok=False
+  COLUMN: value | TEXT | PK=False | Null_Ok=False
+TABLE: policy_settings
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: policy_type | VARCHAR(100) | PK=False | Null_Ok=False
+  COLUMN: content | TEXT | PK=False | Null_Ok=False
+TABLE: reminder_logs
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: reminder_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: attempt_time | DATETIME | PK=False | Null_Ok=True
+  COLUMN: channel | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: result | VARCHAR(20) | PK=False | Null_Ok=False
+  COLUMN: error_message | TEXT | PK=False | Null_Ok=True
+TABLE: reminders
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: prescription_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: reminder_time | DATETIME | PK=False | Null_Ok=False
+  COLUMN: channel | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: status | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: one_time | TINYINT | PK=False | Null_Ok=True
+  COLUMN: reminder_type | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: staff
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: name | VARCHAR(100) | PK=False | Null_Ok=False
+  COLUMN: email | VARBINARY(255) | PK=False | Null_Ok=True
+  COLUMN: phone | VARBINARY(255) | PK=False | Null_Ok=True
+  COLUMN: role | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: is_active | INTEGER | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: password_hash | VARCHAR(255) | PK=False | Null_Ok=False
+TABLE: stock_adjustments
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: batch_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: adjustment_quantity | INTEGER | PK=False | Null_Ok=False
+  COLUMN: adjustment_type | VARCHAR(50) | PK=False | Null_Ok=False
+  COLUMN: reason | TEXT | PK=False | Null_Ok=True
+  COLUMN: cost_impact | INTEGER | PK=False | Null_Ok=True
+  COLUMN: staff_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: approved_by | INTEGER | PK=False | Null_Ok=True
+  COLUMN: approved_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: stock_alerts
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: batch_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: alert_type | VARCHAR(50) | PK=False | Null_Ok=False
+  COLUMN: current_quantity | INTEGER | PK=False | Null_Ok=False
+  COLUMN: threshold_value | INTEGER | PK=False | Null_Ok=False
+  COLUMN: is_active | TINYINT | PK=False | Null_Ok=True
+  COLUMN: is_acknowledged | TINYINT | PK=False | Null_Ok=True
+  COLUMN: acknowledged_by | INTEGER | PK=False | Null_Ok=True
+  COLUMN: acknowledged_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: resolved_at | DATETIME | PK=False | Null_Ok=True
+TABLE: stock_logs
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: batch_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: quantity_used | INTEGER | PK=False | Null_Ok=False
+  COLUMN: reason | VARCHAR(50) | PK=False | Null_Ok=False
+  COLUMN: issued_to | INTEGER | PK=False | Null_Ok=True
+  COLUMN: reference_type | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: logged_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: staff_id | INTEGER | PK=False | Null_Ok=True
+TABLE: stock_transactions
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: batch_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: transaction_type | ENUM | PK=False | Null_Ok=False
+  COLUMN: quantity_change | INTEGER | PK=False | Null_Ok=False
+  COLUMN: reference_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: staff_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: reason | VARCHAR(255) | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=False
+TABLE: stock_updates
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: medicine_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: batch_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: batch_number | VARCHAR(50) | PK=False | Null_Ok=False
+  COLUMN: manufacture_date | DATETIME | PK=False | Null_Ok=True
+  COLUMN: expiry_date | DATETIME | PK=False | Null_Ok=False
+  COLUMN: quantity_added | INTEGER | PK=False | Null_Ok=False
+  COLUMN: cost_price | FLOAT | PK=False | Null_Ok=False
+  COLUMN: total_cost | FLOAT | PK=False | Null_Ok=False
+  COLUMN: supplier_name | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: supplier_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: staff_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: date_received | DATETIME | PK=False | Null_Ok=True
+  COLUMN: updated_at | DATETIME | PK=False | Null_Ok=True
+TABLE: support_messages
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: ticket_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: sender_type | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: body | TEXT | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+TABLE: support_tickets
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: user_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: agent_id | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: status | VARCHAR(50) | PK=False | Null_Ok=True
+  COLUMN: created_at | DATETIME | PK=False | Null_Ok=True
+  COLUMN: accepted_at | DATETIME | PK=False | Null_Ok=True
+TABLE: time_slots
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: doctor_id | INTEGER | PK=False | Null_Ok=False
+  COLUMN: other_hospital_id | INTEGER | PK=False | Null_Ok=True
+  COLUMN: hospital_name | VARCHAR(255) | PK=False | Null_Ok=False
+  COLUMN: time | VARCHAR(20) | PK=False | Null_Ok=False
+  COLUMN: date | VARCHAR(20) | PK=False | Null_Ok=False
+  COLUMN: booked | TINYINT | PK=False | Null_Ok=True
+TABLE: whatsapp_users
+  COLUMN: id | INTEGER | PK=True | Null_Ok=False
+  COLUMN: name | VARCHAR(100) | PK=False | Null_Ok=True
+  COLUMN: phone_number | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: role | VARCHAR(20) | PK=False | Null_Ok=True
+  COLUMN: created_at | TIMESTAMP | PK=False | Null_Ok=True
