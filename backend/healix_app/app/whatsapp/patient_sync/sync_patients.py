@@ -145,7 +145,7 @@ def sync_to_db(df):
                     # Update potentially? Yes, let's update.
                     # Build encrypted update
                     enc_name = encrypt_data(name)
-                    enc_lang = encrypt_data(lang)
+                    # enc_lang = encrypt_data(lang) # No longer encrypting language
                     enc_dob = encrypt_data(dob)
 
                     # Find ID
@@ -160,20 +160,20 @@ def sync_to_db(df):
                     
                     if target_id:
                         query = "UPDATE patients SET name=%s, language=%s, date_of_birth=%s, consent=%s, age=%s WHERE id=%s"
-                        cursor.execute(query, (enc_name, enc_lang, enc_dob, consent, age, target_id))
+                        cursor.execute(query, (enc_name, lang, enc_dob, consent, age, target_id))
                         conn.commit()
                 else:
                     # Brand new patient
                     enc_name = encrypt_data(name)
                     enc_phone = encrypt_data(phone)
-                    enc_lang = encrypt_data(lang)
+                    # enc_lang = encrypt_data(lang) # No longer encrypting language
                     enc_dob = encrypt_data(dob)
 
                     query = """
                         INSERT INTO patients (name, phone_number, language, date_of_birth, consent, age)
                         VALUES (%s, %s, %s, %s, %s, %s)
                     """
-                    cursor.execute(query, (enc_name, enc_phone, enc_lang, enc_dob, consent, age))
+                    cursor.execute(query, (enc_name, enc_phone, lang, enc_dob, consent, age))
                     conn.commit()
                     
                     # Log success and update cache
