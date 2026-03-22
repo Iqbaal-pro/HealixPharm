@@ -6,7 +6,7 @@ const platformLinks = [
   { label: "How It Works", href: "#how-it-works" },
   { label: "About", href: "#about" },
   { label: "Team", href: "#team" },
-  { label: "Sign Up", href: "/register" },
+  { label: "Sign Up", href: "https://healixpharm-frontend.onrender.com/signup" },
 ];
 
 const projectLinks = [

@@ -2,13 +2,50 @@
 import { useEffect, useRef } from "react";
 
 const team = [
-  { name: "Iqbaal Meedin",    role: "Team Lead & Backend",      img: "/team/iqbaal.jpg",   initial: "IM" },
-  { name: "Maneth Liyanage",  role: "Backend & ML",             img: "/team/maneth.jpg",   initial: "ML" },
-  { name: "Rukaiya Riyas",    role: "Frontend, UI/UX & QA",     img: "/team/rukaiya.jpg",  initial: "RR" },
-  { name: "Nasrin Nas",       role: "Frontend, UI/UX & QA",     img: "/team/nasrin.jpg",   initial: "NN" },
-  { name: "Oneli Herath",     role: "WhatsApp Bot",              img: "/team/oneli.jpg",    initial: "OH" },
-  { name: "Theran De Alwis",  role: "Marketing & ML",           img: "/team/theran.jpg",   initial: "TD" },
+  { 
+    name: "Iqbaal Meedin",    
+    role: "Team Lead & Backend",      
+    img: "/team/iqbaal.jpg",   
+    initial: "IM",
+    linkedin: "https://www.linkedin.com/in/iqbaal-meedin-261a54325?utm_source=share_via&utm_content=profile&utm_medium=member_android"
+  },
+  { 
+    name: "Maneth Liyanage",  
+    role: "Backend & ML",             
+    img: "/team/maneth.jpg",   
+    initial: "ML",
+    linkedin: "https://www.linkedin.com/in/liyanage-don-maneth-mihisara-72b734359?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+  },
+  { 
+    name: "Rukaiya Riyas",    
+    role: "Frontend, UI/UX & QA",     
+    img: "/team/rukaiya.jpg",  
+    initial: "RR",
+    linkedin: "https://www.linkedin.com/in/rukaiya-riyas-803395353"
+  },
+  { 
+    name: "Nasrin Nas",       
+    role: "Frontend, UI/UX & QA",     
+    img: "/team/nasrin.jpg",   
+    initial: "NN",
+    linkedin: "https://www.linkedin.com/in/nasrin-nas-b62076353"
+  },
+  { 
+    name: "Oneli Herath",     
+    role: "WhatsApp Bot",              
+    img: "/team/oneli.jpg",    
+    initial: "OH",
+    linkedin: "https://www.linkedin.com/in/oneli-herath"
+  },
+  { 
+    name: "Theran De Alwis",  
+    role: "Marketing & ML",           
+    img: "/team/theran.jpg",   
+    initial: "TD",
+    linkedin: "https://www.linkedin.com/in/theran-de-alwis-18471732b/"
+  },
 ];
+
 
 export default function Team() {
   const ref = useRef<HTMLElement>(null);
@@ -64,8 +101,17 @@ export default function Team() {
                   }}
                 />
               </div>
-              <h3 className="team-name">{m.name}</h3>
+              <h3 className="team-name">
+                <a href={m.linkedin} target="_blank" rel="noopener noreferrer" className="team-link">
+                  {m.name}
+                  <svg className="linkedin-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                  </svg>
+                </a>
+              </h3>
+
               <p className="team-role">{m.role}</p>
+
             </div>
           ))}
         </div>
@@ -141,6 +187,27 @@ export default function Team() {
           font-weight: 800;
           color: #38bdf8;
         }
+        .team-link {
+          text-decoration: none;
+          color: inherit;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .team-link:hover {
+          color: #38bdf8;
+        }
+        .team-link:hover .linkedin-icon {
+          color: #38bdf8;
+          transform: translateY(-1px);
+        }
+        .linkedin-icon {
+          color: #64748b;
+          transition: all 0.2s ease;
+          opacity: 0.8;
+        }
+
         .team-name {
           font-size: 17px;
           font-weight: 700;
@@ -148,6 +215,7 @@ export default function Team() {
           margin-bottom: 6px;
           letter-spacing: -0.01em;
         }
+
         .team-role {
           font-size: 13px;
           color: #64748b;
