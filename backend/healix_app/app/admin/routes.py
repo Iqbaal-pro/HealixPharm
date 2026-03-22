@@ -162,8 +162,20 @@ def update_order_status(order_id: int, payload: schemas.StatusUpdate, db: Sessio
     order.status = status
     if status == "APPROVED":
         order.approved_at = datetime.utcnow()
+        try:
+            if order.patient and order.patient.phone_number:
+                msg = (
+                    f"Your order {order.token} has been approved! ✅\n"
+                    f"Our pharmacist is currently preparing your bill. "
+                    f"You will receive the itemized summary shortly. 💊"
+                )
+                notif.twilio_wa.send_text(order.patient.phone_number, msg)
+                logger.info(f"[ADMIN] Approval notification sent to {order.patient.phone_number}")
+        except Exception as e:
+            logger.error(f"Failed to send manual approval notification for order {order.id}: {e}")
     
     db.commit()
+
     db.refresh(order)
 
     if status == "REJECTED":
