@@ -51,3 +51,9 @@ export async function updateConsent(patientId: number, consent: boolean): Promis
   });
   return handleResponse<unknown>(res);
 }
+
+// DELETE /patients/{id}
+export async function deletePatient(patientId: number): Promise<{ message: string }> {
+  const res = await fetch(`${BASE}/patients/${patientId}`, { method: "DELETE" });
+  return handleResponse<{ message: string }>(res);
+}
