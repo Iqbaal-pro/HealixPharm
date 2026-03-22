@@ -151,22 +151,27 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
     order.total_amount = total_amount
     order.approved_at = datetime.utcnow()
     
-    UserState_wb.set_user_state(order.patient.phone_number, "awaiting_payment_selection")
+    user_phone = order.patient.phone_number if order.patient else None
+    if user_phone:
+        UserState_wb.set_user_state(user_phone, "awaiting_payment_selection")
     
     db.commit()
 
-    try:
-        msg = (
-            f"Your order has been approved! ✅\n\n"
-            f"Total Amount: Rs. {total_amount:.2f}\n"
-            f"Please choose your payment method:\n"
-            f"1️⃣ Cash on Delivery\n"
-            f"2️⃣ Online Payment\n\n"
-            f"⚠️ Please confirm within 2 hours or the order will be cancelled."
-        )
-        notif.twilio_wa.send_text(order.patient.phone_number, msg)
-    except Exception as e:
-        logger.error(f"Failed to send approval message to {order.patient.phone_number}: {e}")
+    if user_phone:
+        try:
+            msg = (
+                f"Your order has been approved! ✅\n\n"
+                f"Total Amount: Rs. {total_amount:.2f}\n"
+                f"Please choose your payment method:\n"
+                f"1️⃣ Cash on Delivery\n"
+                f"2️⃣ Online Payment\n\n"
+                f"⚠️ Please confirm within 2 hours or the order will be cancelled."
+            )
+            notif.twilio_wa.send_text(user_phone, msg)
+        except Exception as e:
+            logger.error(f"Failed to send approval message to {user_phone}: {e}")
+    else:
+        logger.warning(f"[ADMIN] Order {order.id} approved but has no associated patient to notify.")
 
     return {
         "id": order.id,
@@ -224,10 +229,14 @@ def confirm_payment(order_id: int, db: Session = Depends(get_db)):
     order.payment_status = "COMPLETED"
     db.commit()
     
-    try:
-        notif.twilio_wa.send_text(order.patient.phone_number, f"Payment received for Order {order.token}! ✅ Your medicine is being prepared for delivery.")
-    except Exception as e:
-        logger.error(f"Failed to send payment confirmation: {e}")
+    user_phone = order.patient.phone_number if order.patient else None
+    if user_phone:
+        try:
+            notif.twilio_wa.send_text(user_phone, f"Payment received for Order {order.token}! ✅ Your medicine is being prepared for delivery.")
+        except Exception as e:
+            logger.error(f"Failed to send payment confirmation to {user_phone}: {e}")
+    else:
+        logger.warning(f"[ADMIN] Order {order.id} marked PAID but has no associated patient to notify.")
         
     return {"status": "PAID", "order_id": order.id}
 
