@@ -24,7 +24,7 @@ const info = [
   },
   {
     label: "Phone",
-    value: "+94 771 443 155",
+    value: "+94 714 292 929",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="#38bdf8" strokeWidth="1.5" />
@@ -36,6 +36,7 @@ const info = [
 const socials = [
   {
     label: "Facebook",
+    href: "https://www.facebook.com/share/1CFaukYhhC/?mibextid=wwXIfr",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
         <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" stroke="#7dd3fc" strokeWidth="1.5" strokeLinejoin="round" />
@@ -44,6 +45,7 @@ const socials = [
   },
   {
     label: "LinkedIn",
+    href: "https://www.linkedin.com/company/healixpharm/",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
         <rect x="2" y="2" width="20" height="20" rx="4" stroke="#7dd3fc" strokeWidth="1.5" />
@@ -53,6 +55,7 @@ const socials = [
   },
   {
     label: "Instagram",
+    href: "https://www.instagram.com/healix_pharm?igsh=aHF5bHc5ZDZtemFs",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
         <rect x="2" y="2" width="20" height="20" rx="5" stroke="#7dd3fc" strokeWidth="1.5" />
@@ -169,7 +172,7 @@ export default function Contact() {
                 <div className="social-title">Follow Us</div>
                 <div className="social-btns">
                   {socials.map((s) => (
-                    <a key={s.label} href="#" className="social-btn">
+                    <a key={s.label} href={s.href} className="social-btn" target="_blank" rel="noopener noreferrer">
                       {s.icon}
                       {s.label}
                     </a>
