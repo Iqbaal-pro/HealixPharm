@@ -66,6 +66,10 @@ app.add_middleware(
         "https://healix-doctor-portal.onrender.com",
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://10.229.45.189:3000",
+        "http://10.229.45.189:3001"
     ],
     allow_credentials=True,
     allow_methods=["*"],

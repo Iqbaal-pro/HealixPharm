@@ -16,7 +16,6 @@ export default function StockManagementPage() {
     predictedItems: 0,
     reorderNeeded: 0,
   });
-  const [stats, setStats] = useState({ totalSKUs: 0, lowStock: 0, critical: 0, expiringSoon: 0, damagedUnits: 0, reorderNeeded: 0 });
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
@@ -25,39 +24,23 @@ export default function StockManagementPage() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const [invRes, reorderRes, predictRes] = await Promise.all([
-        fetch(`${API}/inventory/`),
-        fetch(`${API}/analytics/reorder-recommendations`),
-        fetch(`http://localhost:8000/api/v1/predict/summary`),
-      ]);
-      const [inv, reorder, predict] = await Promise.all([
-        invRes.json(), 
-        reorderRes.ok ? reorderRes.json() : [],
-        predictRes.ok ? predictRes.json() : null,
-      ]);
-
-      setStats({
-        totalSKUs:     inv.length || 0,
-        lowStock:      inv.filter((i: any) => i.quantity_available <= i.reorder_level).length,
-        critical:      inv.filter((i: any) => i.quantity_available <= i.reorder_level * 0.5).length,
-        totalBudget:   predict?.total_budget || 0,
-        predictedItems: predict?.total_items || 0,
-        reorderNeeded: Array.isArray(reorder) ? reorder.length : 0,
       const token = getTokenFromStorage();
-      const [invResult, batchesResult, reorderResult] = await Promise.allSettled([
-        getInventory(), getBatches(false), getReorderRecommendations(token),
+      const [invResult, reorderResult, predictResult] = await Promise.allSettled([
+        getInventory(),
+        getReorderRecommendations(token),
+        fetch(`http://localhost:8002/api/v1/predict/summary`).then(r => r.ok ? r.json() : null),
       ]);
       const inv     = invResult.status     === "fulfilled" ? invResult.value     : [];
-      const batches = batchesResult.status === "fulfilled" ? batchesResult.value : [];
       const reorder = reorderResult.status === "fulfilled" ? reorderResult.value : [];
-      const now = Date.now();
+      const predict = predictResult.status === "fulfilled" ? predictResult.value : null;
+
       setStats({
-        totalSKUs:     inv.length,
-        lowStock:      inv.filter(i => i.quantity_available <= i.reorder_level).length,
-        critical:      inv.filter(i => i.quantity_available <= i.reorder_level * 0.5).length,
-        expiringSoon:  batches.filter(b => Math.ceil((new Date(b.expiry_date).getTime() - now) / 86400000) <= 30).length,
-        damagedUnits:  inv.reduce((s, i) => s + i.quantity_damaged, 0),
-        reorderNeeded: reorder.length,
+        totalSKUs:      inv.length || 0,
+        lowStock:       inv.filter((i: any) => i.quantity_available <= i.reorder_level).length,
+        critical:       inv.filter((i: any) => i.quantity_available <= i.reorder_level * 0.5).length,
+        totalBudget:    predict?.total_budget || 0,
+        predictedItems: predict?.total_items || 0,
+        reorderNeeded:  Array.isArray(reorder) ? reorder.length : 0,
       });
       setLastUpdated(new Date().toLocaleTimeString());
     } catch (err) { console.error(err); } finally { setLoading(false); }
@@ -68,11 +51,6 @@ export default function StockManagementPage() {
     { href: "/stock-management/batches",     label: "Batches",     icon: "📦", desc: "Track batches & inventory",          badge: stats.reorderNeeded, badgeColor: "#818cf8", badgeLabel: "reorder"      },
     { href: "/stock-management/predictions", label: "Predictions", icon: "🤖", desc: "ML-powered stock forecasting",      badge: stats.predictedItems,badgeColor: "#10b981", badgeLabel: "items"        },
     { href: "/stock-management/analytics",   label: "Analytics",   icon: "📊", desc: "Demand trends & recommendations",    badge: stats.reorderNeeded, badgeColor: "#818cf8", badgeLabel: "reorder"      },
-    { href: "/stock-management/inventory",   label: "Inventory", desc: "View & manage stock levels",         badge: stats.lowStock,      badgeColor: "#f59e0b", badgeLabel: "low stock"  },
-    { href: "/stock-management/batches",     label: "Batches", desc: "Track batches & expiry dates",       badge: stats.expiringSoon,  badgeColor: "#f97316", badgeLabel: "expiring"   },
-    { href: "/stock-management/alerts",      label: "Alerts", desc: "Stock & expiry warnings",            badge: stats.critical,      badgeColor: "#ef4444", badgeLabel: "critical"   },
-    { href: "/stock-management/analytics",   label: "Analytics", desc: "Demand trends & recommendations",    badge: stats.reorderNeeded, badgeColor: "#818cf8", badgeLabel: "reorder"    },
-    { href: "/stock-management/adjustments", label: "Adjustments",desc: "Log damaged, expired & corrections", badge: stats.damagedUnits,  badgeColor: "#64748b", badgeLabel: "damaged"    },
   ];
 
   return (
@@ -114,8 +92,6 @@ export default function StockManagementPage() {
             <p style={{ color:"#475569", fontSize:13.5, margin:"3px 0 0" }}>
               Inventory · Batches · Predictions · Analytics
             </p>
-            <h1 className="page-title gradient-text">Stock Management</h1>
-            <p className="page-sub">Inventory · Batches · Alerts · Analytics · Adjustments</p>
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -134,14 +110,20 @@ export default function StockManagementPage() {
           <div style={{ width:7, height:7, borderRadius:"50%", background:"#38bdf8", boxShadow:"0 0 8px #38bdf8", flexShrink:0 }}/>
           <span style={{ fontSize:13, color:"#38bdf8", fontWeight:500 }}>
             ML Predictions are ready for next month — check the Predictions module for details.
-      {!loading && (stats.critical > 0 || stats.expiringSoon > 0) && (
-        <div className="fade-2 alert-banner alert-banner-red" style={{ marginBottom: 20 }}>
-          <div className="alert-dot alert-dot-red" />
-          <span style={{ fontSize: 13, color: "#f87171", fontWeight: 500 }}>
-            {stats.critical > 0 && `${stats.critical} critical stock items`}
-            {stats.critical > 0 && stats.expiringSoon > 0 && " · "}
-            {stats.expiringSoon > 0 && `${stats.expiringSoon} batches expiring within 30 days`}
-            {" — immediate action required"}
+          </span>
+        </div>
+      )}
+
+      {/* Critical Alert */}
+      {!loading && stats.critical > 0 && (
+        <div className="fade-2" style={{
+          marginBottom:20, padding:"12px 20px",
+          background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)",
+          borderRadius:12, display:"flex", alignItems:"center", gap:10,
+        }}>
+          <div style={{ width:7, height:7, borderRadius:"50%", background:"#ef4444", boxShadow:"0 0 8px #ef4444", flexShrink:0 }}/>
+          <span style={{ fontSize:13, color:"#f87171", fontWeight:500 }}>
+            {stats.critical} critical stock items — immediate action required
           </span>
         </div>
       )}
@@ -154,12 +136,6 @@ export default function StockManagementPage() {
           { label:"Predicted Items", value: loading ? "—" : stats.predictedItems,color:"#10b981" },
           { label:"Est. Budget",     value: loading ? "—" : `Rs. ${(stats.totalBudget/1000000).toFixed(1)}M`, color:"#818cf8" },
           { label:"Reorder Needed",  value: loading ? "—" : stats.reorderNeeded, color:"#f97316" },
-          { label: "Total stock",     value: loading ? "—" : stats.totalSKUs,     color: "#38bdf8" },
-          { label: "Low Stock",      value: loading ? "—" : stats.lowStock,      color: "#f59e0b" },
-          { label: "Critical",       value: loading ? "—" : stats.critical,      color: "#ef4444" },
-          { label: "Expiring < 30d",  value: loading ? "—" : stats.expiringSoon,  color: "#f97316" },
-          { label: "Damaged Units",  value: loading ? "—" : stats.damagedUnits,  color: "#64748b" },
-          { label: "Reorder Needed", value: loading ? "—" : stats.reorderNeeded, color: "#818cf8" },
         ].map(s => (
           <div key={s.label} className="stat-card">
             <div className="stat-label">{s.label}</div>
@@ -175,7 +151,7 @@ export default function StockManagementPage() {
               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                <div style={{ fontSize: 28 }}></div>
+                <div style={{ fontSize: 28 }}>{m.icon}</div>
                 {m.badge > 0 && (
                   <span className="badge" style={{ background: `${m.badgeColor}18`, color: m.badgeColor }}>
                     {m.badge} {m.badgeLabel}
@@ -189,7 +165,6 @@ export default function StockManagementPage() {
           </Link>
         ))}
       </div>
-
 
     </div>
   );

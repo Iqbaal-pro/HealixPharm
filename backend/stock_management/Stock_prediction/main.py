@@ -1,209 +1,197 @@
 import os
+import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# Ensure stdout uses UTF-8 if possible, though we'll stick to ASCII to be safe
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 
 from src.preprocessing import load_and_clean_data, get_latest_prices
 from src.visualization import plot_budget_distribution, plot_category_trends
 
+FEATURES = [
+    'Month', 'lag_1', 'lag_2', 'rolling_3', 'rolling_6', 
+    'item_mean', 'item_std', 'n_months', 'item_encoded', 'cat_encoded'
+]
+
+def build_global_features(monthly_df: pd.DataFrame) -> pd.DataFrame:
+    records = []
+    # Faster grouping
+    for (item, category), group in monthly_df.groupby(['Item', 'Category']):
+        g = group.sort_values('Month').reset_index(drop=True)
+        qty_mean = g['Qty'].mean()
+        qty_std = g['Qty'].std() if len(g) > 1 else 0.0
+        n_months = len(g)
+
+        for i in range(len(g)):
+            row = g.iloc[i]
+            lag1 = float(g.iloc[i-1]['Qty']) if i >= 1 else qty_mean
+            lag2 = float(g.iloc[i-2]['Qty']) if i >= 2 else qty_mean
+            roll3 = float(g.iloc[max(0, i-3):i]['Qty'].mean()) if i >= 1 else qty_mean
+            roll6 = float(g.iloc[max(0, i-6):i]['Qty'].mean()) if i >= 1 else qty_mean
+
+            records.append({
+                'Item': item, 'Category': category, 'Month': int(row['Month']),
+                'lag_1': lag1, 'lag_2': lag2, 'rolling_3': roll3, 'rolling_6': roll6,
+                'item_mean': qty_mean, 'item_std': qty_std, 'n_months': n_months,
+                'Qty': float(row['Qty']),
+            })
+    return pd.DataFrame(records)
 
 def run_prediction_pipeline():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
     today = datetime.today()
     if today.month == 12:
         target_month, target_year = 1, today.year + 1
     else:
         target_month, target_year = today.month + 1, today.year
     month_name = datetime(target_year, target_month, 1).strftime('%B %Y')
-    print(f"=== Predicting stock for: {month_name} ===\n")
 
-    # -------------------------------------------------------
+    print("="*55)
+    print(f"  HealixPharm Stock Prediction - {month_name}")
+    print("  Model: Global Random Forest")
+    print("="*55 + "\n")
+
     print("1. Loading and Preprocessing Data...")
     file_path = os.path.join(BASE_DIR, 'data', 'peoples pharmacy.xlsx')
     df = load_and_clean_data(file_path)
 
     data_dir = os.path.join(BASE_DIR, 'data')
     os.makedirs(data_dir, exist_ok=True)
-    output_csv = os.path.join(data_dir, 'preprocessed_12_month_data.csv')
-    df.to_csv(output_csv, index=False, encoding='utf-8-sig')
-    print(f"   [+] Preprocessed data saved to {output_csv}")
-
+    df.to_csv(os.path.join(data_dir, 'preprocessed_12_month_data.csv'), index=False, encoding='utf-8-sig')
+    
     latest_prices = get_latest_prices(df)
 
-    # -------------------------------------------------------
-    print("\n2. Preparing Monthly Sales Aggregation...")
-    monthly_sales = df.groupby(['Item', 'Category', 'Month'])['Qty'].sum().reset_index()
-    monthly_sales = monthly_sales.sort_values(['Item', 'Month']).reset_index(drop=True)
-    print(f"   [+] Total item-month records: {len(monthly_sales)}")
+    print("\n2. Aggregating Monthly Sales...")
+    monthly_sales = df.groupby(['Item', 'Category', 'Month'])['Qty'].sum().reset_index().sort_values(['Item', 'Month']).reset_index(drop=True)
+    
+    print("\n3. Engineering Features for Global Model...")
+    feat_df = build_global_features(monthly_sales)
+    
+    le_item = LabelEncoder()
+    le_cat = LabelEncoder()
+    feat_df['item_encoded'] = le_item.fit_transform(feat_df['Item'])
+    feat_df['cat_encoded'] = le_cat.fit_transform(feat_df['Category'])
 
-    # -------------------------------------------------------
-    print(f"\n3. Predicting {month_name} using best strategy per item...")
-
-    results = []
-    eval_records = []  # for evaluation
-
-    # Segment items by how many months of data they have
-    item_month_counts = monthly_sales.groupby('Item')['Month'].count()
-    items_12 = item_month_counts[item_month_counts == 12].index   # full year
-    items_6  = item_month_counts[(item_month_counts >= 6) & (item_month_counts < 12)].index
-    items_3  = item_month_counts[(item_month_counts >= 3) & (item_month_counts < 6)].index
-    items_low = item_month_counts[item_month_counts < 3].index
-
-    print(f"   [+] Items with 12 months (Random Forest): {len(items_12)}")
-    print(f"   [+] Items with 6-11 months (Weighted Avg): {len(items_6)}")
-    print(f"   [+] Items with 3-5 months  (Weighted Avg): {len(items_3)}")
-    print(f"   [+] Items with <3 months   (Simple Avg)  : {len(items_low)}")
-
-    for item in monthly_sales['Item'].unique():
-        item_data = monthly_sales[monthly_sales['Item'] == item].copy().reset_index(drop=True)
-        category  = item_data['Category'].iloc[0]
-        n_months  = len(item_data)
-
-        # --- STRATEGY 1: Full 12-month → Random Forest with same-month last year ---
-        if item in items_12:
-            X = item_data[['Month']]
-            y = item_data['Qty']
-
-            # Evaluation: predict last known month, train on rest
-            X_train, X_test = X.iloc[:-1], X.iloc[[-1]]
-            y_train, y_test = y.iloc[:-1], y.iloc[-1]
-            model_eval = RandomForestRegressor(n_estimators=100, random_state=42)
-            model_eval.fit(X_train, y_train)
-            y_pred_eval = max(0, model_eval.predict(X_test)[0])
-            eval_records.append({'true': y_test, 'pred': y_pred_eval, 'group': '12-month RF'})
-
-            # Final prediction: train on all 12 months
-            model_final = RandomForestRegressor(n_estimators=100, random_state=42)
-            model_final.fit(X, y)
-            predicted_qty = model_final.predict(pd.DataFrame({'Month': [target_month]}))[0]
-
-        # --- STRATEGY 2: 6-11 months → Weighted average (recent months count more) ---
-        elif item in items_6:
-            # Check if we have data for the target month from last year
-            same_month = item_data[item_data['Month'] == target_month]
-            if not same_month.empty:
-                # Weight: 60% same month last year + 40% recent 3-month avg
-                same_month_qty = same_month['Qty'].values[0]
-                recent_avg = item_data.tail(3)['Qty'].mean()
-                predicted_qty = 0.6 * same_month_qty + 0.4 * recent_avg
-            else:
-                # Weighted average giving more weight to recent months
-                weights = np.arange(1, n_months + 1)
-                predicted_qty = np.average(item_data['Qty'].values, weights=weights)
-
-            # Evaluation
-            y_test = item_data['Qty'].iloc[-1]
-            y_pred_eval = item_data['Qty'].iloc[:-1].mean()
-            eval_records.append({'true': y_test, 'pred': y_pred_eval, 'group': '6-11 month WA'})
-
-        # --- STRATEGY 3: 3-5 months → Weighted average ---
-        elif item in items_3:
-            weights = np.arange(1, n_months + 1)
-            predicted_qty = np.average(item_data['Qty'].values, weights=weights)
-
-            y_test = item_data['Qty'].iloc[-1]
-            y_pred_eval = item_data['Qty'].iloc[:-1].mean()
-            eval_records.append({'true': y_test, 'pred': y_pred_eval, 'group': '3-5 month WA'})
-
-        # --- STRATEGY 4: <3 months → Simple average ---
+    print("\n4. Splitting Data for Evaluation...")
+    train_rows, test_rows = [], []
+    for _, group in feat_df.groupby('Item'):
+        g = group.sort_values('Month').reset_index(drop=True)
+        if len(g) >= 2:
+            train_rows.append(g.iloc[:-1])
+            test_rows.append(g.iloc[[-1]])
         else:
-            predicted_qty = item_data['Qty'].mean()
+            train_rows.append(g)
 
-        results.append({
-            'Item': item,
-            'Category': category,
-            f'Predicted_{month_name.replace(" ", "_")}_Qty': max(0, round(predicted_qty))
+    train_df = pd.concat(train_rows).reset_index(drop=True)
+    test_df = pd.concat(test_rows).reset_index(drop=True)
+
+    X_train, y_train = train_df[FEATURES], train_df['Qty']
+    X_test, y_test = test_df[FEATURES], test_df['Qty']
+
+    print("\n5. Training Global Random Forest Model...")
+    eval_model = RandomForestRegressor(n_estimators=200, random_state=42, n_jobs=-1)
+    eval_model.fit(X_train, y_train)
+    y_pred_eval = np.maximum(eval_model.predict(X_test), 0)
+
+    mae = mean_absolute_error(y_test, y_pred_eval)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred_eval))
+    r2 = r2_score(y_test, y_pred_eval)
+    mape = np.mean([abs((t - p) / t) * 100 for t, p in zip(y_test, y_pred_eval) if t != 0])
+
+    if r2 >= 0.85:   verdict = "Excellent OK"
+    elif r2 >= 0.70: verdict = "Good OK"
+    elif r2 >= 0.50: verdict = "Acceptable WARN"
+    else:            verdict = "Needs Improvement FAIL"
+
+    print(f"\n   --- GLOBAL MODEL EVALUATION:")
+    print(f"   |-- MAE   : {mae:.2f} units")
+    print(f"   |-- RMSE  : {rmse:.2f} units")
+    print(f"   |-- R2    : {r2:.4f} -> {verdict}")
+    print(f"   |-- MAPE  : {mape:.2f}%")
+
+    print("\n6. Retraining on Full Dataset for Final Predictions...")
+    final_model = RandomForestRegressor(n_estimators=200, random_state=42, n_jobs=-1)
+    final_model.fit(feat_df[FEATURES], feat_df['Qty'])
+
+    print(f"\n7. Predicting {month_name} for All Items...")
+    # Faster prediction loop
+    pred_data = []
+    for (item, category), group in monthly_sales.groupby(['Item', 'Category']):
+        qty_vals = group.sort_values('Month')['Qty'].values
+        qty_mean = qty_vals.mean()
+        qty_std = qty_vals.std() if len(qty_vals) > 1 else 0.0
+        n_months = len(qty_vals)
+
+        pred_data.append({
+            'Item': item, 'Category': category, 'Month': target_month,
+            'lag_1': float(qty_vals[-1]),
+            'lag_2': float(qty_vals[-2]) if len(qty_vals) >= 2 else qty_mean,
+            'rolling_3': float(qty_vals[-3:].mean()) if len(qty_vals) >= 3 else qty_mean,
+            'rolling_6': float(qty_vals[-6:].mean()) if len(qty_vals) >= 6 else qty_mean,
+            'item_mean': qty_mean, 'item_std': qty_std, 'n_months': n_months,
+            'item_encoded': le_item.transform([item])[0],
+            'cat_encoded': le_cat.transform([category])[0]
         })
 
-    # -------------------------------------------------------
-    # Evaluation — split by group
-    eval_df_raw = pd.DataFrame(eval_records)
-    y_true_all = eval_df_raw['true'].values
-    y_pred_all = eval_df_raw['pred'].values
+    X_pred = pd.DataFrame(pred_data)
+    predictions = np.maximum(final_model.predict(X_pred[FEATURES]), 0)
+    
+    results = []
+    month_col = f'Predicted_{month_name.replace(" ", "_")}_Qty'
+    for i, row in X_pred.iterrows():
+        results.append({
+            'Item': row['Item'], 'Category': row['Category'],
+            month_col: round(predictions[i])
+        })
 
-    mae  = mean_absolute_error(y_true_all, y_pred_all)
-    rmse = np.sqrt(mean_squared_error(y_true_all, y_pred_all))
-    r2   = r2_score(y_true_all, y_pred_all)
-    mape_vals = [abs((t-p)/t)*100 for t,p in zip(y_true_all, y_pred_all) if t != 0]
-    mape = np.mean(mape_vals)
+    print(f"   [+] Predictions generated for {len(results)} items")
 
-    if r2 >= 0.85:   verdict = "Excellent ✅"
-    elif r2 >= 0.70: verdict = "Good ✅"
-    elif r2 >= 0.50: verdict = "Acceptable ⚠️"
-    else:            verdict = "Needs Improvement ❌"
-
-    print(f"\n   📊 OVERALL MODEL EVALUATION:")
-    print(f"   ├── MAE   : {mae:.2f} units")
-    print(f"   ├── RMSE  : {rmse:.2f} units")
-    print(f"   ├── R²    : {r2:.4f}  → {verdict}")
-    print(f"   └── MAPE  : {mape:.2f}%")
-
-    # Per-group breakdown
-    print(f"\n   📊 EVALUATION BY STRATEGY:")
-    for group in eval_df_raw['group'].unique():
-        g = eval_df_raw[eval_df_raw['group'] == group]
-        g_mae  = mean_absolute_error(g['true'], g['pred'])
-        g_r2   = r2_score(g['true'], g['pred'])
-        g_mape = np.mean([abs((t-p)/t)*100 for t,p in zip(g['true'],g['pred']) if t!=0])
-        print(f"   ├── {group:20s} → MAE: {g_mae:7.1f}  R²: {g_r2:.4f}  MAPE: {g_mape:.1f}%")
-
-    # Save evaluation
-    eval_out = pd.DataFrame({
-        'Metric':         ['MAE', 'RMSE', 'R2_Score', 'MAPE (%)'],
-        'Value':          [round(mae,4), round(rmse,4), round(r2,4), round(mape,4)],
-        'Interpretation': [
-            f'Avg error of {mae:.1f} units per item',
-            f'Large-error-penalized: {rmse:.1f}',
-            verdict,
-            f'Avg {mape:.1f}% off from actual'
-        ]
-    })
-
-    # -------------------------------------------------------
-    print("\n4. Applying 20% Safety Stock Buffer...")
-    pred_col = f'Predicted_{month_name.replace(" ", "_")}_Qty'
+    print("\n8. Applying 20% Safety Stock Buffer...")
     predictions_df = pd.DataFrame(results)
-    predictions_df['Recommended_Stock'] = (predictions_df[pred_col] * 1.2).apply(np.ceil).astype(int)
+    predictions_df['Recommended_Stock'] = np.ceil(predictions_df[month_col] * 1.2).astype(int)
 
-    # -------------------------------------------------------
-    print("\n5. Calculating Budget Requirements...")
-    merged = pd.merge(predictions_df, latest_prices, on='Item', how='left')
-    merged['Price'] = merged['Price'].fillna(0)
+    print("\n9. Calculating Budget Requirements...")
+    merged = pd.merge(predictions_df, latest_prices, on='Item', how='left').fillna(0)
     merged['Budget_Required'] = merged['Recommended_Stock'] * merged['Price']
 
-    category_budget = merged.groupby('Category')['Budget_Required'].sum().reset_index()
-    category_budget = category_budget.sort_values(by='Budget_Required', ascending=False)
-    category_budget['Budget_Required'] = category_budget['Budget_Required'].round(2)
+    category_budget = merged.groupby('Category')['Budget_Required'].sum().reset_index().sort_values('Budget_Required', ascending=False)
     total_budget = category_budget['Budget_Required'].sum()
+
     print(f"   [+] Total estimated budget: Rs. {total_budget:,.2f}")
 
-    # -------------------------------------------------------
-    print("\n6. Saving Reports...")
+    print("\n10. Saving Reports...")
     reports_dir = os.path.join(BASE_DIR, 'outputs', 'reports')
     os.makedirs(reports_dir, exist_ok=True)
     category_budget.to_csv(os.path.join(reports_dir, 'frontend_category_budgets.csv'), index=False, encoding='utf-8-sig')
-    category_budget.to_json(os.path.join(reports_dir, 'frontend_category_budgets.json'), orient='records')
     merged.to_csv(os.path.join(reports_dir, 'detailed_inventory_plan.csv'), index=False, encoding='utf-8-sig')
+    
+    # Save a small JSON for the dashboard
+    eval_out = pd.DataFrame({
+        'Metric': ['MAE', 'RMSE', 'R2_Score', 'MAPE (%)'],
+        'Value':  [mae, rmse, r2, mape]
+    })
     eval_out.to_csv(os.path.join(reports_dir, 'model_evaluation.csv'), index=False, encoding='utf-8-sig')
-    print(f"   [+] Reports saved to {reports_dir}")
-
-    # -------------------------------------------------------
-    print("\n7. Generating Visualizations...")
+    
+    print("\n11. Generating Visualizations...")
     charts_dir = os.path.join(BASE_DIR, 'outputs', 'charts')
     plot_budget_distribution(category_budget, output_folder=charts_dir)
     plot_category_trends(df, output_folder=charts_dir)
 
-    # -------------------------------------------------------
-    print(f"\n{'='*50}")
-    print(f"✅ ML Pipeline Complete!")
+    print("\n" + "="*55)
+    print("OK Pipeline Complete!")
     print(f"   Target month   : {month_name}")
-    print(f"   Items predicted: {len(predictions_df)}")
+    print(f"   R2 Score       : {r2:.4f}")
     print(f"   Total budget   : Rs. {total_budget:,.2f}")
-    print(f"{'='*50}")
-
+    print("="*55)
 
 if __name__ == "__main__":
     run_prediction_pipeline()
