@@ -118,7 +118,7 @@ export default function PredictionsPage() {
         </div>
         <div className="stat-card">
           <div style={{ fontSize: 11, color: "#334155", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Top Category</div>
-          <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 32, color: "#f59e0b", lineHeight: 1, marginBottom: 4, fontSize: 24 }}>
+          <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, color: "#f59e0b", lineHeight: 1, marginBottom: 4, fontSize: 24 }}>
             {summary ? summary.top_category : "—"}
           </div>
           <div style={{ fontSize: 12, color: "#475569" }}>Highest budget requirement</div>
