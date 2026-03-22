@@ -100,19 +100,17 @@ def update_consent(
         "consent": patient.consent
     }
 
-
-# ─── Delete a patient ─────────────────────────────────────────────
 @router.delete("/{patient_id}")
 def delete_patient(patient_id: int, db: Session = Depends(get_db)):
-    """
-    Remove a patient from the database.
-    Note: The sync script will automatically remove them from Google Sheets 
-    during its next 'reverse sync' cycle.
-    """
     repo = PatientRepository(db)
-    success = repo.delete(patient_id)
 
-    if not success:
+    patient = repo.get_by_id(patient_id)
+    if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    return {"message": "Patient deleted successfully", "id": patient_id}
+    repo.delete(patient_id)
+
+    return {
+        "message": f"Patient '{patient.name}' deleted successfully",
+        "patient_id": patient_id
+    }
