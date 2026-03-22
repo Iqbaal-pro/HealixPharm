@@ -201,14 +201,36 @@ def update_order_status(order_id: int, payload: schemas.StatusUpdate, db: Sessio
         order.approved_at = datetime.utcnow()
         try:
             if order.patient and order.patient.phone_number:
-                msg = (
-                    f"Your order {order.token} has been approved! ✅\n"
-                    f"Our pharmacist is currently preparing your bill. "
-                    f"You will receive the itemized summary shortly. 💊"
-                )
+                # Check if we have bill data to show payment options
+                if order.total_amount and order.total_amount > 0 and order.items:
+                    item_lines = "\n".join([f"• {i.medicine_name} x {i.quantity}" for i in order.items])
+                    msg = (
+                        f"Your prescription has been reviewed and approved! ✅\n\n"
+                        f"*Bill Summary:*\n{item_lines}\n\n"
+                        f"*Total Amount: Rs. {order.total_amount:.2f}*\n\n"
+                        f"Please choose your payment method:\n"
+                        f"1️⃣ Cash on Delivery\n"
+                        f"2️⃣ Online Payment\n\n"
+                        f"⚠️ Please respond with 1 or 2 to proceed."
+                    )
+                    logger.info(f"[ADMIN] Detailed approval notification sent to {order.patient.phone_number}")
+                else:
+                    # Fallback if no bill data yet
+                    msg = (
+                        f"Your order {order.token} has been approved! ✅\n"
+                        f"Our pharmacist is currently preparing your bill. "
+                        f"You will receive the itemized summary shortly. 💊"
+                    )
+                    logger.info(f"[ADMIN] Simple approval notification sent to {order.patient.phone_number}")
+
                 notif.twilio_wa.send_text(order.patient.phone_number, msg)
-                logger.info(f"[ADMIN] Approval notification sent to {order.patient.phone_number}")
+                
+                # Always set state so user is ready for payment step
+                UserState_wb.set_user_state(order.patient.phone_number, "awaiting_payment_selection")
+                logger.info(f"[ADMIN] User state set to awaiting_payment_selection for {order.patient.phone_number}")
         except Exception as e:
+
+
             logger.error(f"Failed to send manual approval notification for order {order.id}: {e}")
     
     db.commit()
