@@ -99,3 +99,18 @@ def update_consent(
         "patient_id": patient.id,
         "consent": patient.consent
     }
+
+@router.delete("/{patient_id}")
+def delete_patient(patient_id: int, db: Session = Depends(get_db)):
+    repo = PatientRepository(db)
+
+    patient = repo.get_by_id(patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    repo.delete(patient_id)
+
+    return {
+        "message": f"Patient '{patient.name}' deleted successfully",
+        "patient_id": patient_id
+    }

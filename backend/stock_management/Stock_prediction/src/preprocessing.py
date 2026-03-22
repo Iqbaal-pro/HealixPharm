@@ -84,7 +84,7 @@ def load_and_clean_data(file_path):
     df['Year'] = df['Date'].dt.year
 
     print(f"   [+] Clean data shape: {df.shape}")
-    print(f"   [+] Date range: {df['Date'].min().date()} → {df['Date'].max().date()}")
+    print(f"   [+] Date range: {df['Date'].min().date()} -> {df['Date'].max().date()}")
     print(f"   [+] Unique items: {df['Item'].nunique()}")
     print(f"   [+] Unique months: {sorted(df['Month'].unique())}")
 

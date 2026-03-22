@@ -113,7 +113,7 @@ export default function ChannellingPage() {
       <div className="page-spacer" />
 
       {/* Header */}
-      <div className="fade-1" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+      <div className="fade-1 channelling-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div className="page-icon" style={{ background: "rgba(56,189,248,0.1)", border: "1px solid rgba(56,189,248,0.22)", boxShadow: "0 0 18px rgba(56,189,248,0.1)" }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="1.8">
@@ -133,7 +133,7 @@ export default function ChannellingPage() {
       </div>
 
       {/* Stats */}
-      <div className="fade-2" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
+      <div className="fade-2 channelling-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
         {[
           { label: "Total Doctors",    value: stats.total,    sub: "registered",    color: "#38bdf8" },
           { label: "Active",           value: stats.active,   sub: "available now", color: "#4ade80" },
@@ -149,7 +149,7 @@ export default function ChannellingPage() {
       </div>
 
       {/* Service Charge Editor */}
-      <div className="glass-panel fade-2" style={{ padding: "18px 24px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
+      <div className="glass-panel fade-2 service-charge-row" style={{ padding: "18px 24px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
         <div>
           <p style={{ fontSize: 15, fontWeight: 600, color: "#f1f5f9", margin: "0 0 4px" }}>E-Channelling Service Charge</p>
           <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
@@ -177,7 +177,7 @@ export default function ChannellingPage() {
       </div>
 
       {/* Filters */}
-      <div className="fade-3" style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+      <div className="fade-3 channelling-filters" style={{ display: "flex", gap: 10, marginBottom: 16 }}>
         <div className="search-wrap" style={{ flex: 1 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -216,7 +216,6 @@ export default function ChannellingPage() {
       {/* Empty */}
       {!loading && !error && filtered.length === 0 && (
         <div className="glass-panel fade-3" style={{ textAlign: "center", padding: "56px 24px" }}>
-          <div className="page-icon" style={{ margin: "0 auto 16px", fontSize: 24, background: "rgba(148,163,184,0.06)", border: "1px solid rgba(148,163,184,0.1)" }}>👨‍⚕️</div>
           <p style={{ fontSize: 15, color: "#94a3b8", marginBottom: 4 }}>{doctors.length === 0 ? "No doctors added yet." : "No doctors match your search."}</p>
           <p style={{ fontSize: 13, color: "#475569" }}>{doctors.length === 0 ? 'Click "Add Doctor" to get started.' : "Try clearing your filters."}</p>
         </div>
@@ -224,7 +223,7 @@ export default function ChannellingPage() {
 
       {/* Table */}
       {!loading && !error && filtered.length > 0 && (
-        <div className="glass-panel fade-3">
+        <div className="glass-panel fade-3 channelling-table-wrap">
           <table className="full-table">
             <thead>
               <tr className="thead-border">
@@ -262,7 +261,7 @@ export default function ChannellingPage() {
                     </span>
                   </td>
                   <td className="td">
-                    <div style={{ display: "flex", gap: 6 }}>
+                    <div className="channelling-actions" style={{ display: "flex", gap: 6 }}>
                       <button onClick={() => openEdit(d)} className="btn-ghost" style={{ padding: "5px 12px", fontSize: 12 }}>Edit</button>
                       <Link href={`/channeling/${d.id}/slots`} className="btn-action btn-action-blue" style={{ padding: "5px 12px", fontSize: 12, textDecoration: "none" }}>Slots</Link>
                       <button onClick={() => handleDelete(d.id, d.name)} disabled={deleting === d.id} className="btn-action btn-action-red" style={{ padding: "5px 12px", fontSize: 12, opacity: deleting === d.id ? 0.5 : 1 }}>

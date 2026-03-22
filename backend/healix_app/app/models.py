@@ -90,11 +90,16 @@ class Patient(Base):
     # --- language ---
     @property
     def language(self) -> str:
-        return _safe_decrypt(self._language, "language")
+        """Hybrid: Decrypt if encrypted (starts with gAAAAA), else return raw."""
+        val = self._language
+        if val and isinstance(val, str) and val.startswith("gAAAAA"):
+            return _safe_decrypt(val, "language") or val
+        return val
 
     @language.setter
     def language(self, value: str):
-        self._language = encrypt_data(value)
+        """Store language as plain text (e.g., 'en', 'si', 'ta')."""
+        self._language = value
 
     # --- date_of_birth ---
     @property
