@@ -33,17 +33,36 @@ def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
         query = query.filter(models.Order.status == status.upper())
     
     orders = query.order_by(models.Order.created_at.desc()).all()
+    logger.info(f"[ADMIN] Found {len(orders)} orders")
+    
     result = []
     for o in orders:
-        res = schemas.OrderSimpleSchema.from_orm(o)
-        res.phone = o.patient.phone_number
-        res.patient_id = o.patient_id
-        if o.prescription and o.prescription.s3_key:
-            try:
-                res.prescription_url = generate_presigned_url(o.prescription.s3_key)
-            except Exception as e:
-                logger.warning(f"Failed to generate presigned URL for order {o.id}: {e}")
-        result.append(res)
+        try:
+            res = schemas.OrderSimpleSchema.model_validate(o)
+            
+            # Securely handle patient info
+            if o.patient:
+                res.phone = o.patient.phone_number
+                res.patient_id = o.patient_id
+                # Option to add patient name if needed
+                # res.patient_name = o.patient.name
+            else:
+                logger.warning(f"[ADMIN] Order {o.id} has no associated patient record!")
+                res.phone = "Unknown"
+                res.patient_id = None
+
+            if o.prescription and o.prescription.s3_key:
+                try:
+                    res.prescription_url = generate_presigned_url(o.prescription.s3_key)
+                except Exception as e:
+                    logger.warning(f"[ADMIN] Failed to generate presigned URL for order {o.id}: {e}")
+            
+            result.append(res)
+        except Exception as e:
+            logger.error(f"[ADMIN] Error processing order {o.id}: {e}", exc_info=True)
+            # Skip this order rather than failing the whole request
+            continue
+
     return result
 
 
@@ -54,11 +73,20 @@ def get_order_details(order_id: int, db: Session = Depends(get_db)):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
-    res = schemas.OrderDetailSchema.from_orm(order)
-    res.phone = order.patient.phone_number
+    res = schemas.OrderDetailSchema.model_validate(order)
+    
+    if order.patient:
+        res.phone = order.patient.phone_number
+    else:
+        logger.warning(f"[ADMIN] Order {order_id} has no associated patient!")
+        res.phone = "Unknown"
+
     if order.prescription:
         # Generate a fresh 1-hour presigned URL for the frontend
-        res.prescription_url = generate_presigned_url(order.prescription.s3_key)
+        try:
+            res.prescription_url = generate_presigned_url(order.prescription.s3_key)
+        except Exception as e:
+            logger.warning(f"[ADMIN] Failed to generate presigned URL for order details {order_id}: {e}")
     return res
 
 
