@@ -34,6 +34,7 @@ app.add_middleware(
     allow_origins=[
         "https://healixpharm-frontend.onrender.com",
         "https://healix-doctor-portal.onrender.com",
+        "https://healixpharm-doc-chan.onrender.com",
         "http://localhost:3000",
         "http://localhost:3001",
     ],
