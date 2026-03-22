@@ -50,6 +50,7 @@ def create_patient(data: PatientCreate, db: Session = Depends(get_db)):
     return {
         "message": "Patient created",
         "patient_id": created.id,
+        "member_id": created.member_id,
         "name": created.name,
         "consent": created.consent
     }
@@ -65,6 +66,7 @@ def list_patients(db: Session = Depends(get_db)):
     return [
         {
             "id": p.id,
+            "member_id": p.member_id,
             "name": p.name,
             "phone_number": p.phone_number,
             "language": p.language,

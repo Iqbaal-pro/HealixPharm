@@ -2,6 +2,7 @@ services:
   - type: web
     name: healix-backend-stock
     env: python
+    rootDir: backend/stock_management
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -27,6 +28,7 @@ services:
   - type: web
     name: healix-backend-bot
     env: python
+    rootDir: backend/healix_app
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -64,10 +66,11 @@ services:
   - type: web
     name: healix-frontend
     env: node
+    rootDir: frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
         sync: false
       - key: NEXT_PUBLIC_BOT_API_URL
-        sync: false
+        value: https://healixpharm-3bot.onrender.com

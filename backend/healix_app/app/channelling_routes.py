@@ -3,17 +3,36 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from app.db import get_db
 from app.core.config import settings
 from app.echannelling_service import (
     list_doctors, get_doctor, get_slots,
-    create_pending_appointment, confirm_appointment, cancel_appointment
+    create_pending_appointment, confirm_appointment, cancel_appointment,
+    _doctor_to_dict
 )
 
 router = APIRouter(prefix="/api", tags=["Channelling"])
 logger = logging.getLogger(__name__)
 
+# ── Channelling Settings ──────────────────────────────────────────
+@router.get("/admin/channelling-settings")
+async def get_channelling_settings():
+    from app.services.stock_integration import StockIntegrationService
+    stock = StockIntegrationService()
+    return {
+        "channelling_service_charge": stock.get_channelling_service_charge()
+    }
+
+@router.post("/admin/channelling-settings")
+async def update_channelling_settings(body: dict):
+    from app.services.stock_integration import StockIntegrationService
+    amount = body.get("channelling_service_charge", 0)
+    stock  = StockIntegrationService()
+    ok     = stock.set_channelling_service_charge(float(amount))
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to update service charge")
+    return {"channelling_service_charge": float(amount)}
 
 # ── Schemas ──────────────────────────────────────────────────────
 class PatientIn(BaseModel):
@@ -33,8 +52,29 @@ class AppointmentIn(BaseModel):
     date:      str
     patient:   PatientIn
 
+# Admin schemas — used by pharmacy portal to add/edit doctors and slots
+class DoctorIn(BaseModel):
+    name:           str
+    specialization: str
+    hospital:       str
+    fee:            float
+    experience:     Optional[str] = ""
+    qualifications: Optional[str] = ""
+    available:      bool = True
+    initials:       Optional[str] = ""
 
-# ── Doctors ──────────────────────────────────────────────────────
+class OtherHospitalIn(BaseModel):
+    name:  str
+    days:  Optional[str] = ""
+    hours: Optional[str] = ""
+
+class SlotIn(BaseModel):
+    hospital: str
+    date:     str
+    time:     str
+
+
+# ── Patient — Doctors ─────────────────────────────────────────────
 @router.get("/doctors")
 async def get_doctors(
     spec:     str = "",
@@ -56,7 +96,7 @@ async def get_single_doctor(
     return doctor
 
 
-# ── Slots ────────────────────────────────────────────────────────
+# ── Patient — Slots ───────────────────────────────────────────────
 @router.get("/doctors/{doctor_id}/slots")
 async def get_doctor_slots(
     doctor_id: int,
@@ -67,7 +107,7 @@ async def get_doctor_slots(
     return get_slots(db, doctor_id=doctor_id, hospital=hospital, date=date)
 
 
-# ── Book ─────────────────────────────────────────────────────────
+# ── Patient — Book ────────────────────────────────────────────────
 @router.post("/appointments")
 async def book_appointment(
     body: AppointmentIn,
@@ -97,7 +137,6 @@ async def book_appointment(
     if error == "doctor_not_found":
         raise HTTPException(status_code=404, detail="Doctor not found")
 
-    # Generate PayHere hash for service charge only
     payhere_order_id   = f"CHANN_{appointment.booking_ref}"
     amount             = appointment.service_fee
     amount_formatted   = "{:.2f}".format(amount)
@@ -105,7 +144,6 @@ async def book_appointment(
     hash_string        = settings.PAYHERE_MERCHANT_ID + payhere_order_id + amount_formatted + "LKR" + secret_hash
     payhere_hash       = hashlib.md5(hash_string.encode()).hexdigest().upper()
 
-    # Save payhere_order_id to appointment
     from app.channelling_models import ChannellingAppointment
     appt = db.query(ChannellingAppointment).filter(
         ChannellingAppointment.id == appointment.id
@@ -133,7 +171,7 @@ async def book_appointment(
     }
 
 
-# ── PayHere Notify ───────────────────────────────────────────────
+# ── PayHere Notify ────────────────────────────────────────────────
 @router.post("/channelling/payhere-notify")
 async def channelling_payhere_notify(
     request: Request,
@@ -146,7 +184,6 @@ async def channelling_payhere_notify(
 
     logger.info(f"[CHANNELLING] PayHere IPN | Order: {order_id} | Status: {status_code}")
 
-    # Verify signature
     merchant_id      = payload.get("merchant_id", "")
     payhere_amount   = payload.get("payhere_amount", "")
     payhere_currency = payload.get("payhere_currency", "")
@@ -160,12 +197,10 @@ async def channelling_payhere_notify(
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     if status_code == "2":
-        # Payment successful — confirm appointment
         appointment = confirm_appointment(db, order_id)
         if appointment:
             logger.info(f"[CHANNELLING] Appointment {appointment.booking_ref} CONFIRMED")
     elif status_code in ["-1", "-2"]:
-        # Payment failed or cancelled — free the slot
         appointment = cancel_appointment(db, order_id)
         if appointment:
             logger.info(f"[CHANNELLING] Appointment {appointment.booking_ref} CANCELLED")
@@ -173,7 +208,7 @@ async def channelling_payhere_notify(
     return {"status": "ok"}
 
 
-# ── Lookup ───────────────────────────────────────────────────────
+# ── Patient — Lookup ──────────────────────────────────────────────
 @router.get("/appointments/{booking_ref}")
 async def get_appointment(
     booking_ref: str,
@@ -202,8 +237,134 @@ async def cancel_existing_appointment(
     payhere_order_id: str,
     db: Session = Depends(get_db)
 ):
-    """Manually cancel an appointment and free its slot."""
     appointment = cancel_appointment(db, payhere_order_id)
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"message": "Appointment cancelled", "booking_ref": appointment.booking_ref}
+
+
+# ── Admin — Doctors ───────────────────────────────────────────────
+# These routes are used by the pharmacy portal to manage doctors and slots
+# The pharmacy adds doctors here, patients see them in the booking portal
+
+@router.post("/admin/doctors")
+async def add_doctor(body: DoctorIn, db: Session = Depends(get_db)):
+    from app.channelling_models import Doctor
+    doctor = Doctor(
+        name           = body.name,
+        specialization = body.specialization,
+        hospital       = body.hospital,
+        fee            = body.fee,
+        experience     = body.experience,
+        qualifications = body.qualifications,
+        available      = body.available,
+        initials       = body.initials or body.name[:2].upper(),
+    )
+    db.add(doctor)
+    db.commit()
+    db.refresh(doctor)
+    return _doctor_to_dict(doctor)
+
+@router.get("/admin/doctors")
+async def admin_list_doctors(db: Session = Depends(get_db)):
+    from app.channelling_models import Doctor
+    doctors = db.query(Doctor).order_by(Doctor.name).all()
+    return [_doctor_to_dict(d) for d in doctors]
+
+@router.put("/admin/doctors/{doctor_id}")
+async def update_doctor(doctor_id: int, body: DoctorIn, db: Session = Depends(get_db)):
+    from app.channelling_models import Doctor
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+    doctor.name           = body.name
+    doctor.specialization = body.specialization
+    doctor.hospital       = body.hospital
+    doctor.fee            = body.fee
+    doctor.experience     = body.experience
+    doctor.qualifications = body.qualifications
+    doctor.available      = body.available
+    doctor.initials       = body.initials or body.name[:2].upper()
+    db.commit()
+    db.refresh(doctor)
+    return _doctor_to_dict(doctor)
+
+@router.delete("/admin/doctors/{doctor_id}")
+async def delete_doctor(doctor_id: int, db: Session = Depends(get_db)):
+    from app.channelling_models import Doctor, ChannellingAppointment, TimeSlot, OtherHospital
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+    # Delete related appointments first to avoid FK constraint
+    db.query(ChannellingAppointment).filter(
+        ChannellingAppointment.doctor_id == doctor_id
+    ).delete(synchronize_session=False)
+    db.delete(doctor)
+    db.commit()
+    return {"message": "Doctor deleted"}
+
+# ── Admin — Other Hospitals ───────────────────────────────────────
+@router.post("/admin/doctors/{doctor_id}/other-hospitals")
+async def add_other_hospital(doctor_id: int, body: OtherHospitalIn, db: Session = Depends(get_db)):
+    from app.channelling_models import OtherHospital
+    oh = OtherHospital(
+        doctor_id = doctor_id,
+        name      = body.name,
+        days      = body.days,
+        hours     = body.hours,
+    )
+    db.add(oh)
+    db.commit()
+    db.refresh(oh)
+    return oh
+
+@router.delete("/admin/other-hospitals/{oh_id}")
+async def delete_other_hospital(oh_id: int, db: Session = Depends(get_db)):
+    from app.channelling_models import OtherHospital
+    oh = db.query(OtherHospital).filter(OtherHospital.id == oh_id).first()
+    if not oh:
+        raise HTTPException(status_code=404, detail="Not found")
+    db.delete(oh)
+    db.commit()
+    return {"message": "Deleted"}
+
+
+# ── Admin — Slots ─────────────────────────────────────────────────
+@router.post("/admin/doctors/{doctor_id}/slots")
+async def add_slot(doctor_id: int, body: SlotIn, db: Session = Depends(get_db)):
+    from app.channelling_models import TimeSlot
+    slot = TimeSlot(
+        doctor_id     = doctor_id,
+        hospital_name = body.hospital,
+        date          = body.date,
+        time          = body.time,
+        booked        = False,
+    )
+    db.add(slot)
+    db.commit()
+    db.refresh(slot)
+    return {
+        "id":       slot.id,
+        "hospital": slot.hospital_name,
+        "date":     slot.date,
+        "time":     slot.time,
+        "booked":   slot.booked,
+    }
+
+@router.get("/admin/doctors/{doctor_id}/slots")
+async def get_all_slots(doctor_id: int, db: Session = Depends(get_db)):
+    from app.channelling_models import TimeSlot
+    slots = db.query(TimeSlot).filter(
+        TimeSlot.doctor_id == doctor_id
+    ).order_by(TimeSlot.date, TimeSlot.time).all()
+    return [{"id": s.id, "hospital": s.hospital_name, "date": s.date, "time": s.time, "booked": s.booked} for s in slots]
+
+@router.delete("/admin/slots/{slot_id}")
+async def delete_slot(slot_id: int, db: Session = Depends(get_db)):
+    from app.channelling_models import TimeSlot
+    slot = db.query(TimeSlot).filter(TimeSlot.id == slot_id).first()
+    if not slot:
+        raise HTTPException(status_code=404, detail="Slot not found")
+    db.delete(slot)
+    db.commit()
+    return {"message": "Slot deleted"}

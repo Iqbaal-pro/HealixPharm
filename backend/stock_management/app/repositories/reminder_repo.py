@@ -35,18 +35,42 @@ class ReminderRepository:
             .all()
         )
 
-    def mark_sent(self, reminder_id: int) -> Reminder:
-        """Update reminder status from 'pending' to 'sent'."""
-        reminder = (
+    def mark_processing(self, reminder_id: int) -> bool:
+        """
+        Update reminder status from 'pending' to 'processing'.
+        Returns True if successful (meaning we locked it).
+        """
+        # Using an UPDATE with a filter on status='pending' is atomic 
+        # and prevents race conditions.
+        result = (
+            self.db.query(Reminder)
+            .filter(Reminder.id == reminder_id, Reminder.status == "pending")
+            .update({"status": "processing"})
+        )
+        self.db.commit()
+        return result > 0
+
+    def mark_sent(self, reminder_id: int) -> bool:
+        """Update reminder status to 'sent'."""
+        result = (
             self.db.query(Reminder)
             .filter(Reminder.id == reminder_id)
-            .first()
+            .update({"status": "sent"})
         )
-        if reminder:
-            reminder.status = "sent"
-            self.db.commit()
-            self.db.refresh(reminder)
-        return reminder
+        self.db.commit()
+        return result > 0
+
+    def reminder_exists(self, prescription_id: int, reminder_time: datetime, reminder_type: str) -> bool:
+        """Check if a specific reminder already exists."""
+        return (
+            self.db.query(Reminder)
+            .filter(
+                Reminder.prescription_id == prescription_id,
+                Reminder.reminder_time == reminder_time,
+                Reminder.reminder_type == reminder_type
+            )
+            .first()
+        ) is not None
 
     # ─── Reminder Logs ──────────────────────────────────────────────
 

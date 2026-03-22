@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, type CSSProperties, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signup, type SignupPayload } from "../routes/authRoutes";
@@ -10,7 +10,7 @@ const pwOk       = (v: string) => v.length >= 8;
 
 // ── Single source of truth for input styles — uses individual border props only
 // This avoids the React "border vs borderColor" rerender warning entirely.
-function iStyle(focused: boolean, hasError = false): React.CSSProperties {
+function iStyle(focused: boolean, hasError = false): CSSProperties {
   return {
     width: "100%",
     background: "rgba(6,13,26,0.9)",
@@ -52,7 +52,7 @@ export default function SignupPage() {
   });
 
   const set = (k: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm(f => ({ ...f, [k]: e.target.value }));
 
   const fo = (k: string) => focused === k;
@@ -74,7 +74,7 @@ export default function SignupPage() {
         ...(form.opening_hours           && { opening_hours: form.opening_hours }),
         ...(form.estimated_delivery_time && { estimated_delivery_time: form.estimated_delivery_time }),
         ...(form.service_areas           && { service_areas: form.service_areas }),
-        ...(form.service_charge          && { service_charge: form.service_charge }),
+        ...(form.service_charge          && { service_charge: parseFloat(form.service_charge) }),
         ...(form.prescription_policy     && { prescription_policy: form.prescription_policy }),
         ...(form.refund_policy           && { refund_policy: form.refund_policy }),
       };
@@ -144,7 +144,7 @@ export default function SignupPage() {
           ))}
           <div style={{ marginTop: 44, paddingTop: 24, borderTop: "1px solid rgba(148,163,184,0.06)" }}>
             <span style={{ color: "#334155", fontSize: 13.5 }}>Already have an account? </span>
-            <Link href="/login" style={{ color: "#38bdf8", fontSize: 13.5, fontWeight: 600, textDecoration: "none" }}>Sign in →</Link>
+            <Link href="/login" style={{ color: "#38bdf8", fontSize: 13.5, fontWeight: 600, textDecoration: "none" }}>Sign in</Link>
           </div>
         </div>
 
@@ -185,7 +185,12 @@ export default function SignupPage() {
                       <input type={showPw ? "text" : "password"} placeholder="Min. 8 characters" value={form.password}
                         onChange={set("password")} onFocus={() => setFocused("pw")} onBlur={() => setFocused(null)}
                         style={{ ...iStyle(fo("pw")), paddingRight: 44 }} autoComplete="new-password" />
-                      <button onClick={() => setShowPw(v => !v)} style={eyeBtn} type="button">{showPw ? "🙈" : "👁"}</button>
+                      <button onClick={() => setShowPw(v => !v)} style={eyeBtn} type="button">
+                        {showPw
+                          ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                          : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        }
+                      </button>
                     </div>
                     {form.password.length > 0 && (
                       <div style={{ marginTop: 7 }}>
@@ -205,7 +210,12 @@ export default function SignupPage() {
                         onChange={set("confirm_pw")} onFocus={() => setFocused("cpw")} onBlur={() => setFocused(null)}
                         style={{ ...iStyle(fo("cpw"), !!(form.confirm_pw && form.confirm_pw !== form.password)), paddingRight: 44 }}
                         autoComplete="new-password" />
-                      <button onClick={() => setShowCPw(v => !v)} style={eyeBtn} type="button">{showCPw ? "🙈" : "👁"}</button>
+                      <button onClick={() => setShowCPw(v => !v)} style={eyeBtn} type="button">
+                        {showCPw
+                          ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                          : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        }
+                      </button>
                     </div>
                     {form.confirm_pw && form.confirm_pw !== form.password && <Hint err>Passwords don&apos;t match.</Hint>}
                   </Field>
@@ -283,8 +293,8 @@ export default function SignupPage() {
                         onChange={set("service_areas")} onFocus={() => setFocused("sa")} onBlur={() => setFocused(null)}
                         style={iStyle(fo("sa"))} />
                     </Field>
-                    <Field label="Service Charge">
-                      <input type="text" placeholder="e.g. 5% or LKR 150" value={form.service_charge}
+                    <Field label="Service Charge (LKR)">
+                      <input type="number" min="0" step="0.01" placeholder="e.g. 150" value={form.service_charge}
                         onChange={set("service_charge")} onFocus={() => setFocused("sc")} onBlur={() => setFocused(null)}
                         style={iStyle(fo("sc"))} />
                     </Field>
@@ -327,7 +337,7 @@ export default function SignupPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <label style={{ display: "block", color: "#64748b", fontSize: 11.5, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase" as const, marginBottom: 7 }}>{label}</label>
@@ -336,24 +346,24 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Hint({ children, err }: { children: React.ReactNode; err?: boolean }) {
+function Hint({ children, err }: { children: ReactNode; err?: boolean }) {
   return <p style={{ margin: "5px 0 0", fontSize: 12, color: err ? "#f87171" : "#475569" }}>{children}</p>;
 }
 
-const pageWrap: React.CSSProperties   = { minHeight: "100vh", background: "#060d1a", fontFamily: "'DM Sans',sans-serif", position: "relative", overflow: "hidden" };
-const gridBg: React.CSSProperties    = { position: "fixed", inset: 0, zIndex: 0, backgroundImage: "linear-gradient(rgba(148,163,184,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,0.025) 1px,transparent 1px)", backgroundSize: "52px 52px" };
-const leftPanel: React.CSSProperties  = { flex: "0 0 380px", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 48px", borderRight: "1px solid rgba(148,163,184,0.05)" };
-const card: React.CSSProperties      = { background: "rgba(10,20,42,0.85)", backdropFilter: "blur(20px)", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(148,163,184,0.09)", borderRadius: 24, boxShadow: "0 32px 80px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04)", padding: "40px 38px" };
-const logoBox: React.CSSProperties   = { width: 38, height: 38, borderRadius: 11, background: "rgba(14,165,233,0.1)", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(14,165,233,0.2)", display: "flex", alignItems: "center", justifyContent: "center" };
-const logoText: React.CSSProperties  = { fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 17, background: "linear-gradient(90deg,#38bdf8,#818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
-const stepH: React.CSSProperties     = { fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20, background: "linear-gradient(90deg,#f1f5f9,#94a3b8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 5px", letterSpacing: "-0.01em" };
-const stepSub: React.CSSProperties   = { color: "#475569", fontSize: 13.5, margin: "0 0 22px" };
-const eyeBtn: React.CSSProperties    = { position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", cursor: "pointer", padding: 4, fontSize: 14 };
-const btnPrimary: React.CSSProperties = { width: "100%", background: "linear-gradient(90deg,#0369a1,#0e7ab5)", color: "#bae6fd", border: "none", borderRadius: 12, padding: "13px 20px", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", boxShadow: "0 4px 18px rgba(3,105,161,.28)", transition: "opacity .18s" };
-const btnGhost: React.CSSProperties  = { background: "transparent", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(148,163,184,.12)", color: "#94a3b8", borderRadius: 12, padding: "13px 18px", fontSize: 13.5, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", whiteSpace: "nowrap" as const };
+const pageWrap: CSSProperties   = { minHeight: "100vh", background: "#060d1a", fontFamily: "'DM Sans',sans-serif", position: "relative", overflow: "hidden" };
+const gridBg: CSSProperties    = { position: "fixed", inset: 0, zIndex: 0, backgroundImage: "linear-gradient(rgba(148,163,184,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,0.025) 1px,transparent 1px)", backgroundSize: "52px 52px" };
+const leftPanel: CSSProperties  = { flex: "0 0 380px", display: "flex", flexDirection: "column", justifyContent: "center", padding: "60px 48px", borderRight: "1px solid rgba(148,163,184,0.05)" };
+const card: CSSProperties      = { background: "rgba(10,20,42,0.85)", backdropFilter: "blur(20px)", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(148,163,184,0.09)", borderRadius: 24, boxShadow: "0 32px 80px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.04)", padding: "40px 38px" };
+const logoBox: CSSProperties   = { width: 38, height: 38, borderRadius: 11, background: "rgba(14,165,233,0.1)", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(14,165,233,0.2)", display: "flex", alignItems: "center", justifyContent: "center" };
+const logoText: CSSProperties  = { fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 17, background: "linear-gradient(90deg,#38bdf8,#818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" };
+const stepH: CSSProperties     = { fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20, background: "linear-gradient(90deg,#f1f5f9,#94a3b8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 5px", letterSpacing: "-0.01em" };
+const stepSub: CSSProperties   = { color: "#475569", fontSize: 13.5, margin: "0 0 22px" };
+const eyeBtn: CSSProperties    = { position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", cursor: "pointer", padding: 4, fontSize: 14 };
+const btnPrimary: CSSProperties = { width: "100%", background: "linear-gradient(90deg,#0369a1,#0e7ab5)", color: "#bae6fd", border: "none", borderRadius: 12, padding: "13px 20px", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", boxShadow: "0 4px 18px rgba(3,105,161,.28)", transition: "opacity .18s" };
+const btnGhost: CSSProperties  = { background: "transparent", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(148,163,184,.12)", color: "#94a3b8", borderRadius: 12, padding: "13px 18px", fontSize: 13.5, fontFamily: "'DM Sans',sans-serif", cursor: "pointer", whiteSpace: "nowrap" as const };
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
   .orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
   .orb1{width:500px;height:500px;background:rgba(14,165,233,0.05);top:-180px;left:-160px;animation:d1 22s ease-in-out infinite alternate}
   .orb2{width:380px;height:380px;background:rgba(129,140,248,0.04);bottom:-120px;right:-100px;animation:d2 26s ease-in-out infinite alternate}

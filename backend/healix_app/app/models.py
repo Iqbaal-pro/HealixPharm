@@ -1,8 +1,12 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+import logging
 from datetime import datetime  #SupportTicket
 from app.db import Base
+from app.utils.encryption import encrypt_data, decrypt_data
+
+logger = logging.getLogger(__name__)
 
 
 class User(Base):
@@ -39,16 +43,67 @@ class SupportMessage(Base):
 
     ticket = relationship("SupportTicket", back_populates="messages")
 
+def _safe_decrypt(cipher_text, field_name: str):
+    """Attempt decryption; log a warning and return None on failure."""
+    try:
+        return decrypt_data(cipher_text)
+    except Exception as e:
+        logger.warning(f"[Patient] Decryption failed for field '{field_name}': {e}")
+        return None
+
 class Patient(Base):
+    """
+    Stores patient information for reminder/consent management.
+    Sensitive data (name, phone, DOB) is encrypted in the database.
+    """
     __tablename__ = "patients"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(600), nullable=True)
-    phone_number = Column(String(600), unique=True, index=True, nullable=False)
-    language = Column(String(600), nullable=True)
-    date_of_birth = Column(String(600), nullable=True)
+    
+    # Internal (encrypted) columns mapped to the database
+    _name = Column("name", String(600), nullable=True)
+    _phone_number = Column("phone_number", String(600), unique=True, index=True, nullable=False)
+    _language = Column("language", String(600), nullable=True)
+    _date_of_birth = Column("date_of_birth", String(600), nullable=True)
+    
     consent = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
+
+    # --- name ---
+    @property
+    def name(self) -> str:
+        return _safe_decrypt(self._name, "name")
+
+    @name.setter
+    def name(self, value: str):
+        self._name = encrypt_data(value)
+
+    # --- phone_number ---
+    @property
+    def phone_number(self) -> str:
+        return _safe_decrypt(self._phone_number, "phone_number")
+
+    @phone_number.setter
+    def phone_number(self, value: str):
+        self._phone_number = encrypt_data(value)
+
+    # --- language ---
+    @property
+    def language(self) -> str:
+        return _safe_decrypt(self._language, "language")
+
+    @language.setter
+    def language(self, value: str):
+        self._language = encrypt_data(value)
+
+    # --- date_of_birth ---
+    @property
+    def date_of_birth(self) -> str:
+        return _safe_decrypt(self._date_of_birth, "date_of_birth")
+
+    @date_of_birth.setter
+    def date_of_birth(self, value: str):
+        self._date_of_birth = encrypt_data(value)
 
     orders = relationship("Order", back_populates="patient")
     support_tickets = relationship("SupportTicket", back_populates="patient")
@@ -128,14 +183,39 @@ class Prescription(Base):
     __tablename__ = "prescriptions"
 
     id = Column(Integer, primary_key=True, index=True)
-    prescription_id = Column(String(128), unique=True, index=True, nullable=False)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    s3_key = Column(String(512), nullable=False)
+    prescription_id = Column(String(128), unique=True, index=True, nullable=True) # Now nullable to match MySQL
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=True) # Now nullable to match MySQL
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    medicine_id = Column(Integer, nullable=False) # Refers to MySQL Stock ID
+    staff_id = Column(Integer, nullable=False) # Refers to internal staff ID
+    uploaded_by_staff_id = Column(Integer, nullable=False)
+    medicine_name = Column(String(100), nullable=True)
+    dose_per_day = Column(Integer, default=1)
+    quantity_given = Column(Integer, default=0)
+    s3_key = Column(String(512), nullable=True)
     s3_url = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     order = relationship("Order", back_populates="prescription")
+
+
+class Pharmacy(Base):
+    __tablename__ = "pharmacies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    pharmacy_name = Column(String(100), nullable=False)
+    contact_number = Column(String(20), nullable=True)
+    whatsapp_number = Column(String(20), nullable=True)
+    address = Column(Text, nullable=True)
+    opening_hours = Column(Text, nullable=True)
+    estimated_delivery_time = Column(String(50), nullable=True)
+    service_areas = Column(String(100), nullable=True)
+    service_charge = Column(Float, nullable=True)
+    prescription_policy = Column(Text, nullable=True)
+    refund_policy = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
 
 
 class PharmacySetting(Base):

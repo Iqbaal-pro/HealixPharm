@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
 from app import models
+from app import channelling_models
 from app.admin.routes import router as admin_router
 
 # Payments router
@@ -27,10 +28,15 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="HealixPharm - WhatsApp Bot")
 
-# ─── CORS Middleware ───────────────────────────────────────────────
+# ─── CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://healixpharm-frontend.onrender.com",
+        "https://healix-doctor-portal.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

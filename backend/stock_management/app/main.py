@@ -24,6 +24,8 @@ from app.routes.auth_routes import router as auth_router
 from app.routes.pharmacy_routes import router as pharmacy_router
 from app.routes.alert_routes import router as alert_router
 from app.routes.refill_routes import router as refill_router
+from app.routes.schedule_routes import router as schedule_router
+from app.routes.channelling_routes import router as channelling_router
 
 # ─── Import scheduler ──────────────────────────────────────────────
 from app.services.scheduler_service import start_scheduler, stop_scheduler
@@ -56,10 +58,15 @@ app = FastAPI(
 )
 
 # ─── CORS Middleware ───────────────────────────────────────────────
-# Allow all origins for now (can be restricted to Vercel URL later)
+# Restrict origins to frontend URLs for security with credentials
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Replace with specific Vercel URL if desired
+    allow_origins=[
+        "https://healixpharm-frontend.onrender.com",
+        "https://healix-doctor-portal.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,6 +83,8 @@ app.include_router(auth_router)
 app.include_router(pharmacy_router)
 app.include_router(alert_router)
 app.include_router(refill_router)
+app.include_router(schedule_router)
+app.include_router(channelling_router)
 
 
 # ─── Custom OpenAPI for Swagger BearerAuth ──────────────────────────
@@ -125,6 +134,7 @@ def root():
             "/auth",
             "/pharmacy",
             "/alerts",
-            "/refill"
+            "/refill",
+            "/schedule"
         ]
     }

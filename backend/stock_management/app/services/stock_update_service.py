@@ -2,7 +2,11 @@ from app.models.inventory import Inventory
 from app.models.batch import MedicineBatch
 from app.models.stock_log import StockLog
 from app.models.issued_item import IssuedItem
+from app.models.prescription import Prescription
+from datetime import datetime
 from sqlalchemy.orm import Session
+from datetime import datetime
+
 
 class StockUpdateService:
     """
@@ -14,13 +18,13 @@ class StockUpdateService:
         self.db = db
 
     def update_stock_fefo(
-        self,
-        db: Session,
-        medicine_id: int,
-        quantity_to_deduct: int,
-        issued_to: int = None,
-        reference_type: str = "order",
-        staff_id: int = None
+            self,
+            db: Session,
+            medicine_id: int,
+            quantity_to_deduct: int,
+            issued_to: int = None,
+            reference_type: str = "order",
+            staff_id: int = None
     ):
         """
         Deduct stock using FEFO logic
@@ -94,12 +98,12 @@ class StockUpdateService:
         return deductions
 
     def update_stock(
-        self,
-        db: Session,
-        medicine_id: int,
-        issued_quantity: int,
-        issued_to: int = None,
-        staff_id: int = None
+            self,
+            db: Session,
+            medicine_id: int,
+            issued_quantity: int,
+            issued_to: int = None,
+            staff_id: int = None
     ):
         """
         Simple stock update (legacy method)
@@ -115,10 +119,10 @@ class StockUpdateService:
         )
 
     def validate_stock_availability(
-        self,
-        db: Session,
-        medicine_id: int,
-        required_quantity: int
+            self,
+            db: Session,
+            medicine_id: int,
+            required_quantity: int
     ) -> bool:
         """
         Check if enough stock is available for a medicine
@@ -126,19 +130,19 @@ class StockUpdateService:
         inventory = db.query(Inventory).filter(
             Inventory.medicine_id == medicine_id
         ).first()
-        
+
         if not inventory:
             return False
-            
+
         return inventory.quantity_available >= required_quantity
 
     def issue_medicine(
-        self,
-        db: Session,
-        prescription_id: int,
-        inventory: Inventory,
-        issued_quantity: int,
-        staff_id: int = None
+            self,
+            db: Session,
+            prescription_id: int,
+            inventory: Inventory,
+            issued_quantity: int,
+            staff_id: int = None
     ):
         """
         Issue medicine from specific inventory record
@@ -146,11 +150,11 @@ class StockUpdateService:
         """
         if inventory.quantity_available < issued_quantity:
             raise ValueError("Not enough stock in this batch")
-            
+
         inventory.quantity_available -= issued_quantity
         inventory.last_stock_update = datetime.utcnow()
         db.add(inventory)
-        
+
         # 1. Log the stock movement
         log = StockLog(
             medicine_id=inventory.medicine_id,
@@ -163,8 +167,13 @@ class StockUpdateService:
         db.add(log)
 
         # 2. Record as Issued Item for the prescription (Migrated from healix_extra logic)
+        # Look up patient_id from the prescription
+        prescription = db.query(Prescription).filter(Prescription.id == prescription_id).first()
+        patient_id = prescription.patient_id if prescription else None
+
         issued_item = IssuedItem(
             prescription_id=prescription_id,
+            patient_id=patient_id,
             medicine_id=inventory.medicine_id,
             batch_id=inventory.batch_id,
             quantity_issued=issued_quantity,
@@ -172,7 +181,7 @@ class StockUpdateService:
             issued_by=staff_id
         )
         db.add(issued_item)
-        
+
         db.commit()
         db.refresh(inventory)
         return inventory
@@ -202,4 +211,3 @@ class StockLogService:
 
         # Return log object (saving is done by repository)
         return stock_log
-
