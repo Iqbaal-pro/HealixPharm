@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
     { key: "stockout",    label: "Stockout Risk",   count: stockout.length,   color: "#ef4444" },
   ];
 
-  const getActiveData = () => {
+  const getActiveData = (): { name: string; value: number; reorder?: number }[] => {
     switch(tab) {
       case "reorder": return reorder.slice(0, 5).map(r => ({ name: r.medicine_name || `MED-${r.medicine_id}`, value: r.current_quantity, reorder: r.reorder_quantity }));
       case "high-demand": return highDemand.slice(0, 5).map(h => ({ name: h.medicine_name || `MED-${h.medicine_id}`, value: h.total_consumed }));
@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => `Rs. ${value.toLocaleString()}`}
+                    formatter={(value: any) => `Rs. ${Number(value ?? 0).toLocaleString()}`}
                     contentStyle={{ background: "#060d1a", border: "1px solid rgba(148,163,184,0.1)", borderRadius: "10px" }}
                   />
                   <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} />
