@@ -14,6 +14,7 @@ from app.models.pharmacy import Pharmacy  # noqa: F401
 
 # ─── Import all routers ─────────────────────────────────────────────
 from app.routes.inventory_routes import router as inventory_router
+from app.routes.stock_routes import router as stock_router
 from app.routes.prescription_routes import router as prescription_router
 from app.routes.patient_routes import router as patient_router
 from app.routes.reminder_routes import router as reminder_router
@@ -26,6 +27,7 @@ from app.routes.alert_routes import router as alert_router
 from app.routes.refill_routes import router as refill_router
 from app.routes.schedule_routes import router as schedule_router
 from app.routes.channelling_routes import router as channelling_router
+
 
 # ─── Import scheduler ──────────────────────────────────────────────
 from app.services.scheduler_service import start_scheduler, stop_scheduler
@@ -71,6 +73,7 @@ app.add_middleware(
 )
 # ─── Register all routers ──────────────────────────────────────────
 app.include_router(inventory_router)
+app.include_router(stock_router)
 app.include_router(prescription_router)
 app.include_router(patient_router)
 app.include_router(reminder_router)
@@ -83,6 +86,7 @@ app.include_router(alert_router)
 app.include_router(refill_router)
 app.include_router(schedule_router)
 app.include_router(channelling_router)
+
 
 
 # ─── Custom OpenAPI for Swagger BearerAuth ──────────────────────────
