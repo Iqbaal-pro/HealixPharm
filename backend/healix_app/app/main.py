@@ -1,6 +1,7 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
@@ -32,7 +33,7 @@ app = FastAPI(title="HealixPharm - WhatsApp Bot")
 # ─── CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["*"],  # Temporarily allow all for debugging
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,13 +48,29 @@ app.include_router(notification_router)
 app.include_router(storage_router)
 app.include_router(auth_router)
 
-# Ensure database tables exist
-Base.metadata.create_all(bind=engine)
-logger.info("[WB_MAIN] Pharmacy database tables ensured")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.error(f"GLOBAL ERROR: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error", "detail": str(exc)},
+        headers={"Access-Control-Allow-Origin": "*"} # Ensure CORS header on error
+    )
 
 @app.on_event("startup")
 async def startup_event():
     logger.info(f"[WB_MAIN] Starting server with ALLOWED_ORIGINS: {settings.ALLOWED_ORIGINS}")
+    
+    # Ensure database tables exist during startup
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("[WB_MAIN] Pharmacy database tables ensured")
+    except Exception as e:
+        logger.error(f"[WB_MAIN] Database initialization FAILED: {e}", exc_info=True)
+        # We don't raise here so uvicorn doesn't crash, allowing us to see error
+        
     logger.info("[WB_MAIN] Starting background scheduler...")
 
     # Start scheduler if not already running
