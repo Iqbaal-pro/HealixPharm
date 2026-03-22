@@ -8,6 +8,14 @@ import { getReorderRecommendations } from "../routes/analyticsRoutes";
 import { getTokenFromStorage } from "../routes/authRoutes";
 
 export default function StockManagementPage() {
+  const [stats, setStats] = useState({
+    totalSKUs: 0,
+    lowStock: 0,
+    critical: 0,
+    totalBudget: 0,
+    predictedItems: 0,
+    reorderNeeded: 0,
+  });
   const [stats, setStats] = useState({ totalSKUs: 0, lowStock: 0, critical: 0, expiringSoon: 0, damagedUnits: 0, reorderNeeded: 0 });
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string>("");
@@ -17,6 +25,24 @@ export default function StockManagementPage() {
   const fetchStats = async () => {
     try {
       setLoading(true);
+      const [invRes, reorderRes, predictRes] = await Promise.all([
+        fetch(`${API}/inventory/`),
+        fetch(`${API}/analytics/reorder-recommendations`),
+        fetch(`http://localhost:8000/api/v1/predict/summary`),
+      ]);
+      const [inv, reorder, predict] = await Promise.all([
+        invRes.json(), 
+        reorderRes.ok ? reorderRes.json() : [],
+        predictRes.ok ? predictRes.json() : null,
+      ]);
+
+      setStats({
+        totalSKUs:     inv.length || 0,
+        lowStock:      inv.filter((i: any) => i.quantity_available <= i.reorder_level).length,
+        critical:      inv.filter((i: any) => i.quantity_available <= i.reorder_level * 0.5).length,
+        totalBudget:   predict?.total_budget || 0,
+        predictedItems: predict?.total_items || 0,
+        reorderNeeded: Array.isArray(reorder) ? reorder.length : 0,
       const token = getTokenFromStorage();
       const [invResult, batchesResult, reorderResult] = await Promise.allSettled([
         getInventory(), getBatches(false), getReorderRecommendations(token),
@@ -38,6 +64,10 @@ export default function StockManagementPage() {
   };
 
   const modules = [
+    { href: "/stock-management/inventory",   label: "Inventory",   icon: "🗃", desc: "View & manage stock levels",         badge: stats.lowStock,      badgeColor: "#f59e0b", badgeLabel: "low stock"    },
+    { href: "/stock-management/batches",     label: "Batches",     icon: "📦", desc: "Track batches & inventory",          badge: stats.reorderNeeded, badgeColor: "#818cf8", badgeLabel: "reorder"      },
+    { href: "/stock-management/predictions", label: "Predictions", icon: "🤖", desc: "ML-powered stock forecasting",      badge: stats.predictedItems,badgeColor: "#10b981", badgeLabel: "items"        },
+    { href: "/stock-management/analytics",   label: "Analytics",   icon: "📊", desc: "Demand trends & recommendations",    badge: stats.reorderNeeded, badgeColor: "#818cf8", badgeLabel: "reorder"      },
     { href: "/stock-management/inventory",   label: "Inventory", desc: "View & manage stock levels",         badge: stats.lowStock,      badgeColor: "#f59e0b", badgeLabel: "low stock"  },
     { href: "/stock-management/batches",     label: "Batches", desc: "Track batches & expiry dates",       badge: stats.expiringSoon,  badgeColor: "#f97316", badgeLabel: "expiring"   },
     { href: "/stock-management/alerts",      label: "Alerts", desc: "Stock & expiry warnings",            badge: stats.critical,      badgeColor: "#ef4444", badgeLabel: "critical"   },
@@ -78,6 +108,12 @@ export default function StockManagementPage() {
             </svg>
           </div>
           <div>
+            <h1 className="gradient-text" style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:26, margin:0, letterSpacing:"-0.02em" }}>
+              Stock Management
+            </h1>
+            <p style={{ color:"#475569", fontSize:13.5, margin:"3px 0 0" }}>
+              Inventory · Batches · Predictions · Analytics
+            </p>
             <h1 className="page-title gradient-text">Stock Management</h1>
             <p className="page-sub">Inventory · Batches · Alerts · Analytics · Adjustments</p>
           </div>
@@ -88,6 +124,16 @@ export default function StockManagementPage() {
         </div>
       </div>
 
+      {/* Prediction Alert */}
+      {!loading && stats.predictedItems === 0 && (
+        <div className="fade-2" style={{
+          marginBottom:20, padding:"12px 20px",
+          background:"rgba(56,189,248,0.06)", border:"1px solid rgba(56,189,248,0.15)",
+          borderRadius:12, display:"flex", alignItems:"center", gap:10,
+        }}>
+          <div style={{ width:7, height:7, borderRadius:"50%", background:"#38bdf8", boxShadow:"0 0 8px #38bdf8", flexShrink:0 }}/>
+          <span style={{ fontSize:13, color:"#38bdf8", fontWeight:500 }}>
+            ML Predictions are ready for next month — check the Predictions module for details.
       {!loading && (stats.critical > 0 || stats.expiringSoon > 0) && (
         <div className="fade-2 alert-banner alert-banner-red" style={{ marginBottom: 20 }}>
           <div className="alert-dot alert-dot-red" />
@@ -102,6 +148,12 @@ export default function StockManagementPage() {
 
       <div className="fade-2" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 14, marginBottom: 28 }}>
         {[
+          { label:"Total SKUs",      value: loading ? "—" : stats.totalSKUs,     color:"#38bdf8" },
+          { label:"Low Stock",       value: loading ? "—" : stats.lowStock,      color:"#f59e0b" },
+          { label:"Critical",        value: loading ? "—" : stats.critical,      color:"#ef4444" },
+          { label:"Predicted Items", value: loading ? "—" : stats.predictedItems,color:"#10b981" },
+          { label:"Est. Budget",     value: loading ? "—" : `Rs. ${(stats.totalBudget/1000000).toFixed(1)}M`, color:"#818cf8" },
+          { label:"Reorder Needed",  value: loading ? "—" : stats.reorderNeeded, color:"#f97316" },
           { label: "Total stock",     value: loading ? "—" : stats.totalSKUs,     color: "#38bdf8" },
           { label: "Low Stock",      value: loading ? "—" : stats.lowStock,      color: "#f59e0b" },
           { label: "Critical",       value: loading ? "—" : stats.critical,      color: "#ef4444" },
@@ -137,6 +189,8 @@ export default function StockManagementPage() {
           </Link>
         ))}
       </div>
+
+
     </div>
   );
 }
