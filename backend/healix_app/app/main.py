@@ -31,13 +31,7 @@ app = FastAPI(title="HealixPharm - WhatsApp Bot")
 # ─── CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://healixpharm-frontend.onrender.com",
-        "https://healix-doctor-portal.onrender.com",
-        "https://healixpharm-doc-chan.onrender.com",
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,6 +52,7 @@ logger.info("[WB_MAIN] Pharmacy database tables ensured")
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info(f"[WB_MAIN] Starting server with ALLOWED_ORIGINS: {settings.ALLOWED_ORIGINS}")
     logger.info("[WB_MAIN] Starting background scheduler...")
 
     # Start scheduler if not already running
