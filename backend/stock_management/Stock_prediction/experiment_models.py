@@ -160,7 +160,7 @@ for model_name, model in MODELS.items():
         'Verdict'           : verdict,
     })
 
-    print(f"  ✔ {model_name:<30} MAE={mae:7.1f}  RMSE={rmse:8.1f}  R²={r2:.4f}  MAPE={mape:6.1f}%  → {verdict}")
+    print(f"  ✔ {model_name:<30} MAE={mae:7.1f}  RMSE={rmse:8.1f}  R²={r2:.4f}  MAPE={mape:6.1f}%  -> {verdict}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # STEP 4 — Print comparison table
