@@ -1,4 +1,6 @@
 import logging
+from sqlalchemy import or_
+
 from datetime import datetime, timedelta
 from app.whatsapp.twilio_client import TwilioWhatsAppClient
 from app.whatsapp.state import UserState_wb
@@ -229,8 +231,14 @@ class WhatsAppService_wb:
                     # Find the latest order awaiting payment selection
                     order = db.query(models.Order).filter(
                         models.Order.patient_id == patient.id,
-                        models.Order.status == "AWAITING_PAYMENT_SELECTION"
+                        or_(
+                            models.Order.status == "AWAITING_PAYMENT_SELECTION",
+                            models.Order.status == "APPROVED"
+                        )
                     ).order_by(models.Order.created_at.desc()).first()
+
+
+
 
                     if order:
                         logger.info(f"[SERVICE] Found order {order.token} for payment selection.")
