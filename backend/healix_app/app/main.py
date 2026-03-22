@@ -30,12 +30,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="HealixPharm - WhatsApp Bot")
 
 # ─── CORS Middleware
+# We must NOT use allow_origins=["*"] if allow_credentials=True
+# We use settings.ALLOWED_ORIGINS which is a carefully curated list.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all for debugging
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 # Include Routers
 app.include_router(whatsapp_router)
@@ -52,10 +55,12 @@ app.include_router(auth_router)
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     logger.error(f"GLOBAL ERROR: {exc}", exc_info=True)
+    # We try to get the origin from the request to stay CORS-friendly
+    origin = request.headers.get("origin", "*")
     return JSONResponse(
         status_code=500,
         content={"message": "Internal Server Error", "detail": str(exc)},
-        headers={"Access-Control-Allow-Origin": "*"} # Ensure CORS header on error
+        headers={"Access-Control-Allow-Origin": origin} 
     )
 
 @app.on_event("startup")

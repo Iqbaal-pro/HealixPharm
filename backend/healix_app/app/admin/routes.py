@@ -28,42 +28,44 @@ class MessagePayload(BaseModel):
 @router.get("/orders", response_model=List[schemas.OrderSimpleSchema])
 def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
     """List all orders with optional status filter."""
-    query = db.query(models.Order)
-    if status:
-        query = query.filter(models.Order.status == status.upper())
-    
-    orders = query.order_by(models.Order.created_at.desc()).all()
-    logger.info(f"[ADMIN] Found {len(orders)} orders")
-    
-    result = []
-    for o in orders:
-        try:
-            res = schemas.OrderSimpleSchema.model_validate(o)
-            
-            # Securely handle patient info
-            if o.patient:
-                res.phone = o.patient.phone_number
-                res.patient_id = o.patient_id
-                # Option to add patient name if needed
-                # res.patient_name = o.patient.name
-            else:
-                logger.warning(f"[ADMIN] Order {o.id} has no associated patient record!")
-                res.phone = "Unknown"
-                res.patient_id = None
+    logger.info(f"[ADMIN] Entering list_orders(status={status})")
+    try:
+        query = db.query(models.Order)
+        if status:
+            query = query.filter(models.Order.status == status.upper())
+        
+        orders = query.order_by(models.Order.created_at.desc()).all()
+        logger.info(f"[ADMIN] Found {len(orders)} orders")
+        
+        result = []
+        for o in orders:
+            try:
+                res = schemas.OrderSimpleSchema.model_validate(o)
+                
+                # Securely handle patient info
+                if o.patient:
+                    res.phone = o.patient.phone_number
+                    res.patient_id = o.patient_id
+                else:
+                    logger.warning(f"[ADMIN] Order {o.id} has no associated patient record!")
+                    res.phone = "Unknown"
+                    res.patient_id = None
 
-            if o.prescription and o.prescription.s3_key:
-                try:
-                    res.prescription_url = generate_presigned_url(o.prescription.s3_key)
-                except Exception as e:
-                    logger.warning(f"[ADMIN] Failed to generate presigned URL for order {o.id}: {e}")
-            
-            result.append(res)
-        except Exception as e:
-            logger.error(f"[ADMIN] Error processing order {o.id}: {e}", exc_info=True)
-            # Skip this order rather than failing the whole request
-            continue
+                if o.prescription and o.prescription.s3_key:
+                    try:
+                        res.prescription_url = generate_presigned_url(o.prescription.s3_key)
+                    except Exception as e:
+                        logger.warning(f"[ADMIN] Failed to generate presigned URL for order {o.id}: {e}")
+                
+                result.append(res)
+            except Exception as e:
+                logger.error(f"[ADMIN] Error processing order {o.id}: {e}", exc_info=True)
+                continue
 
-    return result
+        return result
+    except Exception as e:
+        logger.error(f"[ADMIN] CRITICAL ERROR IN list_orders: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/orders/{order_id}", response_model=schemas.OrderDetailSchema)
