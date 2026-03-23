@@ -794,7 +794,6 @@ export default function PrescriptionPage() {
                   </div>
                 </div>
 
-
                 <div className="col g-10 mb-14">
                   {savedRxs.map((rx, idx) => {
                     const med  = medicines[idx];
