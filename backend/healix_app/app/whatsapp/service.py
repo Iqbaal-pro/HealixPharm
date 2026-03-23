@@ -422,7 +422,7 @@ class WhatsAppService_wb:
             "*Book a Doctor Appointment*\n\n"
             "Ready to see a doctor? It's quick and easy!\n\n"
             "Visit our portal to choose your doctor and pick a time slot:\n"
-            "🔗 https://healixpharm-doc-chan.onrender.com\n\n"
+            "https://healixpharm-doc-chan.onrender.com\n\n"
             "A small service fee is charged at booking.\n"
             "Consultation fee is paid directly at the hospital.\n\n"
             "_(Type 'menu' to return)_"
