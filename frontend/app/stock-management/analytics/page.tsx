@@ -21,7 +21,9 @@ import {
 
 type Tab = "reorder" | "high-demand" | "slow-moving" | "stockout";
 
-const ML_API = "http://localhost:8002/api/v1/predict";
+const ML_API = process.env.NEXT_PUBLIC_ML_API_URL 
+  ? `${process.env.NEXT_PUBLIC_ML_API_URL}/api/v1/predict`
+  : "http://localhost:8002/api/v1/predict";
 
 const COLORS = ["#38bdf8", "#818cf8", "#fbbf24", "#f87171", "#10b981", "#6366f1"];
 
