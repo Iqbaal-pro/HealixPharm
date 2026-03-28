@@ -289,66 +289,65 @@ def run_prediction_pipeline():
     # ── Step 7: Predict target month ──────────────────────────────────────────
     print(f"\n7. Predicting {month_name} for All Items...")
     results = []
+    
+    # Pre-calculate stats for all items to avoid repeated filtering
+    item_stats = {}
+    for item, group in monthly_sales.groupby('Item'):
+        g = group.sort_values('Month')
+        qty_vals = g['Qty'].values
+        m = qty_vals.mean()
+        if m > 0:
+            item_stats[item] = {
+                'mean': m,
+                'std':  qty_vals.std() if len(g) > 1 else 0,
+                'norm': qty_vals / m,
+                'cat':  g['Category'].iloc[0],
+                'n':    len(g)
+            }
 
-    for item in monthly_sales['Item'].unique():
-        item_data = monthly_sales[monthly_sales['Item'] == item].copy()
-        item_data = item_data.sort_values('Month').reset_index(drop=True)
+    # Build feature matrix for all items at once
+    pred_features = []
+    active_items = []
 
-        category = item_data['Category'].iloc[0]
-        qty_vals = item_data['Qty'].values
-        qty_mean = qty_vals.mean()
+    for item, stats in item_stats.items():
+        norm_v = stats['norm']
+        l1 = float(norm_v[-1])
+        l2 = float(norm_v[-2]) if stats['n'] >= 2 else 1.0
+        
+        try: item_enc = le_item.transform([item])[0]
+        except: item_enc = 0
+        try: cat_enc = le_cat.transform([stats['cat']])[0]
+        except: cat_enc = 0
 
-        if qty_mean == 0:
-            continue
-
-        qty_std  = qty_vals.std() if len(qty_vals) > 1 else 0
-        n_months = len(item_data)
-
-        # Normalize historical values
-        norm_vals = qty_vals / qty_mean
-
-        # Build normalized features for target month
-        lag1_n  = float(norm_vals[-1])
-        lag2_n  = float(norm_vals[-2]) if len(norm_vals) >= 2 else 1.0
-        lag3_n  = float(norm_vals[-3]) if len(norm_vals) >= 3 else 1.0
-        roll3_n = float(norm_vals[-3:].mean()) if len(norm_vals) >= 3 else 1.0
-        roll6_n = float(norm_vals[-6:].mean()) if len(norm_vals) >= 6 else 1.0
-        trend_n = lag1_n - lag2_n
-        cv      = qty_std / qty_mean if qty_mean > 0 else 0
-
-        try:
-            item_enc = le_item.transform([item])[0]
-        except ValueError:
-            item_enc = 0
-        try:
-            cat_enc = le_cat.transform([category])[0]
-        except ValueError:
-            cat_enc = 0
-
-        pred_row = pd.DataFrame([{
+        pred_features.append({
             'Month':    target_month,
-            'lag_1_n':  lag1_n,
-            'lag_2_n':  lag2_n,
-            'lag_3_n':  lag3_n,
-            'roll_3_n': roll3_n,
-            'roll_6_n': roll6_n,
-            'trend_n':  trend_n,
-            'item_cv':  cv,
-            'n_months': n_months,
+            'lag_1_n':  l1,
+            'lag_2_n':  l2,
+            'lag_3_n':  float(norm_v[-3]) if stats['n'] >= 3 else 1.0,
+            'roll_3_n': float(norm_v[-3:].mean()) if stats['n'] >= 3 else 1.0,
+            'roll_6_n': float(norm_v[-6:].mean()) if stats['n'] >= 6 else 1.0,
+            'trend_n':  l1 - l2,
+            'item_cv':  stats['std'] / stats['mean'],
+            'n_months': stats['n'],
             'is_q1':    1 if target_month in [1, 2, 3]    else 0,
             'is_q4':    1 if target_month in [10, 11, 12] else 0,
             'item_enc': item_enc,
-            'cat_enc':  cat_enc,
-        }])
+            'cat_enc':  cat_enc
+        })
+        active_items.append(item)
 
-        # Predict normalized → denormalize to actual units
-        pred_norm = final_model.predict(pred_row)[0]
-        pred_qty  = max(0, round(pred_norm * qty_mean))
-
+    # Bulk prediction using the full dataframe
+    pred_df = pd.DataFrame(pred_features)[FEATURES]
+    all_preds_norm = final_model.predict(pred_df)
+    
+    # Denormalize results
+    for i, item in enumerate(active_items):
+        stats = item_stats[item]
+        pred_qty = max(0, round(all_preds_norm[i] * stats['mean']))
         results.append({
             'Item':     item,
-            'Category': category,
-            f'Predicted_{month_name.replace(" ", "_")}_Qty': pred_qty,
+            'Category': stats['cat'],
+            f'Predicted_{month_name.replace(" ", "_")}_Qty': pred_qty
         })
 
     print(f"   [+] Predictions generated: {len(results):,} items")
