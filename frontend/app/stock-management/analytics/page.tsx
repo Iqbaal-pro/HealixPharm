@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => `Rs. ${value.toLocaleString()}`}
+                    formatter={(value) => `Rs. ${Number(value).toLocaleString()}`}
                     contentStyle={{ background: "#060d1a", border: "1px solid rgba(148,163,184,0.1)", borderRadius: "10px" }}
                   />
                   <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} />
@@ -250,7 +250,7 @@ export default function AnalyticsPage() {
                         {tab === "reorder" ? (
                            <>
                              <td><span className="badge" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>Low</span></td>
-                             <td style={{ color: "#38bdf8", fontWeight: 700 }}>+{item.reorder}</td>
+                             <td style={{ color: "#38bdf8", fontWeight: 700 }}>+{(item as any).reorder}</td>
                            </>
                         ) : (
                           <>

@@ -152,3 +152,5 @@ class DashboardSummary(BaseModel):
     model_verdict: str = Field(..., example="Acceptable")
     last_run: Optional[str] = Field(None, example="2026-03-20T10:30:00")
     data_date_range: str = Field(..., example="Apr 2025 - Mar 2026")
+    
+    model_config = {"protected_namespaces": ()}

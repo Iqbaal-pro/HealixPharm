@@ -11,12 +11,12 @@ What it does:
 5. Starts the server
 
 Run with:
-    uvicorn main:app --reload --port 8000
+    uvicorn main:app --reload --port 8002
 
 Then visit:
-    http://localhost:8000/docs        ← Interactive API docs (Swagger UI)
-    http://localhost:8000/redoc       ← Alternative API docs
-    http://localhost:8000/api/v1/...  ← Your actual endpoints
+    http://localhost:8002/docs        ← Interactive API docs (Swagger UI)
+    http://localhost:8002/redoc       ← Alternative API docs
+    http://localhost:8002/api/v1/...  ← Your actual endpoints
 """
 
 from fastapi import FastAPI
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8002,
         reload=True,    # auto-restart when code changes
         log_level="info",
     )
