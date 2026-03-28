@@ -77,9 +77,9 @@ export default function Hero() {
 
           {/* Buttons */}
           <div className="hero-buttons">
-            <Link href="/register" className="btn-primary btn-modern">
+            <a href="https://healixpharm-frontend.onrender.com/signup" target="_blank" rel="noopener noreferrer" className="btn-primary btn-modern">
               Register Your Pharmacy
-            </Link>
+            </a>
             <Link href="#features" className="btn-secondary btn-modern">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />

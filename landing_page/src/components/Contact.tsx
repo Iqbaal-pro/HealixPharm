@@ -7,8 +7,8 @@ const info = [
     value: "IIT, Spencer Building, 435 Galle Rd, Colombo 03",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#38bdf8" strokeWidth="1.5" strokeLinejoin="round"/>
-        <circle cx="12" cy="9" r="2.5" stroke="#38bdf8" strokeWidth="1.5"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="#38bdf8" strokeWidth="1.5" strokeLinejoin="round" />
+        <circle cx="12" cy="9" r="2.5" stroke="#38bdf8" strokeWidth="1.5" />
       </svg>
     ),
   },
@@ -17,17 +17,17 @@ const info = [
     value: "healixpharm@gmail.com",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#38bdf8" strokeWidth="1.5"/>
-        <path d="M2 7l10 7 10-7" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round"/>
+        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#38bdf8" strokeWidth="1.5" />
+        <path d="M2 7l10 7 10-7" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     label: "Phone",
-    value: "+94 771 443 155",
+    value: "+94 714 292 929",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="#38bdf8" strokeWidth="1.5"/>
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="#38bdf8" strokeWidth="1.5" />
       </svg>
     ),
   },
@@ -36,28 +36,31 @@ const info = [
 const socials = [
   {
     label: "Facebook",
+    href: "https://www.facebook.com/share/1CFaukYhhC/?mibextid=wwXIfr",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" stroke="#7dd3fc" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" stroke="#7dd3fc" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
     ),
   },
   {
     label: "LinkedIn",
+    href: "https://www.linkedin.com/company/healixpharm/",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="2" width="20" height="20" rx="4" stroke="#7dd3fc" strokeWidth="1.5"/>
-        <path d="M7 10v7M7 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" stroke="#7dd3fc" strokeWidth="1.5" strokeLinecap="round"/>
+        <rect x="2" y="2" width="20" height="20" rx="4" stroke="#7dd3fc" strokeWidth="1.5" />
+        <path d="M7 10v7M7 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" stroke="#7dd3fc" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     label: "Instagram",
+    href: "https://www.instagram.com/healix_pharm?igsh=aHF5bHc5ZDZtemFs",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <rect x="2" y="2" width="20" height="20" rx="5" stroke="#7dd3fc" strokeWidth="1.5"/>
-        <circle cx="12" cy="12" r="4" stroke="#7dd3fc" strokeWidth="1.5"/>
-        <circle cx="17.5" cy="6.5" r="1" fill="#7dd3fc"/>
+        <rect x="2" y="2" width="20" height="20" rx="5" stroke="#7dd3fc" strokeWidth="1.5" />
+        <circle cx="12" cy="12" r="4" stroke="#7dd3fc" strokeWidth="1.5" />
+        <circle cx="17.5" cy="6.5" r="1" fill="#7dd3fc" />
       </svg>
     ),
   },
@@ -67,6 +70,8 @@ export default function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
 
   useEffect(() => {
@@ -86,8 +91,36 @@ export default function Contact() {
     return () => observer.disconnect();
   }, []);
 
-  const handleSubmit = () => {
-    if (form.name && form.email && form.message) setSent(true);
+  const handleSubmit = async () => {
+    if (!form.name || !form.email || !form.message) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("https://formspree.io/f/xbdzelpb", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (response.ok) {
+        setSent(true);
+      } else {
+        const data = await response.json();
+        setError(data.errors?.[0]?.message || "Something went wrong. Please try again.");
+      }
+    } catch (err) {
+      setError("Failed to connect. Please check your internet connection.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,7 +136,7 @@ export default function Contact() {
           <div className="contact-header reveal">
             <div className="section-badge">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#38bdf8" strokeWidth="2"/>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#38bdf8" strokeWidth="2" />
               </svg>
               Get In Touch
             </div>
@@ -139,7 +172,7 @@ export default function Contact() {
                 <div className="social-title">Follow Us</div>
                 <div className="social-btns">
                   {socials.map((s) => (
-                    <a key={s.label} href="#" className="social-btn">
+                    <a key={s.label} href={s.href} className="social-btn" target="_blank" rel="noopener noreferrer">
                       {s.icon}
                       {s.label}
                     </a>
@@ -154,7 +187,7 @@ export default function Contact() {
                 <div className="success-state">
                   <div className="success-icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 12l5 5L19 7" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M5 12l5 5L19 7" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                   <h3 className="success-title">Message sent!</h3>
@@ -194,11 +227,32 @@ export default function Contact() {
                         className="field-input field-textarea"
                       />
                     </div>
-                    <button className="submit-btn" onClick={handleSubmit}>
-                      Send Message
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
+                    {error && (
+                      <div className="error-box" style={{
+                        padding: "12px",
+                        background: "rgba(239, 68, 68, 0.1)",
+                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                        borderRadius: "8px",
+                        color: "#f87171",
+                        fontSize: "13px",
+                        marginBottom: "16px"
+                      }}>
+                        {error}
+                      </div>
+                    )}
+
+                    <button
+                      className="submit-btn"
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      style={{ opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+                    >
+                      {loading ? "Sending..." : "Send Message"}
+                      {!loading && (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </>

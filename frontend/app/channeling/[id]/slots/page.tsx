@@ -163,7 +163,7 @@ export default function SlotsPage() {
       {error && <div style={{ color: "#f87171", fontSize: 13, padding: "12px 16px", background: "rgba(248,113,113,0.08)", borderRadius: 10, border: "1px solid rgba(248,113,113,0.2)", marginBottom: 16 }}>{error}</div>}
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
+      <div className="slots-stats" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
         {[
           { label: "Total Slots", value: stats.total,  color: "#38bdf8", bg: "rgba(56,189,248,0.07)",  border: "rgba(56,189,248,0.12)"  },
           { label: "Available",   value: stats.free,   color: "#4ade80", bg: "rgba(74,222,128,0.07)",  border: "rgba(74,222,128,0.12)"  },
@@ -176,10 +176,10 @@ export default function SlotsPage() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20, alignItems: "start" }}>
+      <div className="slots-grid" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20, alignItems: "start" }}>
 
         {/* LEFT */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="slots-left-panel" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
           {/* Add Slot Panel */}
           <div style={{ background: "rgba(8,16,32,0.7)", border: "1px solid rgba(148,163,184,0.09)", borderRadius: 14, overflow: "hidden" }}>
@@ -231,7 +231,7 @@ export default function SlotsPage() {
                   </div>
                   <div>
                     <label style={lbl}>Select Times * ({bulkTimes.length} selected)</label>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, maxHeight: 200, overflowY: "auto" }}>
+                    <div className="bulk-times-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, maxHeight: 200, overflowY: "auto" }}>
                       {TIMES.map(t => {
                         const used    = usedTimes.includes(t);
                         const checked = bulkTimes.includes(t);
@@ -287,7 +287,7 @@ export default function SlotsPage() {
         </div>
 
         {/* RIGHT — Slot list */}
-        <div>
+        <div className="slots-right-panel">
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             <select value={filterHospital} onChange={e => setFilterHospital(e.target.value)} style={{ ...inp, width: "auto", flex: 1, cursor: "pointer" }}>
               <option value="">All Hospitals</option>
@@ -323,9 +323,9 @@ export default function SlotsPage() {
                   </div>
                   <span style={{ fontSize: 11, color: "#475569" }}>{bookedCount}/{daySlots.length} booked</span>
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                <div className="slot-chips" style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
                   {daySlots.map(slot => (
-                    <div key={slot.id} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 10px", borderRadius: 8, background: slot.booked ? "rgba(248,113,113,0.06)" : "rgba(8,16,32,0.7)", border: `1px solid ${slot.booked ? "rgba(248,113,113,0.2)" : "rgba(148,163,184,0.09)"}` }}>
+                    <div key={slot.id} className="slot-chip" style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 10px", borderRadius: 8, background: slot.booked ? "rgba(248,113,113,0.06)" : "rgba(8,16,32,0.7)", border: `1px solid ${slot.booked ? "rgba(248,113,113,0.2)" : "rgba(148,163,184,0.09)"}` }}>
                       <span style={{ fontSize: 12, fontWeight: 500, color: slot.booked ? "#f87171" : "#e2e8f0" }}>{slot.time}</span>
                       {slot.booked ? (
                         <span style={{ fontSize: 9, fontWeight: 700, color: "#f87171", background: "rgba(248,113,113,0.1)", padding: "2px 5px", borderRadius: 4 }}>BOOKED</span>

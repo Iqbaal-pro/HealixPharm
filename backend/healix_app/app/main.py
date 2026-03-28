@@ -1,6 +1,7 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.whatsapp.routes import router as whatsapp_router
 from app.db import Base, engine
@@ -29,17 +30,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="HealixPharm - WhatsApp Bot")
 
 # ─── CORS Middleware
+# We must NOT use allow_origins=["*"] if allow_credentials=True
+# We use settings.ALLOWED_ORIGINS which is a carefully curated list.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://healixpharm-frontend.onrender.com",
-        "https://healix-doctor-portal.onrender.com",
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 # Include Routers
 app.include_router(whatsapp_router)
@@ -51,12 +50,31 @@ app.include_router(notification_router)
 app.include_router(storage_router)
 app.include_router(auth_router)
 
-# Ensure database tables exist
-Base.metadata.create_all(bind=engine)
-logger.info("[WB_MAIN] Pharmacy database tables ensured")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.error(f"GLOBAL ERROR: {exc}", exc_info=True)
+    # We try to get the origin from the request to stay CORS-friendly
+    origin = request.headers.get("origin", "*")
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error", "detail": str(exc)},
+        headers={"Access-Control-Allow-Origin": origin} 
+    )
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info(f"[WB_MAIN] Starting server with ALLOWED_ORIGINS: {settings.ALLOWED_ORIGINS}")
+    
+    # Ensure database tables exist during startup
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("[WB_MAIN] Pharmacy database tables ensured")
+    except Exception as e:
+        logger.error(f"[WB_MAIN] Database initialization FAILED: {e}", exc_info=True)
+        # We don't raise here so uvicorn doesn't crash, allowing us to see error
+        
     logger.info("[WB_MAIN] Starting background scheduler...")
 
     # Start scheduler if not already running

@@ -30,7 +30,7 @@ def get_db():
     finally:
         db.close()
 
-
+'''
 @router.get("/")
 def get_all_inventory(db: Session = Depends(get_db)):
     """
@@ -38,7 +38,48 @@ def get_all_inventory(db: Session = Depends(get_db)):
     """
     repo = InventoryRepository(db)
     return repo.get_all()
+'''
+@router.get("/")
+def get_all_inventory(db: Session = Depends(get_db)):
+    from app.models.medicine import Medicine
+    from app.models.inventory import Inventory
+    from app.models.batch import MedicineBatch
 
+    results = (
+        db.query(Inventory, Medicine, MedicineBatch)
+        .outerjoin(Medicine, Inventory.medicine_id == Medicine.id)
+        .outerjoin(MedicineBatch, Inventory.batch_id == MedicineBatch.id)
+        .all()
+    )
+
+    output = []
+    for inv, med, batch in results:
+        output.append({
+            "id":                 inv.id,
+            "medicine_id":        inv.medicine_id,
+            "medicine_name":      med.name if med else "Unknown",
+            "category":           med.category if med else "—",
+            "dosage_form":        med.dosage_form if med else "—",
+            "strength":           med.strength if med else "—",
+            "selling_price":      med.selling_price if med else 0,
+            "cost_price":         med.cost_price if med else 0,
+            "batch_id":           inv.batch_id,
+            "batch_number":       batch.batch_number if batch else "—",
+            "manufacture_date":   batch.manufacture_date if batch else None,
+            "expiry_date":        batch.expiry_date if batch else None,
+            "is_expired":         batch.is_expired if batch else False,
+            "is_active":          batch.is_active if batch else False,
+            "supplier_id":        batch.supplier_id if batch else None,
+            "quantity_available": inv.quantity_available,
+            "quantity_reserved":  inv.quantity_reserved,
+            "quantity_damaged":   inv.quantity_damaged,
+            "quantity_expired":   inv.quantity_expired,
+            "reorder_level":      inv.reorder_level,
+            "reorder_quantity":   inv.reorder_quantity,
+            "last_stock_update":  inv.last_stock_update,
+            "last_dispensed_at":  inv.last_dispensed_at,
+        })
+    return output
 
 @router.get("/low-stock")
 def get_low_stock(db: Session = Depends(get_db)):
@@ -47,34 +88,3 @@ def get_low_stock(db: Session = Depends(get_db)):
     """
     repo = InventoryRepository(db)
     return repo.get_low_stock()
-
-@router.post("/add-stock")
-def add_stock(
-    payload: AddStockRequest,
-    db: Session = Depends(get_db)
-):
-    inventory_repo = InventoryRepository(db)
-    stock_update_repo = StockUpdateRepository(db)
-
-    service = StockAddService(
-        inventory_repo,
-        stock_update_repo
-    )
-
-    updated_inventory = service.add_stock(
-        medicine_id=payload.medicine_id,
-        batch_id=payload.batch_id,
-        batch_number=payload.batch_number,
-        expiry_date=payload.expiry_date,
-        quantity_added=payload.quantity_added,
-        cost_price=payload.cost_price,
-        supplier_id=payload.supplier_id,
-        supplier_name=payload.supplier_name,
-        staff_id=payload.staff_id,
-        db=db
-    )
-
-    return {
-        "message": "Stock added successfully",
-        "current_quantity": updated_inventory.quantity_available
-    }

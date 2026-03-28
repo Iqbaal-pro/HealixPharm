@@ -143,6 +143,7 @@ class TrendsResponse(BaseModel):
 
 class DashboardSummary(BaseModel):
     """GET /api/v1/predict/summary — all key numbers in one request"""
+    model_config = {"protected_namespaces": ()}
     target_month: str = Field(..., example="April 2026")
     total_budget: float = Field(..., example=40935807.31)
     total_items: int = Field(..., example=5024)

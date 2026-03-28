@@ -15,7 +15,6 @@ def get_s3_client():
         endpoint_url=f"https://s3.{settings.AWS_REGION}.amazonaws.com",
         config=Config(
             signature_version="s3v4",
-            s3={"addressing_style": "virtual"}
         )
     )
 

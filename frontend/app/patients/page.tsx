@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { getPatients, createPatient, updateConsent, type Patient } from "../routes/patientRoutes";
+import { getPatients, createPatient, deletePatient, type Patient } from "../routes/patientRoutes";
 
 export default function PatientsPage() {
   const [patients, setPatients]       = useState<Patient[]>([]);
@@ -8,9 +8,9 @@ export default function PatientsPage() {
   const [search, setSearch]           = useState("");
   const [showForm, setShowForm]       = useState(false);
   const [saving, setSaving]           = useState(false);
+  const [deletingId, setDeletingId]   = useState<number | null>(null);
   const [msg, setMsg]                 = useState("");
   const [form, setForm]               = useState({ name: "", phone_number: "", language: "en", consent: false });
-  const [togglingId, setTogglingId]   = useState<number | null>(null);
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -34,11 +34,15 @@ export default function PatientsPage() {
     finally { setSaving(false); }
   };
 
-  const handleConsent = async (patient: Patient) => {
-    setTogglingId(patient.id);
-    try { await updateConsent(patient.id, !patient.consent); fetchPatients(); }
-    catch { setMsg("Failed to update consent."); }
-    finally { setTogglingId(null); }
+
+  const handleDelete = async (p: Patient) => {
+    if (!confirm(`Delete patient "${p.name}"? This cannot be undone.`)) return;
+    setDeletingId(p.id);
+    try {
+      await deletePatient(p.id);
+      fetchPatients();
+    } catch (e: unknown) { alert(e instanceof Error ? e.message : "Failed to delete patient"); }
+    finally { setDeletingId(null); }
   };
 
   const filtered = patients.filter(p =>
@@ -136,7 +140,7 @@ export default function PatientsPage() {
                 <table className="full-table">
                   <thead>
                     <tr className="thead-border">
-                      {["ID", "Name", "Phone", "Language", "SMS Consent"].map(h => <th key={h} className="th">{h}</th>)}
+                      {["ID", "Name", "Phone", "Language", "SMS Consent", "Action"].map(h => <th key={h} className="th">{h}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -147,13 +151,24 @@ export default function PatientsPage() {
                         <td className="td td-phone-cell"><div className="td-phone">{p.phone_number}</div></td>
                         <td className="td"><span className="badge">{(p.language ?? "—").toUpperCase()}</span></td>
                         <td className="td">
-                          <button
-                            onClick={() => handleConsent(p)}
-                            disabled={togglingId === p.id}
-                            className={p.consent ? "btn-sm btn-sm-green" : "btn-sm"}
-                            style={{ opacity: togglingId === p.id ? 0.5 : 1 }}
-                          >
-                            {togglingId === p.id ? "…" : p.consent ? "✓ Consented" : "No Consent"}
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 99,
+                            background: (p.consent === true || p.consent === 1) ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)",
+                            color: (p.consent === true || p.consent === 1) ? "#4ade80" : "#f87171",
+                            border: `1px solid ${(p.consent === true || p.consent === 1) ? "rgba(74,222,128,0.2)" : "rgba(248,113,113,0.2)"}` ,
+                          }}>
+                            <span style={{ width: 5, height: 5, borderRadius: "50%", background: (p.consent === true || p.consent === 1) ? "#4ade80" : "#f87171" }} />
+                            {p.consent === true || p.consent === 1 ? "Consented" : "Not Consented"}
+                          </span>
+                        </td>
+                        <td className="td">
+                          <button onClick={() => handleDelete(p)} disabled={deletingId === p.id}
+                            style={{ padding: "5px 14px", borderRadius: 7, border: "none", cursor: "pointer",
+                              background: "rgba(239,68,68,0.08)", color: "#f87171", fontSize: 12,
+                              fontWeight: 600, fontFamily: "'DM Sans',sans-serif",
+                              opacity: deletingId === p.id ? 0.6 : 1 }}>
+                            {deletingId === p.id ? "..." : "Delete"}
                           </button>
                         </td>
                       </tr>

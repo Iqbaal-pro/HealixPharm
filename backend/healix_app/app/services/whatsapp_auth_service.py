@@ -22,8 +22,9 @@ class WhatsAppAuthService:
         patients = db.query(models.Patient).all()
         for patient in patients:
             if patient.phone_number == phone_number:
-                logger.info(f"[AUTH_SERVICE] Patient verified via in-memory match: {phone_number}")
+                logger.info(f"[AUTH_SERVICE] Patient verified: {phone_number}")
                 return True
+
         
         logger.warning(f"[AUTH_SERVICE] Authentication failed for: {phone_number}")
         return False
