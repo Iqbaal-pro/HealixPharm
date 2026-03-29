@@ -31,11 +31,25 @@ class Patient(Base):
     _phone_number = Column("phone_number", String(600), nullable=False)
     _date_of_birth = Column("date_of_birth", String(600), nullable=True)
 
-    language = Column(String(10), default="en")  # e.g. "en", "si", "ta"
+    _language = Column("language", String(600), default="en")
     consent = Column(Boolean, default=False)      # must be True to send SMS
     _age = Column("age", String(600), nullable=True)  # Encrypted age
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # --- language ---
+    @property
+    def language(self) -> str:
+        """Hybrid: Decrypt if encrypted (starts with gAAAAA), else return raw."""
+        val = self._language
+        if val and isinstance(val, str) and val.startswith("gAAAAA"):
+            return _safe_decrypt(val, "language") or val
+        return val
+
+    @language.setter
+    def language(self, value: str):
+        """Store as plain text (e.g., 'en', 'si', 'ta')."""
+        self._language = value
 
     # --- name ---
     @property

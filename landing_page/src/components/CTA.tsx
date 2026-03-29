@@ -55,10 +55,14 @@ export default function CTA() {
           </div>
 
           <div className="cta-buttons reveal" style={{ transitionDelay: "0.1s" }}>
-            <Link href="/register" className="btn-primary">
+            <a
+              href="https://healixpharm-frontend.onrender.com/signup"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
+            >
               Register Your Pharmacy
-
-            </Link>
+            </a>
             <Link href="#contact" className="btn-secondary">
               Talk to Us First
             </Link>
@@ -78,7 +82,6 @@ export default function CTA() {
             ))}
           </div>
 
-          {/* Honest trust strip */}
           <div className="reveal" style={{
             transitionDelay: "0.26s",
             marginTop: "40px",

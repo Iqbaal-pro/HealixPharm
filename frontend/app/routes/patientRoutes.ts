@@ -16,7 +16,7 @@ export interface Patient {
   name: string;
   phone_number: string;
   language: string;
-  consent: boolean;
+  consent: boolean | number | null;
 }
 
 export interface CreatePatientPayload {
@@ -50,4 +50,10 @@ export async function updateConsent(patientId: number, consent: boolean): Promis
     body: JSON.stringify({ consent }),
   });
   return handleResponse<unknown>(res);
+}
+
+// DELETE /patients/{id}
+export async function deletePatient(patientId: number): Promise<{ message: string }> {
+  const res = await fetch(`${BASE}/patients/${patientId}`, { method: "DELETE" });
+  return handleResponse<{ message: string }>(res);
 }

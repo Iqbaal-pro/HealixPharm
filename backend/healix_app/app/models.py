@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, Float, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import logging
@@ -16,6 +16,17 @@ class User(Base):
     phone = Column(String(64), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class UserState(Base):
+    __tablename__ = "user_states"
+
+    user_id = Column(String(64), primary_key=True, index=True)
+    current_step = Column(String(100), default="main_menu")
+    conversation_data = Column(JSON, default=dict)
+    last_action = Column(String(100), nullable=True)
+    is_first_message = Column(Boolean, default=True)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
 class SupportTicket(Base):
@@ -90,11 +101,16 @@ class Patient(Base):
     # --- language ---
     @property
     def language(self) -> str:
-        return _safe_decrypt(self._language, "language")
+        """Hybrid: Decrypt if encrypted (starts with gAAAAA), else return raw."""
+        val = self._language
+        if val and isinstance(val, str) and val.startswith("gAAAAA"):
+            return _safe_decrypt(val, "language") or val
+        return val
 
     @language.setter
     def language(self, value: str):
-        self._language = encrypt_data(value)
+        """Store language as plain text (e.g., 'en', 'si', 'ta')."""
+        self._language = value
 
     # --- date_of_birth ---
     @property

@@ -28,23 +28,44 @@ class MessagePayload(BaseModel):
 @router.get("/orders", response_model=List[schemas.OrderSimpleSchema])
 def list_orders(status: Optional[str] = None, db: Session = Depends(get_db)):
     """List all orders with optional status filter."""
-    query = db.query(models.Order)
-    if status:
-        query = query.filter(models.Order.status == status.upper())
-    
-    orders = query.order_by(models.Order.created_at.desc()).all()
-    result = []
-    for o in orders:
-        res = schemas.OrderSimpleSchema.from_orm(o)
-        res.phone = o.patient.phone_number
-        res.patient_id = o.patient_id
-        if o.prescription and o.prescription.s3_key:
+    logger.info(f"[ADMIN] Entering list_orders(status={status})")
+    try:
+        query = db.query(models.Order)
+        if status:
+            query = query.filter(models.Order.status == status.upper())
+        
+        orders = query.order_by(models.Order.created_at.desc()).all()
+        logger.info(f"[ADMIN] Found {len(orders)} orders")
+        
+        result = []
+        for o in orders:
             try:
-                res.prescription_url = generate_presigned_url(o.prescription.s3_key)
+                res = schemas.OrderSimpleSchema.model_validate(o)
+                
+                # Securely handle patient info
+                if o.patient:
+                    res.phone = o.patient.phone_number
+                    res.patient_id = o.patient_id
+                else:
+                    logger.warning(f"[ADMIN] Order {o.id} has no associated patient record!")
+                    res.phone = "Unknown"
+                    res.patient_id = None
+
+                if o.prescription and o.prescription.s3_key:
+                    try:
+                        res.prescription_url = generate_presigned_url(o.prescription.s3_key)
+                    except Exception as e:
+                        logger.warning(f"[ADMIN] Failed to generate presigned URL for order {o.id}: {e}")
+                
+                result.append(res)
             except Exception as e:
-                logger.warning(f"Failed to generate presigned URL for order {o.id}: {e}")
-        result.append(res)
-    return result
+                logger.error(f"[ADMIN] Error processing order {o.id}: {e}", exc_info=True)
+                continue
+
+        return result
+    except Exception as e:
+        logger.error(f"[ADMIN] CRITICAL ERROR IN list_orders: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/orders/{order_id}", response_model=schemas.OrderDetailSchema)
@@ -54,11 +75,20 @@ def get_order_details(order_id: int, db: Session = Depends(get_db)):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
-    res = schemas.OrderDetailSchema.from_orm(order)
-    res.phone = order.patient.phone_number
+    res = schemas.OrderDetailSchema.model_validate(order)
+    
+    if order.patient:
+        res.phone = order.patient.phone_number
+    else:
+        logger.warning(f"[ADMIN] Order {order_id} has no associated patient!")
+        res.phone = "Unknown"
+
     if order.prescription:
         # Generate a fresh 1-hour presigned URL for the frontend
-        res.prescription_url = generate_presigned_url(order.prescription.s3_key)
+        try:
+            res.prescription_url = generate_presigned_url(order.prescription.s3_key)
+        except Exception as e:
+            logger.warning(f"[ADMIN] Failed to generate presigned URL for order details {order_id}: {e}")
     return res
 
 
@@ -103,7 +133,9 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
         if not success:
             raise HTTPException(status_code=500, detail=f"Failed to reserve stock for {med_details['name']}")
 
-        subtotal = med_details['selling_price'] * item.quantity
+        # Ensure price is float to avoid "unsupported operand type(s) for +=: 'float' and 'decimal.Decimal'"
+        price = float(med_details['selling_price'])
+        subtotal = price * item.quantity
         total_amount += subtotal
         
         new_item = models.OrderItem(
@@ -111,7 +143,7 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
             medicine_id=item.medicine_id,
             medicine_name=med_details['name'],
             quantity=item.quantity,
-            unit_price=med_details['selling_price'],
+            unit_price=price,
             subtotal=subtotal
         )
         db.add(new_item)
@@ -121,22 +153,27 @@ def approve_order_itemized(order_id: int, payload: schemas.OrderApprovalPayload,
     order.total_amount = total_amount
     order.approved_at = datetime.utcnow()
     
-    UserState_wb.set_user_state(order.patient.phone_number, "awaiting_payment_selection")
+    user_phone = order.patient.phone_number if order.patient else None
+    if user_phone:
+        UserState_wb.set_user_state(user_phone, "awaiting_payment_selection")
     
     db.commit()
 
-    try:
-        msg = (
-            f"Your order has been approved! ✅\n\n"
-            f"Total Amount: Rs. {total_amount:.2f}\n"
-            f"Please choose your payment method:\n"
-            f"1️⃣ Cash on Delivery\n"
-            f"2️⃣ Online Payment\n\n"
-            f"⚠️ Please confirm within 2 hours or the order will be cancelled."
-        )
-        notif.twilio_wa.send_text(order.patient.phone_number, msg)
-    except Exception as e:
-        logger.error(f"Failed to send approval message to {order.patient.phone_number}: {e}")
+    if user_phone:
+        try:
+            msg = (
+                f"Your order has been approved! ✅\n\n"
+                f"Total Amount: Rs. {total_amount:.2f}\n"
+                f"Please choose your payment method:\n"
+                f"1️⃣ Cash on Delivery\n"
+                f"2️⃣ Online Payment\n\n"
+                f"⚠️ Please confirm within 2 hours or the order will be cancelled."
+            )
+            notif.twilio_wa.send_text(user_phone, msg)
+        except Exception as e:
+            logger.error(f"Failed to send approval message to {user_phone}: {e}")
+    else:
+        logger.warning(f"[ADMIN] Order {order.id} approved but has no associated patient to notify.")
 
     return {
         "id": order.id,
@@ -162,8 +199,42 @@ def update_order_status(order_id: int, payload: schemas.StatusUpdate, db: Sessio
     order.status = status
     if status == "APPROVED":
         order.approved_at = datetime.utcnow()
+        try:
+            if order.patient and order.patient.phone_number:
+                # Check if we have bill data to show payment options
+                if order.total_amount and order.total_amount > 0 and order.items:
+                    item_lines = "\n".join([f"• {i.medicine_name} x {i.quantity}" for i in order.items])
+                    msg = (
+                        f"Your prescription has been reviewed and approved! ✅\n\n"
+                        f"*Bill Summary:*\n{item_lines}\n\n"
+                        f"*Total Amount: Rs. {order.total_amount:.2f}*\n\n"
+                        f"Please choose your payment method:\n"
+                        f"1️⃣ Cash on Delivery\n"
+                        f"2️⃣ Online Payment\n\n"
+                        f"⚠️ Please respond with 1 or 2 to proceed."
+                    )
+                    logger.info(f"[ADMIN] Detailed approval notification sent to {order.patient.phone_number}")
+                else:
+                    # Fallback if no bill data yet
+                    msg = (
+                        f"Your order {order.token} has been approved! ✅\n"
+                        f"Our pharmacist is currently preparing your bill. "
+                        f"You will receive the itemized summary shortly. 💊"
+                    )
+                    logger.info(f"[ADMIN] Simple approval notification sent to {order.patient.phone_number}")
+
+                notif.twilio_wa.send_text(order.patient.phone_number, msg)
+                
+                # Always set state so user is ready for payment step
+                UserState_wb.set_user_state(order.patient.phone_number, "awaiting_payment_selection")
+                logger.info(f"[ADMIN] User state set to awaiting_payment_selection for {order.patient.phone_number}")
+        except Exception as e:
+
+
+            logger.error(f"Failed to send manual approval notification for order {order.id}: {e}")
     
     db.commit()
+
     db.refresh(order)
 
     if status == "REJECTED":
@@ -194,10 +265,14 @@ def confirm_payment(order_id: int, db: Session = Depends(get_db)):
     order.payment_status = "COMPLETED"
     db.commit()
     
-    try:
-        notif.twilio_wa.send_text(order.patient.phone_number, f"Payment received for Order {order.token}! ✅ Your medicine is being prepared for delivery.")
-    except Exception as e:
-        logger.error(f"Failed to send payment confirmation: {e}")
+    user_phone = order.patient.phone_number if order.patient else None
+    if user_phone:
+        try:
+            notif.twilio_wa.send_text(user_phone, f"Payment received for Order {order.token}! ✅ Your medicine is being prepared for delivery.")
+        except Exception as e:
+            logger.error(f"Failed to send payment confirmation to {user_phone}: {e}")
+    else:
+        logger.warning(f"[ADMIN] Order {order.id} marked PAID but has no associated patient to notify.")
         
     return {"status": "PAID", "order_id": order.id}
 

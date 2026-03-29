@@ -762,18 +762,6 @@ export default function PrescriptionPage() {
                           )}
                         </div>
 
-                        {/* NEW: Per-medicine bill line */}
-                        {med.selling_price > 0 && Number(med.quantity_given) > 0 && (
-                          <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(148,163,184,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: 12, color: "#475569" }}>
-                              {med.quantity_given} × LKR {med.selling_price.toFixed(2)}
-                            </span>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>
-                              LKR {subtotal.toFixed(2)}
-                            </span>
-                          </div>
-                        )}
-
                       </div>
                     );
                   })}
@@ -783,14 +771,6 @@ export default function PrescriptionPage() {
                   style={{ width: "100%", justifyContent: "center" }}>
                   + Add Another Medicine
                 </button>
-
-                {/* NEW: Bill total preview */}
-                {billTotal > 0 && (
-                  <div style={{ background: "rgba(56,189,248,0.05)", border: "1px solid rgba(56,189,248,0.15)", borderRadius: 12, padding: "14px 18px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 13, color: "#94a3b8" }}>Estimated Total</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: "#38bdf8" }}>LKR {billTotal.toFixed(2)}</span>
-                  </div>
-                )}
 
                 {saveError && <div className="err-box mb-14"><p className="hint hint-err"> {saveError}</p></div>}
 
@@ -813,25 +793,6 @@ export default function PrescriptionPage() {
                     <p className="card-sub">{savedRxs.length} prescription{savedRxs.length > 1 ? "s" : ""} saved — confirm and deduct stock.</p>
                   </div>
                 </div>
-
-                {/* NEW: Bill summary */}
-                <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(148,163,184,0.08)", borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", letterSpacing: "0.06em", marginBottom: 10 }}>BILL SUMMARY</div>
-                  <div className="col g-6">
-                    {billItems.filter(i => i.quantity > 0).map((item, i) => (
-                      <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                        <span style={{ color: "#94a3b8" }}>{item.medicine_name} × {item.quantity}</span>
-                        <span style={{ color: "#e2e8f0", fontWeight: 600 }}>LKR {item.subtotal.toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(148,163,184,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: "#94a3b8" }}>Total</span>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: "#38bdf8" }}>LKR {billTotal.toFixed(2)}</span>
-                  </div>
-                </div>
-
-
 
                 <div className="col g-10 mb-14">
                   {savedRxs.map((rx, idx) => {

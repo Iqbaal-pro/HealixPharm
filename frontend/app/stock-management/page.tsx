@@ -28,7 +28,7 @@ export default function StockManagementPage() {
       const [invResult, reorderResult, predictResult] = await Promise.allSettled([
         getInventory(),
         getReorderRecommendations(token),
-        fetch(`http://localhost:8002/api/v1/predict/summary`).then(r => r.ok ? r.json() : null),
+        fetch(`${process.env.NEXT_PUBLIC_ML_API_URL ? process.env.NEXT_PUBLIC_ML_API_URL : 'http://localhost:8002'}/api/v1/predict/summary`).then(r => r.ok ? r.json() : null),
       ]);
       const inv     = invResult.status     === "fulfilled" ? invResult.value     : [];
       const reorder = reorderResult.status === "fulfilled" ? reorderResult.value : [];

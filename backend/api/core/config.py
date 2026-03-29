@@ -33,19 +33,23 @@ TRENDS_CSV     = ML_ROOT / "data" / "preprocessed_12_month_data.csv"
 BUDGET_CHART_PNG = CHARTS_DIR / "category_budget_chart.png"
 TRENDS_CHART_PNG = CHARTS_DIR / "monthly_category_trends.png"
 
+import os
+
 # ── CORS settings ─────────────────────────────────────────────────────────────
-ALLOWED_ORIGINS = [
-   "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:3002",   
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "http://127.0.0.1:3002",
-    "http://127.0.0.1:5173",
-    "http://10.229.45.189:3000",
-    "http://10.229.45.189:3001",
-]
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
+ALLOWED_ORIGINS = [o.strip() for o in ALLOWED_ORIGINS if o.strip()]
+
+if not ALLOWED_ORIGINS:
+    ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",   
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
+        "http://127.0.0.1:5173",
+    ]
 
 # ── API metadata ──────────────────────────────────────────────────────────────
 API_TITLE = "HealixPharm Stock Prediction API"
