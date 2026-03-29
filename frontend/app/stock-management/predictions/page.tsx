@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
-const API = "http://localhost:8002/api/v1/predict";
+const API = process.env.NEXT_PUBLIC_ML_API_URL 
+  ? `${process.env.NEXT_PUBLIC_ML_API_URL}/api/v1/predict`
+  : "http://localhost:8002/api/v1/predict";
 
 export default function PredictionsPage() {
   const [summary, setSummary] = useState<any>(null);
@@ -37,17 +39,25 @@ export default function PredictionsPage() {
   };
 
   const runPipeline = async () => {
+    if (running) return;
     try {
       setRunning(true);
-      const res = await fetch(`${API}/run`, { method: "POST" });
+      const controller = new AbortController();
+      const res = await fetch(`${API}/run`, { 
+        method: "POST",
+        signal: controller.signal,
+      });
       if (res.ok) {
         await fetchData();
         alert("ML Pipeline completed successfully!");
       } else {
-        alert("Pipeline failed. Check backend logs.");
+        const data = await res.json().catch(() => null);
+        const msg = data?.detail || "Pipeline failed. Check backend logs.";
+        alert(msg);
       }
-    } catch (err) {
-      alert("Error connecting to prediction API.");
+    } catch (err: any) {
+      if (err.name === "AbortError") return;
+      alert("Error connecting to prediction API. The pipeline takes ~4 minutes — please try again.");
     } finally {
       setRunning(false);
     }

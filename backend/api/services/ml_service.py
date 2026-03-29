@@ -17,6 +17,7 @@ import os
 import sys
 import time
 import subprocess
+import threading
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
@@ -81,6 +82,9 @@ def _get_target_month_from_csv(csv_path: Path) -> str:
 # SERVICE FUNCTIONS
 # ══════════════════════════════════════════════════════════════════════════════
 
+# Lock to prevent concurrent pipeline runs
+_pipeline_lock = threading.Lock()
+
 def run_ml_pipeline() -> Dict[str, Any]:
     """
     Triggers main.py as a subprocess.
@@ -92,6 +96,17 @@ def run_ml_pipeline() -> Dict[str, Any]:
 
     Returns dict with status, budget, timing info.
     """
+    if not _pipeline_lock.acquire(blocking=False):
+        raise RuntimeError(
+            "ML pipeline is already running. Please wait for it to finish (~4 minutes)."
+        )
+
+    try:
+        return _run_ml_pipeline_inner()
+    finally:
+        _pipeline_lock.release()
+
+def _run_ml_pipeline_inner() -> Dict[str, Any]:
     start_time = time.time()
 
     main_py_path = ML_ROOT / "main.py"
@@ -114,9 +129,9 @@ def run_ml_pipeline() -> Dict[str, Any]:
         cwd=str(ML_ROOT),          # run FROM the ML folder
         capture_output=True,       # capture stdout and stderr
         text=True,                 # return strings not bytes
-        encoding="utf-8",          # handle emojis/special chars on Windows
-        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
-        timeout=300,               # 5 min max (safety limit)
+        timeout=600,               # 10 min max (safety limit)
+        encoding="utf-8",          # fix Windows cp1252 emoji crash
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},  # force subprocess to write UTF-8
     )
 
     elapsed = round(time.time() - start_time, 2)
