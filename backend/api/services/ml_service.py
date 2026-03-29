@@ -25,6 +25,7 @@ from typing import List, Dict, Any, Optional
 
 # Add ML root to path so we can import from it
 from core.config import (
+    BASE_DIR,
     ML_ROOT,
     BUDGETS_CSV,
     INVENTORY_CSV,
@@ -116,9 +117,15 @@ def _run_ml_pipeline_inner() -> Dict[str, Any]:
             "Check ML_ROOT in config.py"
         )
 
-    # Run main.py using the same Python interpreter
+    # Find the root unified venv python (to ensure all ML libraries are present)
+    root_venv_python = BASE_DIR.parent / "venv" / "Scripts" / "python.exe"
+    
+    # Fallback to current interpreter if root venv isn't found
+    python_exe = str(root_venv_python) if root_venv_python.exists() else sys.executable
+
+    # Run main.py using the robust python interpreter
     result = subprocess.run(
-        [sys.executable, str(main_py_path)],
+        [python_exe, str(main_py_path)],
         cwd=str(ML_ROOT),          # run FROM the ML folder
         capture_output=True,       # capture stdout and stderr
         text=True,                 # return strings not bytes
@@ -142,8 +149,9 @@ def _run_ml_pipeline_inner() -> Dict[str, Any]:
     target_month = "Next Month"
 
     for line in result.stdout.split("\n"):
-        if "Total estimated budget" in line:
-            # Line: "   [+] Total estimated budget: Rs. 40,935,807.31"
+        # Updated string match to "Total budget" to align with main.py output
+        if "Total budget" in line:
+            # Line: "   [+] Total budget: Rs. 40,935,807.31"
             try:
                 budget_str = line.split("Rs.")[-1].strip().replace(",", "")
                 total_budget = float(budget_str)
